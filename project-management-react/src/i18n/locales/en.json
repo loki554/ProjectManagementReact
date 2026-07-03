@@ -86,6 +86,48 @@
     "MEMBER": "Member",
     "VIEWER": "Viewer"
   },
+  "tasks": {
+    "title": "Tasks in \"{{project}}\"",
+    "newTaskLabel": "New task",
+    "newTaskPlaceholder": "Task title",
+    "add": "Add",
+    "adding": "Adding...",
+    "loading": "Loading tasks...",
+    "columnEmpty": "No tasks",
+    "unassigned": "Unassigned",
+    "status": {
+      "NEW": "New",
+      "IN_PROGRESS": "In progress",
+      "PAUSED": "Paused",
+      "FEEDBACK": "Feedback",
+      "DONE": "Done",
+      "REJECTED": "Rejected"
+    },
+    "detail": {
+      "backToBoard": "← Back to tasks",
+      "backToParent": "← Back to parent task",
+      "loading": "Loading task...",
+      "titleLabel": "Title",
+      "statusLabel": "Status",
+      "assigneeLabel": "Assignee",
+      "descriptionLabel": "Description",
+      "noDescription": "No description",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Saved",
+      "delete": "Delete task",
+      "deleting": "Deleting...",
+      "deleteConfirm": "Delete this task along with all of its subtasks?"
+    },
+    "subtasks": {
+      "title": "Subtasks",
+      "loading": "Loading subtasks...",
+      "empty": "No subtasks yet",
+      "addPlaceholder": "Subtask title",
+      "add": "Add subtask",
+      "adding": "Adding..."
+    }
+  },
   "profile": {
     "title": "Profile",
     "backToDashboard": "← Back",
@@ -116,6 +158,10 @@
     "USER_NOT_FOUND_FOR_INVITE": "No registered user with this email",
     "ALREADY_PROJECT_MEMBER": "This user is already a project member",
     "CANNOT_REMOVE_LAST_OWNER": "The project must keep at least one owner",
+    "TASK_NOT_FOUND": "Task not found",
+    "PARENT_TASK_NOT_FOUND": "Parent task not found",
+    "PARENT_TASK_PROJECT_MISMATCH": "The parent task belongs to a different project",
+    "ASSIGNEE_NOT_PROJECT_MEMBER": "The assignee must be a member of the project",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }

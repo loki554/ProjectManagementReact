@@ -56,10 +56,14 @@ export function useDeleteTask(projectId) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ taskId }) => tasksApi.deleteTask(taskId),
-    onSuccess: (_data, { taskId, parentTaskId }) => {
+    // Намеренно НЕ используем removeQueries(taskKey(taskId))/removeQueries(subtasksKey(taskId)):
+    // TaskDetailPage, с которой обычно вызывается удаление, ещё смонтирована в момент onSuccess
+    // (навигация происходит асинхронно) и подписана на эти же ключи через useTask/useSubtasks —
+    // removeQueries на активный запрос заставляет react-query тут же перезапросить удалённую
+    // задачу и словить 404 в консоли прямо перед уходом со страницы. Инвалидации родительских
+    // списков достаточно: на удалённый id больше никто не подписывается после навигации прочь.
+    onSuccess: (_data, { parentTaskId }) => {
       queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
-      queryClient.removeQueries({ queryKey: taskKey(taskId) })
-      queryClient.removeQueries({ queryKey: subtasksKey(taskId) })
       if (parentTaskId) {
         queryClient.invalidateQueries({ queryKey: subtasksKey(parentTaskId) })
       }

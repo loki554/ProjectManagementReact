@@ -86,6 +86,48 @@
     "MEMBER": "Участник",
     "VIEWER": "Наблюдатель"
   },
+  "tasks": {
+    "title": "Задачи проекта «{{project}}»",
+    "newTaskLabel": "Новая задача",
+    "newTaskPlaceholder": "Название задачи",
+    "add": "Добавить",
+    "adding": "Добавляем...",
+    "loading": "Загрузка задач...",
+    "columnEmpty": "Нет задач",
+    "unassigned": "Не назначен",
+    "status": {
+      "NEW": "Новая",
+      "IN_PROGRESS": "В работе",
+      "PAUSED": "На паузе",
+      "FEEDBACK": "Feedback",
+      "DONE": "Выполнена",
+      "REJECTED": "Отклонена"
+    },
+    "detail": {
+      "backToBoard": "← К задачам проекта",
+      "backToParent": "← К родительской задаче",
+      "loading": "Загрузка задачи...",
+      "titleLabel": "Название",
+      "statusLabel": "Статус",
+      "assigneeLabel": "Исполнитель",
+      "descriptionLabel": "Описание",
+      "noDescription": "Без описания",
+      "save": "Сохранить",
+      "saving": "Сохраняем...",
+      "saved": "Сохранено",
+      "delete": "Удалить задачу",
+      "deleting": "Удаляем...",
+      "deleteConfirm": "Удалить задачу вместе со всеми подзадачами?"
+    },
+    "subtasks": {
+      "title": "Подзадачи",
+      "loading": "Загрузка подзадач...",
+      "empty": "Подзадач пока нет",
+      "addPlaceholder": "Название подзадачи",
+      "add": "Добавить подзадачу",
+      "adding": "Добавляем..."
+    }
+  },
   "profile": {
     "title": "Профиль",
     "backToDashboard": "← Назад",
@@ -116,6 +158,10 @@
     "USER_NOT_FOUND_FOR_INVITE": "Пользователь с таким email не зарегистрирован",
     "ALREADY_PROJECT_MEMBER": "Пользователь уже является участником проекта",
     "CANNOT_REMOVE_LAST_OWNER": "В проекте должен остаться хотя бы один владелец",
+    "TASK_NOT_FOUND": "Задача не найдена",
+    "PARENT_TASK_NOT_FOUND": "Родительская задача не найдена",
+    "PARENT_TASK_PROJECT_MISMATCH": "Родительская задача принадлежит другому проекту",
+    "ASSIGNEE_NOT_PROJECT_MEMBER": "Исполнитель должен быть участником проекта",
     "UNKNOWN": "Что-то пошло не так, попробуйте ещё раз"
   }
 }

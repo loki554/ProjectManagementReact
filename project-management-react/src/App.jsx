@@ -7,10 +7,11 @@ import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { NewProjectPage } from './pages/projects/NewProjectPage'
-import { ProjectBoardPlaceholderPage } from './pages/projects/ProjectBoardPlaceholderPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectRedirectPage } from './pages/projects/ProjectRedirectPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
+import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
+import { TaskDetailPage } from './pages/projects/TaskDetailPage'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
 
 function App() {
@@ -85,7 +86,15 @@ function AppRoutes() {
           path="/projects/:projectId/board"
           element={
             <ProtectedRoute>
-              <ProjectBoardPlaceholderPage />
+              <ProjectTasksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/tasks/:taskId"
+          element={
+            <ProtectedRoute>
+              <TaskDetailPage />
             </ProtectedRoute>
           }
         />
