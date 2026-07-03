@@ -18,6 +18,10 @@ export function updateTask(taskId, payload) {
   return apiClient.patch(`/tasks/${taskId}`, payload).then((res) => res.data)
 }
 
+export function updateTaskStatus(taskId, payload) {
+  return apiClient.patch(`/tasks/${taskId}/status`, payload).then((res) => res.data)
+}
+
 export function deleteTask(taskId) {
   return apiClient.delete(`/tasks/${taskId}`)
 }

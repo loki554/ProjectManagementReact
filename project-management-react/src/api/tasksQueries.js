@@ -71,6 +71,67 @@ export function useDeleteTask(projectId) {
   })
 }
 
+// Клиентское зеркало backend-алгоритма пересчёта position (TaskService.updateStatus, 5.1.2):
+// та же "колонка" — top-level задачи одного статуса — перенумеровывается 0..n-1 после
+// вставки перемещённой задачи на targetIndex. Работает над плоским кэшированным списком
+// без явной группировки: сортировка внутри каждого статуса определяется порядком добавления
+// в возвращаемый массив, а группировка по статусу на странице канбана (фильтром по task.status)
+// сохраняет этот относительный порядок независимо от чередования с другими статусами.
+function reorderTasksOptimistically(tasks, { taskId, status: newStatus, position: targetIndex }) {
+  const moved = tasks.find((task) => task.id === taskId)
+  if (!moved) {
+    return tasks
+  }
+  const oldStatus = moved.status
+  const others = tasks.filter((task) => task.id !== taskId)
+
+  if (oldStatus === newStatus) {
+    const column = others.filter((task) => task.status === newStatus).sort((a, b) => a.position - b.position)
+    const rest = others.filter((task) => task.status !== newStatus)
+    column.splice(targetIndex, 0, moved)
+    return [...rest, ...column.map((task, index) => ({ ...task, position: index }))]
+  }
+
+  const oldColumn = others.filter((task) => task.status === oldStatus).sort((a, b) => a.position - b.position)
+  const newColumn = others.filter((task) => task.status === newStatus).sort((a, b) => a.position - b.position)
+  const untouched = others.filter((task) => task.status !== oldStatus && task.status !== newStatus)
+
+  newColumn.splice(targetIndex, 0, { ...moved, status: newStatus })
+
+  return [
+    ...untouched,
+    ...oldColumn.map((task, index) => ({ ...task, position: index })),
+    ...newColumn.map((task, index) => ({ ...task, position: index })),
+  ]
+}
+
+// projectId фиксируется на хуке, как в useCreateTask — используется с канбан-страницы,
+// скоупированной на один проект. Optimistic update: onMutate сразу переставляет задачу
+// в кэше (см. reorderTasksOptimistically), onError откатывает к снимку "до", onSettled
+// сверяет с сервером — сервер остаётся источником истины для итогового position (см. §6).
+export function useUpdateTaskStatus(projectId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ taskId, status, position }) => tasksApi.updateTaskStatus(taskId, { status, position }),
+    onMutate: async ({ taskId, status, position }) => {
+      await queryClient.cancelQueries({ queryKey: tasksKey(projectId) })
+      const previous = queryClient.getQueriesData({ queryKey: tasksKey(projectId) })
+      queryClient.setQueriesData({ queryKey: tasksKey(projectId) }, (old) =>
+        old ? reorderTasksOptimistically(old, { taskId, status, position }) : old,
+      )
+      return { previous }
+    },
+    onError: (_error, _variables, context) => {
+      context?.previous?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data)
+      })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+    },
+  })
+}
+
 export function useSubtasks(taskId) {
   return useQuery({
     queryKey: subtasksKey(taskId),
