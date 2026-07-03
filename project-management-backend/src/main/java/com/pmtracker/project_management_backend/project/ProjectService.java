@@ -1,9 +1,6 @@
 package com.pmtracker.project_management_backend.project;
 
 import com.pmtracker.project_management_backend.auth.User;
-import com.pmtracker.project_management_backend.common.exception.InsufficientProjectRoleException;
-import com.pmtracker.project_management_backend.common.exception.NotProjectMemberException;
-import com.pmtracker.project_management_backend.common.exception.ProjectNotFoundException;
 import com.pmtracker.project_management_backend.project.dto.CreateProjectRequest;
 import com.pmtracker.project_management_backend.project.dto.ProjectResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateProjectRequest;
@@ -18,10 +15,14 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectAccessService projectAccessService;
 
-    public ProjectService(ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository) {
+    public ProjectService(ProjectRepository projectRepository,
+                           ProjectMemberRepository projectMemberRepository,
+                           ProjectAccessService projectAccessService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.projectAccessService = projectAccessService;
     }
 
     @Transactional
@@ -50,16 +51,16 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public ProjectResponse getById(User currentUser, UUID projectId) {
-        Project project = findProjectOrThrow(projectId);
-        ProjectMember membership = requireMembership(project, currentUser);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
+        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         return ProjectResponse.from(project, membership.getRole());
     }
 
     @Transactional
     public ProjectResponse update(User currentUser, UUID projectId, UpdateProjectRequest request) {
-        Project project = findProjectOrThrow(projectId);
-        ProjectMember membership = requireMembership(project, currentUser);
-        requireRole(membership, ProjectRole.OWNER);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
+        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(membership, ProjectRole.OWNER);
 
         project.setName(request.name());
         project.setDescription(request.description());
@@ -71,25 +72,9 @@ public class ProjectService {
 
     @Transactional
     public void delete(User currentUser, UUID projectId) {
-        Project project = findProjectOrThrow(projectId);
-        ProjectMember membership = requireMembership(project, currentUser);
-        requireRole(membership, ProjectRole.OWNER);
+        projectAccessService.findProjectOrThrow(projectId);
+        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(membership, ProjectRole.OWNER);
         projectRepository.deleteById(projectId);
-    }
-
-    private Project findProjectOrThrow(UUID projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(ProjectNotFoundException::new);
-    }
-
-    private ProjectMember requireMembership(Project project, User user) {
-        return projectMemberRepository.findByProjectIdAndUserId(project.getId(), user.getId())
-                .orElseThrow(NotProjectMemberException::new);
-    }
-
-    private void requireRole(ProjectMember membership, ProjectRole required) {
-        if (!membership.getRole().isAtLeast(required)) {
-            throw new InsufficientProjectRoleException();
-        }
     }
 }

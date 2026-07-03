@@ -78,6 +78,24 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INSUFFICIENT_ROLE", ex.getMessage()));
     }
 
+    @ExceptionHandler(UserNotFoundForInviteException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFoundForInvite(UserNotFoundForInviteException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("USER_NOT_FOUND_FOR_INVITE", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AlreadyProjectMemberException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyProjectMember(AlreadyProjectMemberException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("ALREADY_PROJECT_MEMBER", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CannotRemoveLastOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleCannotRemoveLastOwner(CannotRemoveLastOwnerException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("CANNOT_REMOVE_LAST_OWNER", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
