@@ -6,13 +6,10 @@ import com.pmtracker.project_management_backend.auth.dto.MessageResponse;
 import com.pmtracker.project_management_backend.auth.dto.RefreshRequest;
 import com.pmtracker.project_management_backend.auth.dto.RegisterRequest;
 import com.pmtracker.project_management_backend.auth.dto.ResendVerificationRequest;
-import com.pmtracker.project_management_backend.auth.dto.UserSummary;
 import com.pmtracker.project_management_backend.auth.dto.VerifyEmailRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,14 +59,5 @@ public class AuthController {
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
         authService.logout(request.refreshToken());
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * "Кто я" — проверяет, что JWT-фильтр отработал и в SecurityContext лежит текущий пользователь.
-     * Понадобится фронтенду при старте приложения, чтобы восстановить сессию по access-токену.
-     */
-    @GetMapping("/me")
-    public ResponseEntity<UserSummary> me(@AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(UserSummary.from(currentUser));
     }
 }

@@ -19,7 +19,3 @@ export function login(email, password) {
 export function logout(refreshToken) {
   return apiClient.post('/auth/logout', { refreshToken })
 }
-
-export function fetchMe() {
-  return apiClient.get('/auth/me').then((res) => res.data)
-}
