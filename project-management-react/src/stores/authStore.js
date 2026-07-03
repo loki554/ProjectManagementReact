@@ -19,6 +19,11 @@ export const useAuthStore = create(
           user: user ?? state.user,
         })),
 
+      // Отдельно от setSession: используется после PATCH /users/me и загрузки аватарки,
+      // где обновляется только профиль, а accessToken/refreshToken трогать не нужно —
+      // setSession перезаписал бы accessToken на undefined, если его не передать.
+      updateUser: (user) => set({ user }),
+
       clearSession: () => set({ accessToken: null, refreshToken: null, user: null }),
     }),
     {

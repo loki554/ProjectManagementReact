@@ -51,7 +51,22 @@
   "dashboard": {
     "welcome": "Welcome, {{name}}!",
     "logout": "Log out",
-    "loggingOut": "Logging out..."
+    "loggingOut": "Logging out...",
+    "profileLink": "Profile"
+  },
+  "profile": {
+    "title": "Profile",
+    "backToDashboard": "← Back",
+    "changeAvatar": "Change avatar",
+    "avatarHint": "PNG, JPEG, WEBP or GIF, up to 5MB",
+    "avatarPending": "The new avatar will be uploaded when you save",
+    "lastName": "Last name",
+    "firstName": "First name",
+    "patronymic": "Middle name",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Changes saved",
+    "unsavedChangesConfirm": "You have unsaved changes. Leave this page?"
   },
   "errors": {
     "EMAIL_ALREADY_EXISTS": "An account with this email already exists",
@@ -61,6 +76,8 @@
     "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again",
     "VALIDATION_ERROR": "Please check the form fields",
     "UNAUTHENTICATED": "Authentication required",
+    "INVALID_FILE": "Invalid file",
+    "NOT_FOUND": "Not found",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }

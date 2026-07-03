@@ -51,7 +51,22 @@
   "dashboard": {
     "welcome": "Добро пожаловать, {{name}}!",
     "logout": "Выйти",
-    "loggingOut": "Выходим..."
+    "loggingOut": "Выходим...",
+    "profileLink": "Профиль"
+  },
+  "profile": {
+    "title": "Профиль",
+    "backToDashboard": "← Назад",
+    "changeAvatar": "Сменить аватарку",
+    "avatarHint": "PNG, JPEG, WEBP или GIF, до 5 МБ",
+    "avatarPending": "Новая аватарка будет загружена при сохранении",
+    "lastName": "Фамилия",
+    "firstName": "Имя",
+    "patronymic": "Отчество",
+    "save": "Сохранить",
+    "saving": "Сохраняем...",
+    "saved": "Изменения сохранены",
+    "unsavedChangesConfirm": "У вас есть несохранённые изменения. Уйти со страницы?"
   },
   "errors": {
     "EMAIL_ALREADY_EXISTS": "Пользователь с таким email уже зарегистрирован",
@@ -61,6 +76,8 @@
     "INVALID_REFRESH_TOKEN": "Сессия истекла, войдите заново",
     "VALIDATION_ERROR": "Проверьте правильность заполнения формы",
     "UNAUTHENTICATED": "Требуется аутентификация",
+    "INVALID_FILE": "Недопустимый файл",
+    "NOT_FOUND": "Не найдено",
     "UNKNOWN": "Что-то пошло не так, попробуйте ещё раз"
   }
 }

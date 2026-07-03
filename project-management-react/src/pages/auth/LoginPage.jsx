@@ -8,7 +8,8 @@ import { z } from 'zod'
 import { login, resendVerification } from '../../api/authApi'
 import { getErrorCode, getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { useAuthStore } from '../../stores/authStore'
-import { AuthLayout, Field, inputClass, submitButtonClass } from './authFormKit'
+import { Field, inputClass, submitButtonClass } from '../../components/ui/FormKit'
+import { AuthLayout } from './authFormKit'
 
 function buildSchema(t) {
   return z.object({

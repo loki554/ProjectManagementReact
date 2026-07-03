@@ -51,7 +51,22 @@
   "dashboard": {
     "welcome": "Willkommen, {{name}}!",
     "logout": "Abmelden",
-    "loggingOut": "Abmeldung läuft..."
+    "loggingOut": "Abmeldung läuft...",
+    "profileLink": "Profil"
+  },
+  "profile": {
+    "title": "Profil",
+    "backToDashboard": "← Zurück",
+    "changeAvatar": "Avatar ändern",
+    "avatarHint": "PNG, JPEG, WEBP oder GIF, bis zu 5 MB",
+    "avatarPending": "Der neue Avatar wird beim Speichern hochgeladen",
+    "lastName": "Nachname",
+    "firstName": "Vorname",
+    "patronymic": "Vatersname",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "saved": "Änderungen gespeichert",
+    "unsavedChangesConfirm": "Sie haben ungespeicherte Änderungen. Seite verlassen?"
   },
   "errors": {
     "EMAIL_ALREADY_EXISTS": "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
@@ -61,6 +76,8 @@
     "INVALID_REFRESH_TOKEN": "Ihre Sitzung ist abgelaufen, bitte melden Sie sich erneut an",
     "VALIDATION_ERROR": "Bitte überprüfen Sie die Formularfelder",
     "UNAUTHENTICATED": "Authentifizierung erforderlich",
+    "INVALID_FILE": "Ungültige Datei",
+    "NOT_FOUND": "Nicht gefunden",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
 }

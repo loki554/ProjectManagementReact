@@ -7,7 +7,8 @@ import { Link } from 'react-router-dom'
 import { z } from 'zod'
 import { register as registerRequest } from '../../api/authApi'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { AuthLayout, Field, inputClass, submitButtonClass } from './authFormKit'
+import { Field, inputClass, submitButtonClass } from '../../components/ui/FormKit'
+import { AuthLayout } from './authFormKit'
 
 function buildSchema(t) {
   return z.object({
