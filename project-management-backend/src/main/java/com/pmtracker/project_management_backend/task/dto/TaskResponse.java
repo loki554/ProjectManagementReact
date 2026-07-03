@@ -1,0 +1,38 @@
+package com.pmtracker.project_management_backend.task.dto;
+
+import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.task.Task;
+import com.pmtracker.project_management_backend.task.TaskStatus;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public record TaskResponse(
+        UUID id,
+        UUID projectId,
+        UUID parentTaskId,
+        String title,
+        String description,
+        TaskStatus status,
+        UserSummary assignee,
+        UUID createdBy,
+        int position,
+        Instant createdAt,
+        Instant updatedAt
+) {
+    public static TaskResponse from(Task task) {
+        return new TaskResponse(
+                task.getId(),
+                task.getProject().getId(),
+                task.getParentTask() != null ? task.getParentTask().getId() : null,
+                task.getTitle(),
+                task.getDescription(),
+                task.getStatus(),
+                task.getAssignee() != null ? UserSummary.from(task.getAssignee()) : null,
+                task.getCreatedBy().getId(),
+                task.getPosition(),
+                task.getCreatedAt(),
+                task.getUpdatedAt()
+        );
+    }
+}

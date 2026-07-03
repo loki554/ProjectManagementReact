@@ -96,6 +96,30 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("CANNOT_REMOVE_LAST_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTaskNotFound(TaskNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("TASK_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ParentTaskNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleParentTaskNotFound(ParentTaskNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("PARENT_TASK_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ParentTaskProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleParentTaskProjectMismatch(ParentTaskProjectMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("PARENT_TASK_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AssigneeNotProjectMemberException.class)
+    public ResponseEntity<ErrorResponse> handleAssigneeNotProjectMember(AssigneeNotProjectMemberException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("ASSIGNEE_NOT_PROJECT_MEMBER", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
