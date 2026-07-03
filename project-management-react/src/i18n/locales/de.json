@@ -1,0 +1,66 @@
+{
+  "app": {
+    "loading": "Wird geladen..."
+  },
+  "language": {
+    "ru": "Русский",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "submitting": "Anmeldung läuft...",
+      "noAccount": "Noch kein Konto?",
+      "register": "Registrieren",
+      "resendVerification": "E-Mail erneut senden",
+      "resendVerificationPending": "Wird gesendet...",
+      "resendVerificationSuccess": "E-Mail wurde erneut gesendet, bitte prüfen Sie Ihr Postfach."
+    },
+    "register": {
+      "title": "Registrieren",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "lastName": "Nachname",
+      "firstName": "Vorname",
+      "patronymic": "Vatersname (optional)",
+      "submit": "Registrieren",
+      "submitting": "Registrierung läuft...",
+      "hasAccount": "Sie haben bereits ein Konto?",
+      "login": "Anmelden",
+      "successTitle": "Bestätigen Sie Ihre E-Mail",
+      "successMessage": "Wir haben Ihnen einen Bestätigungslink per E-Mail gesendet. Folgen Sie ihm, um Ihr Konto zu aktivieren.",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
+    "verifyEmail": {
+      "title": "E-Mail-Bestätigung",
+      "pending": "E-Mail wird bestätigt...",
+      "success": "E-Mail bestätigt, Sie können sich jetzt anmelden.",
+      "goToLogin": "Zur Anmeldung",
+      "missingToken": "Der Bestätigungstoken fehlt im Link."
+    },
+    "validation": {
+      "required": "Dieses Feld ist erforderlich",
+      "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein",
+      "passwordMin": "Das Passwort muss mindestens 8 Zeichen lang sein"
+    }
+  },
+  "dashboard": {
+    "welcome": "Willkommen, {{name}}!",
+    "logout": "Abmelden",
+    "loggingOut": "Abmeldung läuft..."
+  },
+  "errors": {
+    "EMAIL_ALREADY_EXISTS": "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
+    "INVALID_CREDENTIALS": "Ungültige E-Mail-Adresse oder ungültiges Passwort",
+    "EMAIL_NOT_VERIFIED": "E-Mail wurde nicht bestätigt. Prüfen Sie Ihr Postfach oder fordern Sie die Bestätigung erneut an.",
+    "INVALID_TOKEN": "Der Bestätigungslink ist ungültig oder abgelaufen",
+    "INVALID_REFRESH_TOKEN": "Ihre Sitzung ist abgelaufen, bitte melden Sie sich erneut an",
+    "VALIDATION_ERROR": "Bitte überprüfen Sie die Formularfelder",
+    "UNAUTHENTICATED": "Authentifizierung erforderlich",
+    "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
+  }
+}

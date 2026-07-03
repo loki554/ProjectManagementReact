@@ -1,0 +1,66 @@
+{
+  "app": {
+    "loading": "Загрузка..."
+  },
+  "language": {
+    "ru": "Русский",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "auth": {
+    "login": {
+      "title": "Вход",
+      "email": "Email",
+      "password": "Пароль",
+      "submit": "Войти",
+      "submitting": "Входим...",
+      "noAccount": "Нет аккаунта?",
+      "register": "Зарегистрироваться",
+      "resendVerification": "Отправить письмо ещё раз",
+      "resendVerificationPending": "Отправляем...",
+      "resendVerificationSuccess": "Письмо отправлено повторно, проверьте почту."
+    },
+    "register": {
+      "title": "Регистрация",
+      "email": "Email",
+      "password": "Пароль",
+      "lastName": "Фамилия",
+      "firstName": "Имя",
+      "patronymic": "Отчество (необязательно)",
+      "submit": "Зарегистрироваться",
+      "submitting": "Регистрируем...",
+      "hasAccount": "Уже есть аккаунт?",
+      "login": "Войти",
+      "successTitle": "Проверьте почту",
+      "successMessage": "Мы отправили письмо со ссылкой для подтверждения регистрации. Перейдите по ней, чтобы активировать аккаунт.",
+      "backToLogin": "Вернуться ко входу"
+    },
+    "verifyEmail": {
+      "title": "Подтверждение email",
+      "pending": "Подтверждаем адрес...",
+      "success": "Email подтверждён, теперь можно войти.",
+      "goToLogin": "Перейти ко входу",
+      "missingToken": "В ссылке отсутствует токен подтверждения."
+    },
+    "validation": {
+      "required": "Обязательное поле",
+      "invalidEmail": "Введите корректный email",
+      "passwordMin": "Пароль должен быть не короче 8 символов"
+    }
+  },
+  "dashboard": {
+    "welcome": "Добро пожаловать, {{name}}!",
+    "logout": "Выйти",
+    "loggingOut": "Выходим..."
+  },
+  "errors": {
+    "EMAIL_ALREADY_EXISTS": "Пользователь с таким email уже зарегистрирован",
+    "INVALID_CREDENTIALS": "Неверный email или пароль",
+    "EMAIL_NOT_VERIFIED": "Email не подтверждён. Проверьте почту или запросите письмо повторно.",
+    "INVALID_TOKEN": "Ссылка для подтверждения недействительна или устарела",
+    "INVALID_REFRESH_TOKEN": "Сессия истекла, войдите заново",
+    "VALIDATION_ERROR": "Проверьте правильность заполнения формы",
+    "UNAUTHENTICATED": "Требуется аутентификация",
+    "UNKNOWN": "Что-то пошло не так, попробуйте ещё раз"
+  }
+}

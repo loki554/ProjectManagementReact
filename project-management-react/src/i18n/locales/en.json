@@ -1,0 +1,66 @@
+{
+  "app": {
+    "loading": "Loading..."
+  },
+  "language": {
+    "ru": "Русский",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up",
+      "resendVerification": "Resend the email",
+      "resendVerificationPending": "Sending...",
+      "resendVerificationSuccess": "Email sent again, please check your inbox."
+    },
+    "register": {
+      "title": "Sign up",
+      "email": "Email",
+      "password": "Password",
+      "lastName": "Last name",
+      "firstName": "First name",
+      "patronymic": "Middle name (optional)",
+      "submit": "Sign up",
+      "submitting": "Signing up...",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in",
+      "successTitle": "Check your email",
+      "successMessage": "We've sent a confirmation link to your email. Follow it to activate your account.",
+      "backToLogin": "Back to sign in"
+    },
+    "verifyEmail": {
+      "title": "Email confirmation",
+      "pending": "Confirming your email...",
+      "success": "Email confirmed, you can sign in now.",
+      "goToLogin": "Go to sign in",
+      "missingToken": "The confirmation token is missing from the link."
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Enter a valid email address",
+      "passwordMin": "Password must be at least 8 characters"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}!",
+    "logout": "Log out",
+    "loggingOut": "Logging out..."
+  },
+  "errors": {
+    "EMAIL_ALREADY_EXISTS": "An account with this email already exists",
+    "INVALID_CREDENTIALS": "Invalid email or password",
+    "EMAIL_NOT_VERIFIED": "Email is not confirmed. Check your inbox or resend the confirmation email.",
+    "INVALID_TOKEN": "The confirmation link is invalid or has expired",
+    "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again",
+    "VALIDATION_ERROR": "Please check the form fields",
+    "UNAUTHENTICATED": "Authentication required",
+    "UNKNOWN": "Something went wrong, please try again"
+  }
+}
