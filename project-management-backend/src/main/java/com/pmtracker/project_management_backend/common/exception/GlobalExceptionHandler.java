@@ -60,6 +60,24 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProjectNotFound(ProjectNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("PROJECT_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NotProjectMemberException.class)
+    public ResponseEntity<ErrorResponse> handleNotProjectMember(NotProjectMemberException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("NOT_A_PROJECT_MEMBER", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InsufficientProjectRoleException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientProjectRole(InsufficientProjectRoleException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("INSUFFICIENT_ROLE", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
