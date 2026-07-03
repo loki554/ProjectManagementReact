@@ -6,6 +6,7 @@ import com.pmtracker.project_management_backend.common.exception.InvalidTargetPo
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.TaskStatusConflictException;
 import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
@@ -100,8 +101,12 @@ public class TaskService {
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
 
-        UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
         TaskStatus oldStatus = task.getStatus();
+        if (oldStatus != request.expectedStatus()) {
+            throw new TaskStatusConflictException();
+        }
+
+        UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
         TaskStatus newStatus = request.status();
         int targetIndex = request.position();
 

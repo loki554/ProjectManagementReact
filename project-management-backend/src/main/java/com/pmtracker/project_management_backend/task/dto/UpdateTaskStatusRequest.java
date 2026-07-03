@@ -6,6 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public record UpdateTaskStatusRequest(
         @NotNull TaskStatus status,
-        @NotNull @PositiveOrZero Integer position
+        @NotNull @PositiveOrZero Integer position,
+        @NotNull TaskStatus expectedStatus
 ) {
 }

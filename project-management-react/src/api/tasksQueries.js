@@ -112,7 +112,8 @@ function reorderTasksOptimistically(tasks, { taskId, status: newStatus, position
 export function useUpdateTaskStatus(projectId) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ taskId, status, position }) => tasksApi.updateTaskStatus(taskId, { status, position }),
+    mutationFn: ({ taskId, status, position, expectedStatus }) =>
+      tasksApi.updateTaskStatus(taskId, { status, position, expectedStatus }),
     onMutate: async ({ taskId, status, position }) => {
       await queryClient.cancelQueries({ queryKey: tasksKey(projectId) })
       const previous = queryClient.getQueriesData({ queryKey: tasksKey(projectId) })

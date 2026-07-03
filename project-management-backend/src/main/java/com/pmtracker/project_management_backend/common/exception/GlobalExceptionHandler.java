@@ -126,6 +126,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INVALID_TARGET_POSITION", ex.getMessage()));
     }
 
+    @ExceptionHandler(TaskStatusConflictException.class)
+    public ResponseEntity<ErrorResponse> handleTaskStatusConflict(TaskStatusConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("TASK_STATUS_CONFLICT", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()

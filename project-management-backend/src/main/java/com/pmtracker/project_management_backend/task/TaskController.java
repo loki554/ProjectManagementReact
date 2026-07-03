@@ -50,7 +50,9 @@ public class TaskController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Сменить статус/позицию (канбан drag)",
-            description = "Транзакционно пересчитывает position внутри затронутой колонки (тот же статус + тот же родитель); OWNER/ADMIN/MEMBER, не VIEWER")
+            description = "Транзакционно пересчитывает position внутри затронутой колонки (тот же статус + тот же родитель); "
+                    + "OWNER/ADMIN/MEMBER, не VIEWER. expectedStatus — статус задачи, известный клиенту на момент начала drag; "
+                    + "если он не совпадает с текущим статусом в БД (задачу успел передвинуть кто-то ещё), возвращает 409 TASK_STATUS_CONFLICT")
     public ResponseEntity<TaskResponse> updateStatus(@AuthenticationPrincipal User currentUser,
                                                        @PathVariable UUID id,
                                                        @Valid @RequestBody UpdateTaskStatusRequest request) {

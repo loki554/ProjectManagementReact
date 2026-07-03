@@ -162,6 +162,8 @@
     "PARENT_TASK_NOT_FOUND": "Übergeordnete Aufgabe nicht gefunden",
     "PARENT_TASK_PROJECT_MISMATCH": "Die übergeordnete Aufgabe gehört zu einem anderen Projekt",
     "ASSIGNEE_NOT_PROJECT_MEMBER": "Der Zuständige muss Mitglied des Projekts sein",
+    "INVALID_TARGET_POSITION": "Ungültige Position in der Spalte, bitte Seite neu laden",
+    "TASK_STATUS_CONFLICT": "Jemand anderes hat den Status dieser Aufgabe bereits geändert. Das Board wurde aktualisiert — bitte erneut versuchen",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
 }

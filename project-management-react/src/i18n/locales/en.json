@@ -162,6 +162,8 @@
     "PARENT_TASK_NOT_FOUND": "Parent task not found",
     "PARENT_TASK_PROJECT_MISMATCH": "The parent task belongs to a different project",
     "ASSIGNEE_NOT_PROJECT_MEMBER": "The assignee must be a member of the project",
+    "INVALID_TARGET_POSITION": "Invalid position in the column, please refresh the page",
+    "TASK_STATUS_CONFLICT": "Someone else already changed this task's status. The board has been refreshed — try again",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }
