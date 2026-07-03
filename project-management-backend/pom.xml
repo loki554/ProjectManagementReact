@@ -121,9 +121,47 @@
 
 	<build>
 		<plugins>
+			<!-- .env лежит в корне монорепо (рядом с docker-compose.yml), на уровень выше
+			     этого модуля. Пробовали spring-dotenv (EnvironmentPostProcessor), но под
+			     Spring Boot 4 он молча не срабатывает (в логах нет ни следа его активности) —
+			     похоже, библиотека ещё не адаптирована под новый механизм бутстрапа.
+			     Вместо магии на уровне Spring читаем .env как обычный Maven properties-файл
+			     (формат KEY=value у него и так properties-совместимый) до сборки и прокидываем
+			     значение в JVM как system property — это не зависит от версии Spring Boot вообще.
+
+			     ВАЖНО: goal spring-boot:run форкает свой собственный изолированный lifecycle,
+			     и properties, установленные этим плагином в фазе initialize, в форкнутый
+			     контекст не попадают (${DB_PASSWORD} останется неразвёрнутым текстом, Spring
+			     упадёт с "Circular placeholder reference"). Поэтому фазу initialize нужно
+			     запускать явно в той же команде:
+
+			         ./mvnw initialize spring-boot:run
+
+			     а не просто "./mvnw spring-boot:run". -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>read-project-properties</goal>
+						</goals>
+						<configuration>
+							<files>
+								<file>${project.basedir}/../.env</file>
+							</files>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>-DDB_PASSWORD=${DB_PASSWORD}</jvmArguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

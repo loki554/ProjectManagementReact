@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: pmtracker
       POSTGRES_USER: pmtracker
-      POSTGRES_PASSWORD: pmtracker
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
