@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
+import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
@@ -13,9 +14,11 @@ import com.pmtracker.project_management_backend.project.ProjectRole;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskRequest;
+import com.pmtracker.project_management_backend.task.dto.UpdateTaskStatusRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,6 +91,49 @@ public class TaskService {
         task.setStatus(request.status());
         taskRepository.save(task);
         return TaskResponse.from(task);
+    }
+
+    @Transactional
+    public TaskResponse updateStatus(User currentUser, UUID taskId, UpdateTaskStatusRequest request) {
+        Task task = findTaskOrThrow(taskId);
+        UUID projectId = task.getProject().getId();
+        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+
+        UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
+        TaskStatus oldStatus = task.getStatus();
+        TaskStatus newStatus = request.status();
+        int targetIndex = request.position();
+
+        if (oldStatus == newStatus) {
+            List<Task> column = new ArrayList<>(taskRepository.findSiblingsByStatus(projectId, oldStatus, parentId));
+            column.removeIf(t -> t.getId().equals(taskId));
+            if (targetIndex > column.size()) {
+                throw new InvalidTargetPositionException();
+            }
+            column.add(targetIndex, task);
+            renumber(column);
+        } else {
+            List<Task> oldColumn = new ArrayList<>(taskRepository.findSiblingsByStatus(projectId, oldStatus, parentId));
+            oldColumn.removeIf(t -> t.getId().equals(taskId));
+            renumber(oldColumn);
+
+            List<Task> newColumn = new ArrayList<>(taskRepository.findSiblingsByStatus(projectId, newStatus, parentId));
+            if (targetIndex > newColumn.size()) {
+                throw new InvalidTargetPositionException();
+            }
+            task.setStatus(newStatus);
+            newColumn.add(targetIndex, task);
+            renumber(newColumn);
+        }
+
+        return TaskResponse.from(task);
+    }
+
+    private void renumber(List<Task> orderedColumn) {
+        for (int i = 0; i < orderedColumn.size(); i++) {
+            orderedColumn.get(i).setPosition(i);
+        }
     }
 
     @Transactional

@@ -4,6 +4,7 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskRequest;
+import com.pmtracker.project_management_backend.task.dto.UpdateTaskStatusRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -45,6 +46,15 @@ public class TaskController {
                                                 @PathVariable UUID id,
                                                 @Valid @RequestBody UpdateTaskRequest request) {
         return ResponseEntity.ok(taskService.update(currentUser, id, request));
+    }
+
+    @PatchMapping("/{id}/status")
+    @Operation(summary = "Сменить статус/позицию (канбан drag)",
+            description = "Транзакционно пересчитывает position внутри затронутой колонки (тот же статус + тот же родитель); OWNER/ADMIN/MEMBER, не VIEWER")
+    public ResponseEntity<TaskResponse> updateStatus(@AuthenticationPrincipal User currentUser,
+                                                       @PathVariable UUID id,
+                                                       @Valid @RequestBody UpdateTaskStatusRequest request) {
+        return ResponseEntity.ok(taskService.updateStatus(currentUser, id, request));
     }
 
     @DeleteMapping("/{id}")

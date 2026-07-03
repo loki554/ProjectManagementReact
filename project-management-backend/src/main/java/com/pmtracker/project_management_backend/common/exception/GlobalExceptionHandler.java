@@ -120,6 +120,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("ASSIGNEE_NOT_PROJECT_MEMBER", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidTargetPositionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidTargetPosition(InvalidTargetPositionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_TARGET_POSITION", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()

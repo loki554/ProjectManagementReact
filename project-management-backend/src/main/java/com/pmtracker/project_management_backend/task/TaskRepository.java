@@ -35,6 +35,22 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     int findMaxPositionForStatus(UUID projectId, TaskStatus status);
 
     /**
+     * "Колонка" для пересчёта position при канбан-drag (5.1.2): сиблинги той же задачи —
+     * тот же статус и тот же родитель (top-level, если parentTaskId = null, иначе подзадачи
+     * того же родителя). Уже (project_id, status) недостаточно, т.к. в этом скоупе смешаны
+     * top-level задачи и подзадачи разных родителей (см. nextPosition) — для канбана нужна
+     * ровно та колонка, которую видит пользователь.
+     */
+    @Query("""
+            select t from Task t
+            where t.project.id = :projectId
+              and t.status = :status
+              and ((:parentTaskId is null and t.parentTask is null) or t.parentTask.id = :parentTaskId)
+            order by t.position asc
+            """)
+    List<Task> findSiblingsByStatus(UUID projectId, TaskStatus status, UUID parentTaskId);
+
+    /**
      * Bulk JPQL-delete по той же причине, что и ProjectRepository.deleteById() (см. комментарий
      * там): избегаем Hibernate TransientPropertyValueException, когда в persistence context уже
      * загружен managed граф (родитель/подзадачи), и полагаемся на ON DELETE CASCADE в БД для
