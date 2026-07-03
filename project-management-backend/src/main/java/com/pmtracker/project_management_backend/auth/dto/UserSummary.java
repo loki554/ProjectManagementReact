@@ -9,15 +9,18 @@ public record UserSummary(
         String email,
         String lastName,
         String firstName,
-        String patronymic
+        String patronymic,
+        String avatarUrl
 ) {
     public static UserSummary from(User user) {
+        String avatarUrl = user.getAvatarPath() != null ? "/users/" + user.getId() + "/avatar" : null;
         return new UserSummary(
                 user.getId(),
                 user.getEmail(),
                 user.getLastName(),
                 user.getFirstName(),
-                user.getPatronymic()
+                user.getPatronymic(),
+                avatarUrl
         );
     }
 }
