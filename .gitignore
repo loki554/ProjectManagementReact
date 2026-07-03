@@ -1,0 +1,19 @@
+# backend
+project-management-backend/target/
+project-management-backend/storage/
+
+# ide / os
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# secrets
+.env
+.env.*
+!.env.example
+application-local.yml
+application-secrets.yml
+
+# logs
+*.log
