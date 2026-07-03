@@ -180,7 +180,7 @@ public class AuthService {
             byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 недоступен в JVM", e);
+            throw new IllegalStateException("SHA-256 is not available in this JVM", e);
         }
     }
 

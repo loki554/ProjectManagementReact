@@ -96,7 +96,7 @@ public class ProjectMemberService {
 
     private ProjectMember findMemberOrThrow(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Участник не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
     }
 
     private void requireAnotherOwnerExists(UUID projectId) {

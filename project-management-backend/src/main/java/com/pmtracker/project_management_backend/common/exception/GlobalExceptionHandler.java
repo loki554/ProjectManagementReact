@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("INVALID_FILE", "Файл слишком большой"));
+                .body(new ErrorResponse("INVALID_FILE", "File is too large"));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

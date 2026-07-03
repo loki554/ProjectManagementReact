@@ -22,7 +22,7 @@ import java.io.IOException;
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String BODY =
-            "{\"error\":\"UNAUTHENTICATED\",\"message\":\"Требуется аутентификация\"}";
+            "{\"error\":\"UNAUTHENTICATED\",\"message\":\"Authentication required\"}";
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,

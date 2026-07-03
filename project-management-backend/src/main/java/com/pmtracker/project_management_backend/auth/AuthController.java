@@ -29,20 +29,20 @@ public class AuthController {
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new MessageResponse("Регистрация прошла успешно. Проверьте почту для подтверждения."));
+                .body(new MessageResponse("Registration successful. Check your email to confirm your account."));
     }
 
     @PostMapping("/verify-email")
     public ResponseEntity<MessageResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         authService.verifyEmail(request.token());
-        return ResponseEntity.ok(new MessageResponse("Email подтверждён."));
+        return ResponseEntity.ok(new MessageResponse("Email confirmed."));
     }
 
     @PostMapping("/resend-verification")
     public ResponseEntity<MessageResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
         authService.resendVerification(request.email());
         return ResponseEntity.ok(new MessageResponse(
-                "Если аккаунт с таким email существует и ещё не подтверждён, письмо отправлено повторно."));
+                "If an account with this email exists and is not yet verified, the email has been resent."));
     }
 
     @PostMapping("/login")

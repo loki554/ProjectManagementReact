@@ -45,10 +45,10 @@ public class UserService {
     @Transactional
     public UserSummary uploadAvatar(User user, MultipartFile file) {
         if (file.isEmpty()) {
-            throw new InvalidFileException("Файл не выбран");
+            throw new InvalidFileException("No file selected");
         }
         if (!ALLOWED_AVATAR_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new InvalidFileException("Допустимые форматы изображения: PNG, JPEG, WEBP, GIF");
+            throw new InvalidFileException("Allowed image formats: PNG, JPEG, WEBP, GIF");
         }
 
         String previousAvatarPath = user.getAvatarPath();
@@ -57,7 +57,7 @@ public class UserService {
         try {
             stored = fileStorageService.store(file, "avatars/" + user.getId());
         } catch (IOException e) {
-            throw new UncheckedIOException("Не удалось сохранить файл аватарки", e);
+            throw new UncheckedIOException("Failed to save avatar file", e);
         }
 
         user.setAvatarPath(stored.relativePath());
@@ -74,16 +74,16 @@ public class UserService {
 
     public Resource getAvatarResource(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (user.getAvatarPath() == null) {
-            throw new ResourceNotFoundException("У пользователя нет аватарки");
+            throw new ResourceNotFoundException("User has no avatar");
         }
         try {
             return fileStorageService.load(user.getAvatarPath());
         } catch (NoSuchElementException e) {
             // запись в БД есть, а файла на диске уже нет — не должно происходить в норме,
             // но лучше вернуть понятный 404, чем уронить запрос в 500
-            throw new ResourceNotFoundException("Файл аватарки не найден");
+            throw new ResourceNotFoundException("Avatar file not found");
         }
     }
 }

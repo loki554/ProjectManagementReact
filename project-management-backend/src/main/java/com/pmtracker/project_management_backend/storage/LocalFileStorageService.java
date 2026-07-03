@@ -49,7 +49,7 @@ public class LocalFileStorageService implements FileStorageService {
         Path file = resolveWithinBase(relativePath);
         Resource resource = new FileSystemResource(file);
         if (!resource.exists() || !resource.isReadable()) {
-            throw new NoSuchElementException("Файл не найден: " + relativePath);
+            throw new NoSuchElementException("File not found: " + relativePath);
         }
         return resource;
     }
@@ -66,7 +66,7 @@ public class LocalFileStorageService implements FileStorageService {
     private Path resolveWithinBase(String relativePath) {
         Path resolved = basePath.resolve(relativePath).normalize();
         if (!resolved.startsWith(basePath)) {
-            throw new UncheckedIOException(new IOException("Путь выходит за пределы хранилища: " + relativePath));
+            throw new UncheckedIOException(new IOException("Path escapes storage root: " + relativePath));
         }
         return resolved;
     }
