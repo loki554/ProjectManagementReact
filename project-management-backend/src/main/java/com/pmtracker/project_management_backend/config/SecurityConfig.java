@@ -71,6 +71,14 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/logout"
                         ).permitAll()
+                        // Swagger UI/OpenAPI-спека — не содержит чувствительных данных (только
+                        // формы запросов/ответов), доступ без токена нужен, чтобы ей вообще
+                        // можно было пользоваться из браузера. Ограничить/выключить в проде — Phase 10.
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))

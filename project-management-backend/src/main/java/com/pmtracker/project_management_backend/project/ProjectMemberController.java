@@ -4,6 +4,8 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.project.dto.InviteMemberRequest;
 import com.pmtracker.project_management_backend.project.dto.MemberResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateMemberRoleRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/members")
+@Tag(name = "Project members", description = "Управление участниками проекта и их ролями (OWNER/ADMIN/MEMBER/VIEWER)")
 public class ProjectMemberController {
 
     private final ProjectMemberService projectMemberService;
@@ -31,12 +34,14 @@ public class ProjectMemberController {
     }
 
     @GetMapping
+    @Operation(summary = "Список участников проекта", description = "Доступно любому участнику, включая VIEWER")
     public ResponseEntity<List<MemberResponse>> list(@AuthenticationPrincipal User currentUser,
                                                        @PathVariable UUID projectId) {
         return ResponseEntity.ok(projectMemberService.list(currentUser, projectId));
     }
 
     @PostMapping
+    @Operation(summary = "Пригласить участника по email", description = "Только для уже зарегистрированных пользователей; OWNER/ADMIN")
     public ResponseEntity<MemberResponse> invite(@AuthenticationPrincipal User currentUser,
                                                   @PathVariable UUID projectId,
                                                   @Valid @RequestBody InviteMemberRequest request) {
@@ -45,6 +50,7 @@ public class ProjectMemberController {
     }
 
     @PatchMapping("/{userId}")
+    @Operation(summary = "Сменить роль участника", description = "OWNER/ADMIN; нельзя оставить проект без ни одного OWNER")
     public ResponseEntity<MemberResponse> updateRole(@AuthenticationPrincipal User currentUser,
                                                       @PathVariable UUID projectId,
                                                       @PathVariable UUID userId,
@@ -53,6 +59,7 @@ public class ProjectMemberController {
     }
 
     @DeleteMapping("/{userId}")
+    @Operation(summary = "Удалить участника из проекта", description = "OWNER/ADMIN; нельзя удалить последнего OWNER")
     public ResponseEntity<Void> remove(@AuthenticationPrincipal User currentUser,
                                         @PathVariable UUID projectId,
                                         @PathVariable UUID userId) {

@@ -4,6 +4,8 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.project.dto.CreateProjectRequest;
 import com.pmtracker.project_management_backend.project.dto.ProjectResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateProjectRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects")
+@Tag(name = "Projects", description = "CRUD проектов; видимость и права зависят от роли текущего пользователя в project_members")
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -31,22 +34,26 @@ public class ProjectController {
     }
 
     @PostMapping
+    @Operation(summary = "Создать проект", description = "Создатель автоматически становится участником с ролью OWNER")
     public ResponseEntity<ProjectResponse> create(@AuthenticationPrincipal User currentUser,
                                                    @Valid @RequestBody CreateProjectRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectService.create(currentUser, request));
     }
 
     @GetMapping
+    @Operation(summary = "Список проектов текущего пользователя", description = "Только проекты, где пользователь состоит в project_members; без пагинации")
     public ResponseEntity<List<ProjectResponse>> list(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(projectService.listForUser(currentUser));
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Детали проекта", description = "Доступно любому участнику проекта, включая VIEWER")
     public ResponseEntity<ProjectResponse> get(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         return ResponseEntity.ok(projectService.getById(currentUser, id));
     }
 
     @PatchMapping("/{id}")
+    @Operation(summary = "Редактировать проект", description = "Только OWNER (см. таблицу ролей): name/description/archived")
     public ResponseEntity<ProjectResponse> update(@AuthenticationPrincipal User currentUser,
                                                    @PathVariable UUID id,
                                                    @Valid @RequestBody UpdateProjectRequest request) {
@@ -54,6 +61,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Удалить проект", description = "Только OWNER; каскадно удаляет project_members на уровне БД")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         projectService.delete(currentUser, id);
         return ResponseEntity.noContent().build();

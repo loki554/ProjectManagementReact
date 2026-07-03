@@ -30,7 +30,7 @@ export function ProjectMembersPage() {
   const currentUser = useAuthStore((state) => state.user)
 
   const { data: project } = useProject(projectId)
-  const { data: members, isLoading } = useProjectMembers(projectId)
+  const { data: members, isLoading, isError, error } = useProjectMembers(projectId)
   const inviteMember = useInviteMember(projectId)
   const updateMemberRole = useUpdateMemberRole(projectId)
   const removeMember = useRemoveMember(projectId)
@@ -104,8 +104,9 @@ export function ProjectMembersPage() {
         )}
 
         {isLoading && <p className="text-gray-500">{t('members.loading')}</p>}
+        {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
 
-        {!isLoading && (
+        {!isLoading && !isError && (
           <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
             {members.map((member) => (
               <li key={member.userId} className="flex items-center justify-between gap-4 px-4 py-3">
