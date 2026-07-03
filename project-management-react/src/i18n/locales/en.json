@@ -1,6 +1,12 @@
 {
   "app": {
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "name": "PM Tracker"
+  },
+  "header": {
+    "profile": "Profile",
+    "logout": "Log out",
+    "loggingOut": "Logging out..."
   },
   "language": {
     "ru": "Русский",
@@ -48,11 +54,37 @@
       "passwordMin": "Password must be at least 8 characters"
     }
   },
-  "dashboard": {
-    "welcome": "Welcome, {{name}}!",
-    "logout": "Log out",
-    "loggingOut": "Logging out...",
-    "profileLink": "Profile"
+  "projects": {
+    "title": "My projects",
+    "newProject": "New project",
+    "empty": "You don't have any projects yet",
+    "loading": "Loading projects...",
+    "members": "Members",
+    "archived": "Archived",
+    "backToList": "← Back to projects",
+    "backToProject": "← Back to project",
+    "boardComingSoon": "The kanban board is coming soon",
+    "createTitle": "New project",
+    "name": "Name",
+    "description": "Description (optional)",
+    "create": "Create",
+    "creating": "Creating...",
+    "cancel": "Cancel"
+  },
+  "members": {
+    "title": "Members of \"{{project}}\"",
+    "email": "Email",
+    "role": "Role",
+    "invite": "Invite",
+    "inviting": "Inviting...",
+    "remove": "Remove",
+    "loading": "Loading members..."
+  },
+  "roles": {
+    "OWNER": "Owner",
+    "ADMIN": "Admin",
+    "MEMBER": "Member",
+    "VIEWER": "Viewer"
   },
   "profile": {
     "title": "Profile",
@@ -78,6 +110,12 @@
     "UNAUTHENTICATED": "Authentication required",
     "INVALID_FILE": "Invalid file",
     "NOT_FOUND": "Not found",
+    "PROJECT_NOT_FOUND": "Project not found",
+    "NOT_A_PROJECT_MEMBER": "You are not a member of this project",
+    "INSUFFICIENT_ROLE": "You don't have permission to do this",
+    "USER_NOT_FOUND_FOR_INVITE": "No registered user with this email",
+    "ALREADY_PROJECT_MEMBER": "This user is already a project member",
+    "CANNOT_REMOVE_LAST_OWNER": "The project must keep at least one owner",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }

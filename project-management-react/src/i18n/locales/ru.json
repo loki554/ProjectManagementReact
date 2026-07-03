@@ -1,6 +1,12 @@
 {
   "app": {
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "name": "PM Tracker"
+  },
+  "header": {
+    "profile": "Профиль",
+    "logout": "Выйти",
+    "loggingOut": "Выходим..."
   },
   "language": {
     "ru": "Русский",
@@ -48,11 +54,37 @@
       "passwordMin": "Пароль должен быть не короче 8 символов"
     }
   },
-  "dashboard": {
-    "welcome": "Добро пожаловать, {{name}}!",
-    "logout": "Выйти",
-    "loggingOut": "Выходим...",
-    "profileLink": "Профиль"
+  "projects": {
+    "title": "Мои проекты",
+    "newProject": "Новый проект",
+    "empty": "У вас пока нет проектов",
+    "loading": "Загрузка проектов...",
+    "members": "Участники",
+    "archived": "В архиве",
+    "backToList": "← К списку проектов",
+    "backToProject": "← К проекту",
+    "boardComingSoon": "Канбан-доска появится позже",
+    "createTitle": "Новый проект",
+    "name": "Название",
+    "description": "Описание (необязательно)",
+    "create": "Создать",
+    "creating": "Создаём...",
+    "cancel": "Отмена"
+  },
+  "members": {
+    "title": "Участники проекта «{{project}}»",
+    "email": "Email",
+    "role": "Роль",
+    "invite": "Пригласить",
+    "inviting": "Приглашаем...",
+    "remove": "Удалить",
+    "loading": "Загрузка участников..."
+  },
+  "roles": {
+    "OWNER": "Владелец",
+    "ADMIN": "Администратор",
+    "MEMBER": "Участник",
+    "VIEWER": "Наблюдатель"
   },
   "profile": {
     "title": "Профиль",
@@ -78,6 +110,12 @@
     "UNAUTHENTICATED": "Требуется аутентификация",
     "INVALID_FILE": "Недопустимый файл",
     "NOT_FOUND": "Не найдено",
+    "PROJECT_NOT_FOUND": "Проект не найден",
+    "NOT_A_PROJECT_MEMBER": "Вы не являетесь участником этого проекта",
+    "INSUFFICIENT_ROLE": "Недостаточно прав для этого действия",
+    "USER_NOT_FOUND_FOR_INVITE": "Пользователь с таким email не зарегистрирован",
+    "ALREADY_PROJECT_MEMBER": "Пользователь уже является участником проекта",
+    "CANNOT_REMOVE_LAST_OWNER": "В проекте должен остаться хотя бы один владелец",
     "UNKNOWN": "Что-то пошло не так, попробуйте ещё раз"
   }
 }

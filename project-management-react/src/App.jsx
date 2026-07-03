@@ -1,12 +1,16 @@
 import { useTranslation } from 'react-i18next'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
-import { DashboardPage } from './pages/DashboardPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
+import { NewProjectPage } from './pages/projects/NewProjectPage'
+import { ProjectBoardPlaceholderPage } from './pages/projects/ProjectBoardPlaceholderPage'
+import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
+import { ProjectRedirectPage } from './pages/projects/ProjectRedirectPage'
+import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
 
 function App() {
@@ -26,19 +30,25 @@ function App() {
 
   return (
     <BrowserRouter>
-      <LanguageSwitcher />
+      <AppRoutes />
+    </BrowserRouter>
+  )
+}
+
+// AppHeader (см. /projects/*) уже содержит свой переключатель языка — отдельный
+// плавающий LanguageSwitcher нужен только там, где своего хедера ещё нет
+// (auth-страницы, профиль).
+function AppRoutes() {
+  const location = useLocation()
+  const hasOwnHeader = location.pathname.startsWith('/projects')
+
+  return (
+    <>
+      {!hasOwnHeader && <LanguageSwitcher />}
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/profile"
           element={
@@ -47,9 +57,50 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/new"
+          element={
+            <ProtectedRoute>
+              <NewProjectPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/settings/members"
+          element={
+            <ProtectedRoute>
+              <ProjectMembersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/board"
+          element={
+            <ProtectedRoute>
+              <ProjectBoardPlaceholderPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId"
+          element={
+            <ProtectedRoute>
+              <ProjectRedirectPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<Navigate to="/projects" replace />} />
+        <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>
-    </BrowserRouter>
+    </>
   )
 }
 

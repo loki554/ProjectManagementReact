@@ -109,7 +109,7 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-12">
-      <Link to="/" onClick={handleBackClick} className="text-sm text-purple-600 hover:underline">
+      <Link to="/projects" onClick={handleBackClick} className="text-sm text-purple-600 hover:underline">
         {t('profile.backToDashboard')}
       </Link>
 

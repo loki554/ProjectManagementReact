@@ -1,6 +1,12 @@
 {
   "app": {
-    "loading": "Wird geladen..."
+    "loading": "Wird geladen...",
+    "name": "PM Tracker"
+  },
+  "header": {
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "loggingOut": "Abmeldung läuft..."
   },
   "language": {
     "ru": "Русский",
@@ -48,11 +54,37 @@
       "passwordMin": "Das Passwort muss mindestens 8 Zeichen lang sein"
     }
   },
-  "dashboard": {
-    "welcome": "Willkommen, {{name}}!",
-    "logout": "Abmelden",
-    "loggingOut": "Abmeldung läuft...",
-    "profileLink": "Profil"
+  "projects": {
+    "title": "Meine Projekte",
+    "newProject": "Neues Projekt",
+    "empty": "Sie haben noch keine Projekte",
+    "loading": "Projekte werden geladen...",
+    "members": "Mitglieder",
+    "archived": "Archiviert",
+    "backToList": "← Zurück zu den Projekten",
+    "backToProject": "← Zurück zum Projekt",
+    "boardComingSoon": "Das Kanban-Board folgt bald",
+    "createTitle": "Neues Projekt",
+    "name": "Name",
+    "description": "Beschreibung (optional)",
+    "create": "Erstellen",
+    "creating": "Wird erstellt...",
+    "cancel": "Abbrechen"
+  },
+  "members": {
+    "title": "Mitglieder von „{{project}}“",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "invite": "Einladen",
+    "inviting": "Wird eingeladen...",
+    "remove": "Entfernen",
+    "loading": "Mitglieder werden geladen..."
+  },
+  "roles": {
+    "OWNER": "Eigentümer",
+    "ADMIN": "Administrator",
+    "MEMBER": "Mitglied",
+    "VIEWER": "Betrachter"
   },
   "profile": {
     "title": "Profil",
@@ -78,6 +110,12 @@
     "UNAUTHENTICATED": "Authentifizierung erforderlich",
     "INVALID_FILE": "Ungültige Datei",
     "NOT_FOUND": "Nicht gefunden",
+    "PROJECT_NOT_FOUND": "Projekt nicht gefunden",
+    "NOT_A_PROJECT_MEMBER": "Sie sind kein Mitglied dieses Projekts",
+    "INSUFFICIENT_ROLE": "Sie haben keine Berechtigung für diese Aktion",
+    "USER_NOT_FOUND_FOR_INVITE": "Kein registrierter Benutzer mit dieser E-Mail-Adresse",
+    "ALREADY_PROJECT_MEMBER": "Dieser Benutzer ist bereits Mitglied des Projekts",
+    "CANNOT_REMOVE_LAST_OWNER": "Das Projekt muss mindestens einen Eigentümer behalten",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
 }
