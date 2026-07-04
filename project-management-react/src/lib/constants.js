@@ -22,3 +22,26 @@ const TASK_STATUS_BADGE_CLASSES = {
 export function taskStatusBadgeClass(status) {
   return TASK_STATUS_BADGE_CLASSES[status] ?? TASK_STATUS_BADGE_CLASSES.NEW
 }
+
+// Клиентская подсказка для <input accept>, зеркало whitelist на бэкенде
+// (attachment/AttachmentService.java, ALLOWED_CONTENT_TYPES) — окончательную проверку
+// всё равно делает сервер, это только UX (не открывать системный файловый диалог на
+// заведомо неподходящих файлах).
+export const ATTACHMENT_ACCEPT = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'application/zip',
+  'application/x-zip-compressed',
+].join(',')
+
+export function isImageAttachment(attachment) {
+  return attachment.contentType?.startsWith('image/') ?? false
+}

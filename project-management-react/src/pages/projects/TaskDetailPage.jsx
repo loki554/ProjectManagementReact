@@ -1,18 +1,26 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
+import { downloadAttachment } from '../../api/attachmentsApi'
+import { useAttachments, useDeleteAttachment, useUploadAttachment } from '../../api/attachmentsQueries'
 import { useProjectMembers } from '../../api/projectsQueries'
 import { useCreateSubtask, useDeleteTask, useSubtasks, useTask, useUpdateTask } from '../../api/tasksQueries'
 import { useCreateTimeLog, useDeleteTimeLog, useTimeLogs } from '../../api/timeLogsQueries'
+import { AttachmentDropzone } from '../../components/attachments/AttachmentDropzone'
+import { AttachmentPreviewModal } from '../../components/attachments/AttachmentPreviewModal'
+import { AttachmentThumbnail } from '../../components/attachments/AttachmentThumbnail'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
+import { ATTACHMENT_ACCEPT, TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import { downloadBlob } from '../../lib/downloadBlob'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import { formatFileSize } from '../../lib/formatFileSize'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildTaskSchema(t) {
@@ -66,12 +74,30 @@ export function TaskDetailPage() {
     isError: timeLogsIsError,
     error: timeLogsError,
   } = useTimeLogs(taskId)
+  const {
+    data: attachments,
+    isLoading: attachmentsLoading,
+    isError: attachmentsIsError,
+    error: attachmentsError,
+  } = useAttachments(taskId)
 
   const updateTask = useUpdateTask(taskId)
   const deleteTask = useDeleteTask(projectId)
   const createSubtask = useCreateSubtask(taskId)
   const createTimeLog = useCreateTimeLog(taskId)
   const deleteTimeLog = useDeleteTimeLog(taskId)
+  const uploadAttachment = useUploadAttachment(taskId)
+  const deleteAttachmentMutation = useDeleteAttachment(taskId)
+  // Скачивание — разовое действие (сохранение файла на диск пользователя), а не
+  // кэшируемые данные, поэтому это обычный useMutation прямо на странице, а не
+  // экспортируемый хук из attachmentsQueries.js (см. 7.4).
+  const downloadAttachmentMutation = useMutation({
+    mutationFn: async (attachment) => {
+      const blob = await downloadAttachment(attachment.id)
+      downloadBlob(blob, attachment.originalFilename)
+    },
+  })
+  const [preview, setPreview] = useState(null)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
@@ -158,6 +184,17 @@ export function TaskDetailPage() {
       return
     }
     deleteTimeLog.mutate(timeLogId)
+  }
+
+  function onUploadAttachment(file) {
+    uploadAttachment.mutate(file)
+  }
+
+  function onDeleteAttachment(attachmentId) {
+    if (!window.confirm(t('tasks.attachments.deleteConfirm'))) {
+      return
+    }
+    deleteAttachmentMutation.mutate(attachmentId)
   }
 
   const backLink = task?.parentTaskId
@@ -396,7 +433,95 @@ export function TaskDetailPage() {
             )}
           </div>
         )}
+
+        {!isLoading && !isError && task && (
+          <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('tasks.attachments.title')}</h2>
+
+            {attachmentsLoading && <p className="text-sm text-gray-500">{t('tasks.attachments.loading')}</p>}
+            {attachmentsIsError && (
+              <p className="text-sm text-red-600">{getLocalizedErrorMessage(attachmentsError, t)}</p>
+            )}
+
+            {!attachmentsLoading && !attachmentsIsError && (
+              <ul className="mb-4 divide-y divide-gray-100">
+                {attachments.length === 0 && (
+                  <li className="py-2 text-sm text-gray-400">{t('tasks.attachments.empty')}</li>
+                )}
+                {attachments.map((attachment) => {
+                  const isUploader = attachment.uploadedBy.id === currentUser?.id
+                  const canDeleteAttachment = canManage && (isUploader || isModerator)
+                  return (
+                    <li key={attachment.id} className="flex items-center gap-3 py-2 text-sm">
+                      <AttachmentThumbnail
+                        attachment={attachment}
+                        onPreview={(url) => setPreview({ url, filename: attachment.originalFilename })}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => downloadAttachmentMutation.mutate(attachment)}
+                          disabled={downloadAttachmentMutation.isPending}
+                          className="block max-w-full truncate text-left text-purple-700 hover:underline disabled:opacity-60"
+                        >
+                          {attachment.originalFilename}
+                        </button>
+                        <div className="text-xs text-gray-500">
+                          {formatFileSize(attachment.sizeBytes)} · {attachment.uploadedBy.lastName}{' '}
+                          {attachment.uploadedBy.firstName} ·{' '}
+                          {new Date(attachment.createdAt).toLocaleDateString(i18n.language)}
+                        </div>
+                      </div>
+                      {canDeleteAttachment && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteAttachment(attachment.id)}
+                          disabled={deleteAttachmentMutation.isPending}
+                          className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60"
+                        >
+                          {t('tasks.attachments.delete')}
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+
+            {canManage && (
+              <AttachmentDropzone
+                onFileSelected={onUploadAttachment}
+                disabled={uploadAttachment.isPending}
+                pending={uploadAttachment.isPending}
+                accept={ATTACHMENT_ACCEPT}
+                hintText={t('tasks.attachments.dropHint')}
+                activeText={t('tasks.attachments.uploading')}
+              />
+            )}
+            {uploadAttachment.isError && (
+              <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(uploadAttachment.error, t)}</p>
+            )}
+            {deleteAttachmentMutation.isError && (
+              <p className="mt-2 text-sm text-red-600">
+                {getLocalizedErrorMessage(deleteAttachmentMutation.error, t)}
+              </p>
+            )}
+            {downloadAttachmentMutation.isError && (
+              <p className="mt-2 text-sm text-red-600">
+                {getLocalizedErrorMessage(downloadAttachmentMutation.error, t)}
+              </p>
+            )}
+          </div>
+        )}
       </div>
+
+      {preview && (
+        <AttachmentPreviewModal
+          imageUrl={preview.url}
+          filename={preview.filename}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </div>
   )
 }

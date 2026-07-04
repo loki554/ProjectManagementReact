@@ -145,6 +145,20 @@
         "hoursRange": "Die Stundenzahl muss größer als 0 und höchstens 24 sein",
         "dateNotFuture": "Das Datum darf nicht in der Zukunft liegen"
       }
+    },
+    "attachments": {
+      "title": "Anhänge",
+      "loading": "Anhänge werden geladen...",
+      "empty": "Noch keine Anhänge",
+      "delete": "Löschen",
+      "deleting": "Wird gelöscht...",
+      "deleteConfirm": "Diesen Anhang löschen?",
+      "dropHint": "Datei hierher ziehen oder klicken, um eine auszuwählen",
+      "uploading": "Wird hochgeladen...",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "resetZoom": "Zoom zurücksetzen",
+      "closePreview": "Schließen"
     }
   },
   "profile": {
@@ -185,6 +199,8 @@
     "TASK_STATUS_CONFLICT": "Jemand anderes hat den Status dieser Aufgabe bereits geändert. Das Board wurde aktualisiert — bitte erneut versuchen",
     "TIME_LOG_NOT_FOUND": "Zeiteintrag nicht gefunden",
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
+    "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",
+    "NOT_ATTACHMENT_OWNER": "Nur die hochladende Person oder ein Projekt-Administrator kann diesen Anhang löschen",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
 }

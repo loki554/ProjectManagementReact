@@ -145,6 +145,20 @@
         "hoursRange": "Hours must be greater than 0 and at most 24",
         "dateNotFuture": "The date can't be in the future"
       }
+    },
+    "attachments": {
+      "title": "Attachments",
+      "loading": "Loading attachments...",
+      "empty": "No attachments yet",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteConfirm": "Delete this attachment?",
+      "dropHint": "Drag a file here or click to choose one",
+      "uploading": "Uploading...",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "resetZoom": "Reset zoom",
+      "closePreview": "Close"
     }
   },
   "profile": {
@@ -185,6 +199,8 @@
     "TASK_STATUS_CONFLICT": "Someone else already changed this task's status. The board has been refreshed — try again",
     "TIME_LOG_NOT_FOUND": "Time log not found",
     "NOT_TIME_LOG_OWNER": "Only the author or a project admin can delete this entry",
+    "ATTACHMENT_NOT_FOUND": "Attachment not found",
+    "NOT_ATTACHMENT_OWNER": "Only the uploader or a project admin can delete this attachment",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }
