@@ -63,7 +63,6 @@
     "members": "Участники",
     "archived": "В архиве",
     "backToList": "← К списку проектов",
-    "backToProject": "← К проекту",
     "boardComingSoon": "Канбан-доска появится позже",
     "createTitle": "Новый проект",
     "name": "Название",
@@ -77,6 +76,18 @@
       "nameLatinOnly": "Название должно содержать только латинские буквы, цифры и стандартные знаки препинания",
       "previewImageTooLarge": "Файл слишком большой (максимум 5MB)"
     }
+  },
+  "projectSidebar": {
+    "kanban": "Канбан",
+    "members": "Участники",
+    "tags": "Тэги",
+    "collapse": "Свернуть",
+    "expand": "Развернуть"
+  },
+  "projectOverview": {
+    "loading": "Загрузка проекта...",
+    "noDescription": "Без описания",
+    "allMembers": "Все участники →"
   },
   "members": {
     "title": "Участники проекта «{{project}}»",
@@ -136,7 +147,6 @@
       "REJECTED": "Отклонена"
     },
     "detail": {
-      "backToBoard": "← К задачам проекта",
       "backToParent": "← К родительской задаче",
       "loading": "Загрузка задачи...",
       "titleLabel": "Название",

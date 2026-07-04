@@ -7,9 +7,10 @@ import { ProfilePage } from './pages/ProfilePage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
+import { ProjectLayout } from './components/layout/ProjectLayout'
 import { NewProjectPage } from './pages/projects/NewProjectPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
-import { ProjectRedirectPage } from './pages/projects/ProjectRedirectPage'
+import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
@@ -79,46 +80,22 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/projects/:projectSlug/settings/members"
-          element={
-            <ProtectedRoute>
-              <ProjectMembersPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectSlug/settings/tags"
-          element={
-            <ProtectedRoute>
-              <ProjectTagsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectSlug/board"
-          element={
-            <ProtectedRoute>
-              <ProjectTasksPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectSlug/tasks/:taskNumber"
-          element={
-            <ProtectedRoute>
-              <TaskDetailPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* Все страницы внутри проекта живут во вложенных роутах под общим
+            ProjectLayout (хедер + сайдбар), их URL-ы не изменились. */}
         <Route
           path="/projects/:projectSlug"
           element={
             <ProtectedRoute>
-              <ProjectRedirectPage />
+              <ProjectLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<ProjectOverviewPage />} />
+          <Route path="board" element={<ProjectTasksPage />} />
+          <Route path="tasks/:taskNumber" element={<TaskDetailPage />} />
+          <Route path="settings/members" element={<ProjectMembersPage />} />
+          <Route path="settings/tags" element={<ProjectTagsPage />} />
+        </Route>
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="*" element={<Navigate to="/projects" replace />} />
       </Routes>

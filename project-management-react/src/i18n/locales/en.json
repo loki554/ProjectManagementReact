@@ -63,7 +63,6 @@
     "members": "Members",
     "archived": "Archived",
     "backToList": "← Back to projects",
-    "backToProject": "← Back to project",
     "boardComingSoon": "The kanban board is coming soon",
     "createTitle": "New project",
     "name": "Name",
@@ -77,6 +76,18 @@
       "nameLatinOnly": "Name must contain only Latin letters, digits, and standard punctuation",
       "previewImageTooLarge": "Image is too large (max 5MB)"
     }
+  },
+  "projectSidebar": {
+    "kanban": "Kanban",
+    "members": "Members",
+    "tags": "Tags",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "projectOverview": {
+    "loading": "Loading project...",
+    "noDescription": "No description",
+    "allMembers": "All members →"
   },
   "members": {
     "title": "Members of \"{{project}}\"",
@@ -136,7 +147,6 @@
       "REJECTED": "Rejected"
     },
     "detail": {
-      "backToBoard": "← Back to tasks",
       "backToParent": "← Back to parent task",
       "loading": "Loading task...",
       "titleLabel": "Title",

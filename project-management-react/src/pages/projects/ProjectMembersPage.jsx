@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { z } from 'zod'
 import {
   useInviteMember,
@@ -11,7 +11,6 @@ import {
   useRemoveMember,
   useUpdateMemberRole,
 } from '../../api/projectsQueries'
-import { AppHeader } from '../../components/layout/AppHeader'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { PROJECT_ROLES, roleIsAtLeast } from '../../lib/constants'
@@ -55,24 +54,8 @@ export function ProjectMembersPage() {
   }
 
   return (
-    <div className="min-h-svh">
-      <AppHeader />
-
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Link to={`/projects/${projectSlug}`} className="text-sm text-purple-600 hover:underline">
-          {t('projects.backToProject')}
-        </Link>
-
-        <div className="mt-4 mb-6 flex items-center gap-4 text-sm">
-          <span className="font-medium text-purple-700">{t('projects.members')}</span>
-          <Link to={`/projects/${projectSlug}/settings/tags`} className="text-gray-500 hover:text-purple-700">
-            {t('tags.navLabel')}
-          </Link>
-        </div>
-
-        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
-          {t('members.title', { project: project?.name ?? '' })}
-        </h1>
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900">{t('projects.members')}</h1>
 
         {canManage && (
           <form
@@ -163,6 +146,5 @@ export function ProjectMembersPage() {
           </ul>
         )}
       </div>
-    </div>
   )
 }

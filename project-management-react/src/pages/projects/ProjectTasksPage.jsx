@@ -14,11 +14,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useCreateTask, useTasks, useUpdateTaskStatus } from '../../api/tasksQueries'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
-import { AppHeader } from '../../components/layout/AppHeader'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { TASK_NUMBER_BADGE_CLASS, TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
@@ -197,26 +196,7 @@ export function ProjectTasksPage() {
   }
 
   return (
-    <div className="min-h-svh">
-      <AppHeader />
-
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <Link to="/projects" className="text-sm text-purple-600 hover:underline">
-          {t('projects.backToList')}
-        </Link>
-
-        <div className="mt-4 mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            {t('tasks.title', { project: project?.name ?? '' })}
-          </h1>
-          <Link
-            to={`/projects/${projectSlug}/settings/members`}
-            className="text-sm text-purple-600 hover:underline"
-          >
-            {t('projects.members')}
-          </Link>
-        </div>
-
+    <div className="mx-auto max-w-7xl px-4 py-8">
         {canManage && (
           <form
             onSubmit={handleSubmit(onCreate)}
@@ -272,7 +252,6 @@ export function ProjectTasksPage() {
             <DragOverlay>{activeTask && <TaskCardOverlay task={activeTask} />}</DragOverlay>
           </DndContext>
         )}
-      </div>
     </div>
   )
 }

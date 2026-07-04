@@ -63,7 +63,6 @@
     "members": "Mitglieder",
     "archived": "Archiviert",
     "backToList": "← Zurück zu den Projekten",
-    "backToProject": "← Zurück zum Projekt",
     "boardComingSoon": "Das Kanban-Board folgt bald",
     "createTitle": "Neues Projekt",
     "name": "Name",
@@ -77,6 +76,18 @@
       "nameLatinOnly": "Der Name darf nur lateinische Buchstaben, Ziffern und übliche Satzzeichen enthalten",
       "previewImageTooLarge": "Die Datei ist zu groß (max. 5MB)"
     }
+  },
+  "projectSidebar": {
+    "kanban": "Kanban",
+    "members": "Mitglieder",
+    "tags": "Tags",
+    "collapse": "Einklappen",
+    "expand": "Ausklappen"
+  },
+  "projectOverview": {
+    "loading": "Projekt wird geladen...",
+    "noDescription": "Keine Beschreibung",
+    "allMembers": "Alle Mitglieder →"
   },
   "members": {
     "title": "Mitglieder von „{{project}}“",
@@ -136,7 +147,6 @@
       "REJECTED": "Abgelehnt"
     },
     "detail": {
-      "backToBoard": "← Zurück zu den Aufgaben",
       "backToParent": "← Zurück zur übergeordneten Aufgabe",
       "loading": "Aufgabe wird geladen...",
       "titleLabel": "Titel",

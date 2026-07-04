@@ -14,7 +14,6 @@ import { useCreateTimeLog, useDeleteTimeLog, useTimeLogs } from '../../api/timeL
 import { AttachmentDropzone } from '../../components/attachments/AttachmentDropzone'
 import { AttachmentPreviewModal } from '../../components/attachments/AttachmentPreviewModal'
 import { AttachmentThumbnail } from '../../components/attachments/AttachmentThumbnail'
-import { AppHeader } from '../../components/layout/AppHeader'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
@@ -227,18 +226,17 @@ export function TaskDetailPage() {
     deleteAttachmentMutation.mutate(attachmentId)
   }
 
-  const backLink = task?.parentTaskId
-    ? `/projects/${projectSlug}/tasks/${task.parentTaskNumber}`
-    : `/projects/${projectSlug}/board`
-
   return (
-    <div className="min-h-svh">
-      <AppHeader />
-
+    <>
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <Link to={backLink} className="text-sm text-purple-600 hover:underline">
-          {t(task?.parentTaskId ? 'tasks.detail.backToParent' : 'tasks.detail.backToBoard')}
-        </Link>
+        {task?.parentTaskId && (
+          <Link
+            to={`/projects/${projectSlug}/tasks/${task.parentTaskNumber}`}
+            className="text-sm text-purple-600 hover:underline"
+          >
+            {t('tasks.detail.backToParent')}
+          </Link>
+        )}
 
         {isLoading && <p className="mt-4 text-gray-500">{t('tasks.detail.loading')}</p>}
         {isError && <p className="mt-4 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
@@ -607,6 +605,6 @@ export function TaskDetailPage() {
           onClose={() => setPreview(null)}
         />
       )}
-    </div>
+    </>
   )
 }
