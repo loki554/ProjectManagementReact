@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useProjectMembers } from '../../api/projectsQueries'
 import { useCreateSubtask, useDeleteTask, useSubtasks, useTask, useUpdateTask } from '../../api/tasksQueries'
+import { useCreateTimeLog, useDeleteTimeLog, useTimeLogs } from '../../api/timeLogsQueries'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
@@ -29,6 +30,22 @@ function buildSubtaskSchema(t) {
   })
 }
 
+function buildTimeLogSchema(t) {
+  return z
+    .object({
+      hours: z.coerce
+        .number()
+        .gt(0, t('tasks.timeLogs.validation.hoursRange'))
+        .lte(24, t('tasks.timeLogs.validation.hoursRange')),
+      spentOn: z.string().min(1, t('auth.validation.required')),
+      description: z.string().max(1000).optional(),
+    })
+    .refine((values) => values.spentOn <= new Date().toISOString().slice(0, 10), {
+      path: ['spentOn'],
+      message: t('tasks.timeLogs.validation.dateNotFuture'),
+    })
+}
+
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation()
   const { projectId, taskId } = useParams()
@@ -43,13 +60,22 @@ export function TaskDetailPage() {
     isError: subtasksIsError,
     error: subtasksError,
   } = useSubtasks(taskId)
+  const {
+    data: timeLogs,
+    isLoading: timeLogsLoading,
+    isError: timeLogsIsError,
+    error: timeLogsError,
+  } = useTimeLogs(taskId)
 
   const updateTask = useUpdateTask(taskId)
   const deleteTask = useDeleteTask(projectId)
   const createSubtask = useCreateSubtask(taskId)
+  const createTimeLog = useCreateTimeLog(taskId)
+  const deleteTimeLog = useDeleteTimeLog(taskId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const isModerator = myMembership ? roleIsAtLeast(myMembership.role, 'ADMIN') : false
 
   const schema = useMemo(() => buildTaskSchema(t), [i18n.language, t])
   const {
@@ -78,6 +104,16 @@ export function TaskDetailPage() {
     reset: resetSubtask,
     formState: { errors: subtaskErrors },
   } = useForm({ resolver: zodResolver(subtaskSchema), defaultValues: { title: '' } })
+
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const timeLogDefaults = useMemo(() => ({ hours: '', spentOn: todayIso, description: '' }), [todayIso])
+  const timeLogSchema = useMemo(() => buildTimeLogSchema(t), [i18n.language, t])
+  const {
+    register: registerTimeLog,
+    handleSubmit: handleSubmitTimeLog,
+    reset: resetTimeLog,
+    formState: { errors: timeLogErrors },
+  } = useForm({ resolver: zodResolver(timeLogSchema), defaultValues: timeLogDefaults })
 
   function onSave(values) {
     updateTask.mutate({
@@ -108,6 +144,20 @@ export function TaskDetailPage() {
 
   function onCreateSubtask(values) {
     createSubtask.mutate(values, { onSuccess: () => resetSubtask({ title: '' }) })
+  }
+
+  function onCreateTimeLog(values) {
+    createTimeLog.mutate(
+      { hours: values.hours, spentOn: values.spentOn, description: values.description || null },
+      { onSuccess: () => resetTimeLog(timeLogDefaults) },
+    )
+  }
+
+  function onDeleteTimeLog(timeLogId) {
+    if (!window.confirm(t('tasks.timeLogs.deleteConfirm'))) {
+      return
+    }
+    deleteTimeLog.mutate(timeLogId)
   }
 
   const backLink = task?.parentTaskId
@@ -267,6 +317,82 @@ export function TaskDetailPage() {
             )}
             {createSubtask.isError && (
               <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(createSubtask.error, t)}</p>
+            )}
+          </div>
+        )}
+
+        {!isLoading && !isError && task && (
+          <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-900">{t('tasks.timeLogs.title')}</h2>
+              {timeLogs && (
+                <span className="text-sm text-gray-600">
+                  {t('tasks.timeLogs.totalLabel', { hours: Number(timeLogs.totalHours).toFixed(2) })}
+                </span>
+              )}
+            </div>
+
+            {timeLogsLoading && <p className="text-sm text-gray-500">{t('tasks.timeLogs.loading')}</p>}
+            {timeLogsIsError && (
+              <p className="text-sm text-red-600">{getLocalizedErrorMessage(timeLogsError, t)}</p>
+            )}
+
+            {!timeLogsLoading && !timeLogsIsError && (
+              <ul className="mb-4 divide-y divide-gray-100">
+                {timeLogs.items.length === 0 && (
+                  <li className="py-2 text-sm text-gray-400">{t('tasks.timeLogs.empty')}</li>
+                )}
+                {timeLogs.items.map((entry) => {
+                  const isAuthor = entry.user.id === currentUser?.id
+                  const canDelete = canManage && (isAuthor || isModerator)
+                  return (
+                    <li key={entry.id} className="flex items-start justify-between gap-3 py-2 text-sm">
+                      <div>
+                        <div className="text-gray-900">
+                          {entry.spentOn} · {Number(entry.hours).toFixed(2)} {t('tasks.timeLogs.hoursShort')} ·{' '}
+                          {entry.user.lastName} {entry.user.firstName}
+                        </div>
+                        {entry.description && <div className="text-gray-500">{entry.description}</div>}
+                      </div>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteTimeLog(entry.id)}
+                          disabled={deleteTimeLog.isPending}
+                          className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60"
+                        >
+                          {t('tasks.timeLogs.delete')}
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+
+            {canManage && (
+              <form onSubmit={handleSubmitTimeLog(onCreateTimeLog)} className="space-y-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Field label={t('tasks.timeLogs.hoursLabel')} error={timeLogErrors.hours?.message}>
+                    <input type="number" step="any" className={inputClass} {...registerTimeLog('hours')} />
+                  </Field>
+                  <Field label={t('tasks.timeLogs.dateLabel')} error={timeLogErrors.spentOn?.message}>
+                    <input type="date" className={inputClass} {...registerTimeLog('spentOn')} />
+                  </Field>
+                  <Field label={t('tasks.timeLogs.descriptionLabel')}>
+                    <input type="text" className={inputClass} {...registerTimeLog('description')} />
+                  </Field>
+                </div>
+                <button type="submit" disabled={createTimeLog.isPending} className={primaryButtonClass}>
+                  {createTimeLog.isPending ? t('tasks.timeLogs.adding') : t('tasks.timeLogs.add')}
+                </button>
+              </form>
+            )}
+            {createTimeLog.isError && (
+              <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(createTimeLog.error, t)}</p>
+            )}
+            {deleteTimeLog.isError && (
+              <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(deleteTimeLog.error, t)}</p>
             )}
           </div>
         )}

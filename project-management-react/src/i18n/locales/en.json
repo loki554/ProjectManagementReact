@@ -126,6 +126,25 @@
       "addPlaceholder": "Subtask title",
       "add": "Add subtask",
       "adding": "Adding..."
+    },
+    "timeLogs": {
+      "title": "Time tracking",
+      "totalLabel": "Total: {{hours}}h",
+      "loading": "Loading time logs...",
+      "empty": "No time logged yet",
+      "hoursShort": "h",
+      "hoursLabel": "Hours",
+      "dateLabel": "Date",
+      "descriptionLabel": "Comment (optional)",
+      "add": "Log time",
+      "adding": "Adding...",
+      "delete": "Delete",
+      "deleting": "Deleting...",
+      "deleteConfirm": "Delete this time log entry?",
+      "validation": {
+        "hoursRange": "Hours must be greater than 0 and at most 24",
+        "dateNotFuture": "The date can't be in the future"
+      }
     }
   },
   "profile": {
@@ -164,6 +183,8 @@
     "ASSIGNEE_NOT_PROJECT_MEMBER": "The assignee must be a member of the project",
     "INVALID_TARGET_POSITION": "Invalid position in the column, please refresh the page",
     "TASK_STATUS_CONFLICT": "Someone else already changed this task's status. The board has been refreshed — try again",
+    "TIME_LOG_NOT_FOUND": "Time log not found",
+    "NOT_TIME_LOG_OWNER": "Only the author or a project admin can delete this entry",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }
