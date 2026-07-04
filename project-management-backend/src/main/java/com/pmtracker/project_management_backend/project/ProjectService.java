@@ -1,32 +1,52 @@
 package com.pmtracker.project_management_backend.project;
 
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.InvalidProjectNameException;
 import com.pmtracker.project_management_backend.common.exception.ProjectNameAlreadyExistsException;
 import com.pmtracker.project_management_backend.common.exception.ProjectNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
 import com.pmtracker.project_management_backend.project.dto.CreateProjectRequest;
 import com.pmtracker.project_management_backend.project.dto.ProjectResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateProjectRequest;
+import com.pmtracker.project_management_backend.storage.FileStorageService;
+import com.pmtracker.project_management_backend.storage.StoredFile;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class ProjectService {
 
+    private static final Set<String> ALLOWED_PREVIEW_IMAGE_CONTENT_TYPES =
+            Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
+
+    // "не супер большая" (пользовательский запрос) — тот же лимит, что и у аватарки
+    // пользователя (UserService.MAX_AVATAR_SIZE_BYTES), сопоставимый по смыслу артефакт.
+    private static final long MAX_PREVIEW_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
+
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectAccessService projectAccessService;
+    private final FileStorageService fileStorageService;
 
     public ProjectService(ProjectRepository projectRepository,
                            ProjectMemberRepository projectMemberRepository,
-                           ProjectAccessService projectAccessService) {
+                           ProjectAccessService projectAccessService,
+                           FileStorageService fileStorageService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectAccessService = projectAccessService;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -103,10 +123,69 @@ public class ProjectService {
 
     @Transactional
     public void delete(User currentUser, UUID projectId) {
-        projectAccessService.findProjectOrThrow(projectId);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        String previewImagePath = project.getPreviewImagePath();
         projectRepository.deleteById(projectId);
+        if (previewImagePath != null) {
+            fileStorageService.delete(previewImagePath);
+        }
+    }
+
+    // Права — как у update() (только OWNER, см. таблицу ролей §5 "Настройки проекта"):
+    // загрузка превью-картинки — часть настроек проекта, не отдельное разрешение.
+    @Transactional
+    public ProjectResponse uploadPreviewImage(User currentUser, UUID projectId, MultipartFile file) {
+        Project project = projectAccessService.findProjectOrThrow(projectId);
+        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+
+        if (file.isEmpty()) {
+            throw new InvalidFileException("No file selected");
+        }
+        if (file.getSize() > MAX_PREVIEW_IMAGE_SIZE_BYTES) {
+            throw new InvalidFileException("File is too large (max 5MB)");
+        }
+        if (!ALLOWED_PREVIEW_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new InvalidFileException("Allowed image formats: PNG, JPEG, WEBP, GIF");
+        }
+
+        String previousPreviewImagePath = project.getPreviewImagePath();
+
+        StoredFile stored;
+        try {
+            stored = fileStorageService.store(file, "projects/" + projectId);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to save preview image file", e);
+        }
+
+        project.setPreviewImagePath(stored.relativePath());
+        projectRepository.save(project);
+
+        // Как и у аватарки (UserService.uploadAvatar) — удаляем старый файл только после того,
+        // как новый успешно сохранён и БД обновлена.
+        if (previousPreviewImagePath != null) {
+            fileStorageService.delete(previousPreviewImagePath);
+        }
+
+        return ProjectResponse.from(project, membership.getRole());
+    }
+
+    // Просмотр открыт всем ролям проекта, включая VIEWER — как и остальные детали проекта
+    // (getById/getBySlugOrId).
+    @Transactional(readOnly = true)
+    public Resource getPreviewImageResource(User currentUser, UUID projectId) {
+        Project project = projectAccessService.findProjectOrThrow(projectId);
+        projectAccessService.requireMembership(projectId, currentUser);
+        if (project.getPreviewImagePath() == null) {
+            throw new ResourceNotFoundException("Project has no preview image");
+        }
+        try {
+            return fileStorageService.load(project.getPreviewImagePath());
+        } catch (NoSuchElementException e) {
+            throw new ResourceNotFoundException("Preview image file not found");
+        }
     }
 
     // lowercase + любая последовательность не-alphanumeric символов схлопывается в один "-" +

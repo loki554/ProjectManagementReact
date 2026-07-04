@@ -71,8 +71,11 @@
     "create": "Create",
     "creating": "Creating...",
     "cancel": "Cancel",
+    "previewImage": "Add preview image",
+    "previewImageHint": "PNG, JPEG, WEBP or GIF, up to 5MB",
     "validation": {
-      "nameLatinOnly": "Name must contain only Latin letters, digits, and standard punctuation"
+      "nameLatinOnly": "Name must contain only Latin letters, digits, and standard punctuation",
+      "previewImageTooLarge": "Image is too large (max 5MB)"
     }
   },
   "members": {

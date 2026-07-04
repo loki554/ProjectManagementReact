@@ -66,6 +66,19 @@ export function useDeleteProject() {
   })
 }
 
+// projectId — аргумент mutate (не зафиксирован на хуке), т.к. вызывается сразу после
+// useCreateProject, когда id проекта известен только в момент onSuccess создания.
+export function useUploadProjectPreviewImage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ projectId, file }) => projectsApi.uploadProjectPreviewImage(projectId, file),
+    onSuccess: (data, { projectId }) => {
+      queryClient.setQueryData(projectKey(projectId), data)
+      queryClient.invalidateQueries({ queryKey: projectsKey })
+    },
+  })
+}
+
 export function useProjectMembers(projectId) {
   return useQuery({
     queryKey: membersKey(projectId),

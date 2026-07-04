@@ -41,6 +41,9 @@ public class Project {
     @Column(nullable = false)
     private boolean archived = false;
 
+    @Column(name = "preview_image_path", length = 500)
+    private String previewImagePath;
+
     @Column(name = "next_task_number", nullable = false)
     private int nextTaskNumber = 1;
 
@@ -104,6 +107,14 @@ public class Project {
 
     public void setArchived(boolean archived) {
         this.archived = archived;
+    }
+
+    public String getPreviewImagePath() {
+        return previewImagePath;
+    }
+
+    public void setPreviewImagePath(String previewImagePath) {
+        this.previewImagePath = previewImagePath;
     }
 
     public int getNextTaskNumber() {

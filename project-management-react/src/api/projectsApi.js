@@ -27,6 +27,12 @@ export function deleteProject(projectId) {
   return apiClient.delete(`/projects/${projectId}`)
 }
 
+export function uploadProjectPreviewImage(projectId, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return apiClient.post(`/projects/${projectId}/preview-image`, formData).then((res) => res.data)
+}
+
 export function fetchProjectMembers(projectId) {
   return apiClient.get(`/projects/${projectId}/members`).then((res) => res.data)
 }

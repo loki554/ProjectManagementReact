@@ -66,3 +66,9 @@ export const ATTACHMENT_ACCEPT = [
 export function isImageAttachment(attachment) {
   return attachment.contentType?.startsWith('image/') ?? false
 }
+
+// Зеркало ProjectService.ALLOWED_PREVIEW_IMAGE_CONTENT_TYPES / MAX_PREVIEW_IMAGE_SIZE_BYTES
+// на бэкенде — как и с вложениями, здесь только UX-подсказка, окончательную проверку
+// (включая квадратность) всё равно делает сервер.
+export const PROJECT_PREVIEW_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif'
+export const MAX_PROJECT_PREVIEW_IMAGE_SIZE_BYTES = 5 * 1024 * 1024

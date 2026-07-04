@@ -1,16 +1,23 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 
 export function ProjectCard({ project }) {
   const { t } = useTranslation()
+  const previewImageUrl = useAuthenticatedImage(project.previewImageUrl)
 
   return (
     <li className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <Link to={`/projects/${project.slug}`} className="block">
-        <h2 className="font-medium text-gray-900">{project.name}</h2>
-        {project.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-600">{project.description}</p>
-        )}
+      <Link to={`/projects/${project.slug}`} className="flex gap-3">
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gray-100">
+          {previewImageUrl && <img src={previewImageUrl} alt="" className="h-full w-full object-cover" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-medium text-gray-900">{project.name}</h2>
+          {project.description && (
+            <p className="mt-1 line-clamp-2 text-sm text-gray-600">{project.description}</p>
+          )}
+        </div>
       </Link>
       <div className="mt-3 flex items-center justify-between">
         <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">

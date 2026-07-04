@@ -12,6 +12,7 @@ public record ProjectResponse(
         String slug,
         String description,
         boolean archived,
+        String previewImageUrl,
         ProjectRole myRole,
         UUID createdBy,
         Instant createdAt,
@@ -24,10 +25,23 @@ public record ProjectResponse(
                 project.getSlug(),
                 project.getDescription(),
                 project.isArchived(),
+                buildPreviewImageUrl(project),
                 myRole,
                 project.getCreatedBy().getId(),
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );
+    }
+
+    // Тот же приём кэш-бастинга ?v=<имя файла на диске>, что и UserSummary.buildAvatarUrl —
+    // путь "/projects/{id}/preview-image" сам по себе не меняется между загрузками новой
+    // картинки, без версии useAuthenticatedImage не перезапросил бы её после замены.
+    private static String buildPreviewImageUrl(Project project) {
+        String path = project.getPreviewImagePath();
+        if (path == null) {
+            return null;
+        }
+        String version = path.substring(path.lastIndexOf('/') + 1);
+        return "/projects/" + project.getId() + "/preview-image?v=" + version;
     }
 }
