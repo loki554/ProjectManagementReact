@@ -138,6 +138,7 @@
       "assigneeLabel": "Zuständig",
       "urgencyLabel": "Dringlichkeit",
       "dueDateLabel": "Fälligkeitsdatum",
+      "dueDateUntil": "Zu",
       "tagLabel": "Tag",
       "descriptionLabel": "Beschreibung",
       "noDescription": "Keine Beschreibung",

@@ -138,6 +138,7 @@
       "assigneeLabel": "Assignee",
       "urgencyLabel": "Urgency",
       "dueDateLabel": "Due date",
+      "dueDateUntil": "Until",
       "tagLabel": "Tag",
       "descriptionLabel": "Description",
       "noDescription": "No description",

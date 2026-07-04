@@ -138,6 +138,7 @@
       "assigneeLabel": "Исполнитель",
       "urgencyLabel": "Срочность",
       "dueDateLabel": "Срок выполнения",
+      "dueDateUntil": "До",
       "tagLabel": "Тэг",
       "descriptionLabel": "Описание",
       "noDescription": "Без описания",

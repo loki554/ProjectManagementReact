@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { taskUrgencyBadgeClass } from '../../lib/constants'
+import { taskStatusBadgeClass, taskUrgencyBadgeClass } from '../../lib/constants'
 import { tagBadgeStyle } from '../../lib/tagColor'
 
 export function ActiveTaskCard({ task }) {
@@ -18,11 +18,14 @@ export function ActiveTaskCard({ task }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className={`rounded-full px-2 py-0.5 font-medium ${taskStatusBadgeClass(task.status)}`}>
+            {t(`tasks.status.${task.status}`)}
+          </span>
           <span className={`rounded-full px-2 py-0.5 font-medium ${taskUrgencyBadgeClass(task.urgency)}`}>
             {t(`urgency.${task.urgency}`)}
           </span>
           {task.dueDate && (
-            <span className="text-gray-500">{new Date(task.dueDate).toLocaleDateString(i18n.language)}</span>
+            <span className="text-gray-500">{t(`tasks.detail.dueDateUntil`)} {new Date(task.dueDate).toLocaleDateString(i18n.language)}</span>
           )}
           {task.tag && (
             <span className="rounded-full px-2 py-0.5 font-medium" style={tagBadgeStyle(task.tag.color)}>
