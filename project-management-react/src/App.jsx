@@ -9,6 +9,7 @@ import { RegisterPage } from './pages/auth/RegisterPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { ProjectLayout } from './components/layout/ProjectLayout'
 import { NewProjectPage } from './pages/projects/NewProjectPage'
+import { ProjectEditPage } from './pages/projects/ProjectEditPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
@@ -95,6 +96,7 @@ function AppRoutes() {
           <Route path="tasks/:taskNumber" element={<TaskDetailPage />} />
           <Route path="settings/members" element={<ProjectMembersPage />} />
           <Route path="settings/tags" element={<ProjectTagsPage />} />
+          <Route path="settings/edit" element={<ProjectEditPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="*" element={<Navigate to="/projects" replace />} />

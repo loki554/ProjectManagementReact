@@ -1,6 +1,8 @@
+import { Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { secondaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 
@@ -77,7 +79,18 @@ export function ProjectOverviewPage() {
         </div>
 
         <aside className="w-full shrink-0 space-y-4 lg:w-72">
-          {/* Место под кнопки Star и «Редактировать» (фазы 2–3). */}
+          {/* Место под кнопку Star (фаза 3). */}
+
+          {/* Косметическое скрытие — PATCH на бэкенде в любом случае OWNER-only. */}
+          {project.myRole === 'OWNER' && (
+            <Link
+              to="settings/edit"
+              className={`${secondaryButtonClass} flex w-full items-center justify-center gap-2`}
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              {t('projectOverview.edit')}
+            </Link>
+          )}
 
           <div className="rounded-lg border border-gray-200 bg-white p-4">
             <h2 className="text-sm font-semibold text-gray-900">{t('projects.members')}</h2>

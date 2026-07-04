@@ -87,7 +87,15 @@
   "projectOverview": {
     "loading": "Загрузка проекта...",
     "noDescription": "Без описания",
-    "allMembers": "Все участники →"
+    "allMembers": "Все участники →",
+    "edit": "Редактировать"
+  },
+  "projectEdit": {
+    "title": "Редактирование проекта",
+    "changeImage": "Сменить картинку",
+    "archived": "Проект в архиве",
+    "save": "Сохранить",
+    "saving": "Сохраняем..."
   },
   "members": {
     "title": "Участники проекта «{{project}}»",

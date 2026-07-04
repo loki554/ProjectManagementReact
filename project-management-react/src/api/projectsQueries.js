@@ -49,6 +49,9 @@ export function useUpdateProject(projectId) {
     onSuccess: (data) => {
       queryClient.setQueryData(projectKey(projectId), data)
       queryClient.invalidateQueries({ queryKey: projectsKey })
+      // ProjectLayout/Overview живут на ключе by-slug — без инвалидации сайдбар
+      // показывал бы устаревшие имя/описание до перезагрузки страницы.
+      queryClient.invalidateQueries({ queryKey: ['projects', 'by-slug'] })
     },
   })
 }
@@ -75,6 +78,8 @@ export function useUploadProjectPreviewImage() {
     onSuccess: (data, { projectId }) => {
       queryClient.setQueryData(projectKey(projectId), data)
       queryClient.invalidateQueries({ queryKey: projectsKey })
+      // См. useUpdateProject: сайдбар/обзор читают проект по ключу by-slug.
+      queryClient.invalidateQueries({ queryKey: ['projects', 'by-slug'] })
     },
   })
 }

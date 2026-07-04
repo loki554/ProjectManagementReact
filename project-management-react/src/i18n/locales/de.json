@@ -87,7 +87,15 @@
   "projectOverview": {
     "loading": "Projekt wird geladen...",
     "noDescription": "Keine Beschreibung",
-    "allMembers": "Alle Mitglieder →"
+    "allMembers": "Alle Mitglieder →",
+    "edit": "Bearbeiten"
+  },
+  "projectEdit": {
+    "title": "Projekt bearbeiten",
+    "changeImage": "Bild ändern",
+    "archived": "Projekt archiviert",
+    "save": "Speichern",
+    "saving": "Wird gespeichert..."
   },
   "members": {
     "title": "Mitglieder von „{{project}}“",
