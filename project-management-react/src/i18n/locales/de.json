@@ -90,6 +90,10 @@
     "allMembers": "Alle Mitglieder →",
     "edit": "Bearbeiten"
   },
+  "projectStar": {
+    "star": "Star",
+    "starred": "Starred"
+  },
   "projectEdit": {
     "title": "Projekt bearbeiten",
     "changeImage": "Bild ändern",

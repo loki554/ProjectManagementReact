@@ -90,6 +90,10 @@
     "allMembers": "Все участники →",
     "edit": "Редактировать"
   },
+  "projectStar": {
+    "star": "Star",
+    "starred": "Starred"
+  },
   "projectEdit": {
     "title": "Редактирование проекта",
     "changeImage": "Сменить картинку",

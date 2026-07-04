@@ -33,6 +33,19 @@ export function uploadProjectPreviewImage(projectId, file) {
   return apiClient.post(`/projects/${projectId}/preview-image`, formData).then((res) => res.data)
 }
 
+export function fetchProjectStar(projectId) {
+  return apiClient.get(`/projects/${projectId}/star`).then((res) => res.data)
+}
+
+// PUT/DELETE идемпотентны и оба возвращают актуальный { starCount, starredByMe }.
+export function starProject(projectId) {
+  return apiClient.put(`/projects/${projectId}/star`).then((res) => res.data)
+}
+
+export function unstarProject(projectId) {
+  return apiClient.delete(`/projects/${projectId}/star`).then((res) => res.data)
+}
+
 export function fetchProjectMembers(projectId) {
   return apiClient.get(`/projects/${projectId}/members`).then((res) => res.data)
 }

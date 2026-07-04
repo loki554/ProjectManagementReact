@@ -4,6 +4,7 @@ import * as projectsApi from './projectsApi'
 const projectsKey = ['projects']
 const projectKey = (projectId) => ['projects', projectId]
 const membersKey = (projectId) => ['projects', projectId, 'members']
+const starKey = (projectId) => ['projects', projectId, 'star']
 
 export function useProjects() {
   return useQuery({
@@ -80,6 +81,44 @@ export function useUploadProjectPreviewImage() {
       queryClient.invalidateQueries({ queryKey: projectsKey })
       // См. useUpdateProject: сайдбар/обзор читают проект по ключу by-slug.
       queryClient.invalidateQueries({ queryKey: ['projects', 'by-slug'] })
+    },
+  })
+}
+
+export function useProjectStar(projectId) {
+  return useQuery({
+    queryKey: starKey(projectId),
+    queryFn: () => projectsApi.fetchProjectStar(projectId),
+    enabled: Boolean(projectId),
+  })
+}
+
+// Один хук на обе стороны тумблера: mutate(true) — поставить звезду, mutate(false) — снять.
+// Оптимистичный апдейт, как у канбана: счётчик и заливка меняются мгновенно, при ошибке
+// откатываемся к снапшоту, по завершении сверяемся с сервером.
+export function useSetProjectStarred(projectId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (starred) =>
+      starred ? projectsApi.starProject(projectId) : projectsApi.unstarProject(projectId),
+    onMutate: async (starred) => {
+      await queryClient.cancelQueries({ queryKey: starKey(projectId) })
+      const previous = queryClient.getQueryData(starKey(projectId))
+      if (previous && previous.starredByMe !== starred) {
+        queryClient.setQueryData(starKey(projectId), {
+          starCount: previous.starCount + (starred ? 1 : -1),
+          starredByMe: starred,
+        })
+      }
+      return { previous }
+    },
+    onError: (_error, _starred, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(starKey(projectId), context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: starKey(projectId) })
     },
   })
 }
