@@ -15,7 +15,7 @@ export const submitButtonClass =
   'w-full rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60'
 
 export const secondaryButtonClass =
-  'rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60'
+  'rounded-md border bg-white border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60'
 
 // Как submitButtonClass, но без w-full — для кнопок-действий вне форм на всю ширину
 // (например, "Новый проект" рядом с заголовком списка).

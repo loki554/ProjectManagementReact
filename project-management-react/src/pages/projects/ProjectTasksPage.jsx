@@ -197,7 +197,7 @@ export function ProjectTasksPage() {
   }
 
   return (
-    <div className="min-h-svh bg-gray-50">
+    <div className="min-h-svh">
       <AppHeader />
 
       <div className="mx-auto max-w-7xl px-4 py-8">

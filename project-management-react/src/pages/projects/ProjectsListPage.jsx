@@ -12,7 +12,7 @@ export function ProjectsListPage() {
   const { data: projects, isLoading, isError, error } = useProjects()
 
   return (
-    <div className="min-h-svh bg-gray-50">
+    <div className="min-h-svh">
       <AppHeader />
 
       <div className="mx-auto max-w-4xl px-4 py-8">
@@ -43,7 +43,7 @@ export function ProjectsListPage() {
           </ul>
         )}
 
-        <hr className="my-8 border-gray-200" />
+        <hr className="my-8 border-gray-200 border-2 rounded-2xl" />
 
         <h2 className="mb-4 text-xl font-semibold text-gray-900">{t('home.myActiveTasksTitle')}</h2>
         <MyActiveTasksSection />

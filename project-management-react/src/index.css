@@ -11,4 +11,5 @@ body {
 
 #root {
   min-height: 100svh;
+  background-image: url('./assets/geometry-pattern.png');
 }
