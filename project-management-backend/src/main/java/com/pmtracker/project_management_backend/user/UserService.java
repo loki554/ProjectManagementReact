@@ -25,6 +25,11 @@ public class UserService {
     private static final Set<String> ALLOWED_AVATAR_CONTENT_TYPES =
             Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
 
+    // Глобальный spring.servlet.multipart.max-file-size теперь 20MB (поднят ради вложений
+    // к задачам, см. AttachmentService) — без явной проверки здесь аватарка расширилась бы
+    // до того же лимита, хотя ей для картинки профиля хватает 5MB.
+    private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
+
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
 
@@ -46,6 +51,9 @@ public class UserService {
     public UserSummary uploadAvatar(User user, MultipartFile file) {
         if (file.isEmpty()) {
             throw new InvalidFileException("No file selected");
+        }
+        if (file.getSize() > MAX_AVATAR_SIZE_BYTES) {
+            throw new InvalidFileException("File is too large (max 5MB)");
         }
         if (!ALLOWED_AVATAR_CONTENT_TYPES.contains(file.getContentType())) {
             throw new InvalidFileException("Allowed image formats: PNG, JPEG, WEBP, GIF");

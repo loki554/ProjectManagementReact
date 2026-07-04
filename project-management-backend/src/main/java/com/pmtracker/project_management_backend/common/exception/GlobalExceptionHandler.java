@@ -144,6 +144,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("NOT_TIME_LOG_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(AttachmentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAttachmentNotFound(AttachmentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("ATTACHMENT_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NotAttachmentOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleNotAttachmentOwner(NotAttachmentOwnerException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("NOT_ATTACHMENT_OWNER", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
