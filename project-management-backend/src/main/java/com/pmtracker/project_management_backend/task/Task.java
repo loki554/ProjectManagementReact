@@ -35,6 +35,9 @@ public class Task {
     @JoinColumn(name = "parent_task_id")
     private Task parentTask;
 
+    @Column(name = "task_number", nullable = false, updatable = false)
+    private int taskNumber;
+
     @Column(nullable = false)
     private String title;
 
@@ -103,6 +106,14 @@ public class Task {
 
     public void setParentTask(Task parentTask) {
         this.parentTask = parentTask;
+    }
+
+    public int getTaskNumber() {
+        return taskNumber;
+    }
+
+    public void setTaskNumber(int taskNumber) {
+        this.taskNumber = taskNumber;
     }
 
     public String getTitle() {

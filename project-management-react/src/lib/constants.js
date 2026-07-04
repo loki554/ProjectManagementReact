@@ -38,6 +38,12 @@ export function taskUrgencyBadgeClass(urgency) {
   return TASK_URGENCY_BADGE_CLASSES[urgency] ?? TASK_URGENCY_BADGE_CLASSES.MEDIUM
 }
 
+// Бейдж порядкового номера задачи (#1, #2, ...) — присваивается автоматически на бэкенде
+// (Task.taskNumber), счётчик свой для каждого проекта. Стиль отличается от статус/urgency
+// бейджей нарочно (моноширинный, приглушённый), чтобы номер читался как идентификатор, а не
+// как ещё один статус.
+export const TASK_NUMBER_BADGE_CLASS = 'rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-500'
+
 // Клиентская подсказка для <input accept>, зеркало whitelist на бэкенде
 // (attachment/AttachmentService.java, ALLOWED_CONTENT_TYPES) — окончательную проверку
 // всё равно делает сервер, это только UX (не открывать системный файловый диалог на

@@ -3,10 +3,24 @@ package com.pmtracker.project_management_backend.project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
 
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
+
+    /**
+     * Атомарно резервирует следующий порядковый номер задачи (#1, #2, ...) для проекта:
+     * UPDATE ... RETURNING в одном statement'е, без отдельного SELECT перед ним — так конкурентные
+     * транзакции сериализуются через row-lock на projects, и не могут получить одинаковый номер
+     * (в отличие от read-then-write через SELECT MAX, см. TaskRepository.findMaxPositionForStatus).
+     * Без @Modifying: Spring Data выполняет запрос через getSingleResult(), что нужно, чтобы
+     * получить обратно значение из RETURNING (executeUpdate() из @Modifying вернул бы только
+     * количество обновлённых строк).
+     */
+    @Query(value = "update projects set next_task_number = next_task_number + 1 "
+            + "where id = :projectId returning next_task_number - 1", nativeQuery = true)
+    int reserveNextTaskNumber(@Param("projectId") UUID projectId);
 
     /**
      * Bulk JPQL-delete вместо {@code delete(entity)}: удаление сущности через persistence

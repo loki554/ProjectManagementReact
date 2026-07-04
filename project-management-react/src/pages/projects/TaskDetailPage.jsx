@@ -20,6 +20,7 @@ import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
   ATTACHMENT_ACCEPT,
+  TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
   TASK_URGENCIES,
   roleIsAtLeast,
@@ -237,6 +238,9 @@ export function TaskDetailPage() {
           <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
             {canManage ? (
               <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+                <div>
+                  <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+                </div>
                 <Field label={t('tasks.detail.titleLabel')} error={errors.title?.message}>
                   <input type="text" className={inputClass} {...register('title')} />
                 </Field>
@@ -324,7 +328,10 @@ export function TaskDetailPage() {
               </form>
             ) : (
               <div className="space-y-4">
-                <h1 className="text-xl font-semibold text-gray-900">{task.title}</h1>
+                <h1 className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                  <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+                  {task.title}
+                </h1>
                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskStatusBadgeClass(task.status)}`}
@@ -388,7 +395,10 @@ export function TaskDetailPage() {
                       to={`/projects/${projectId}/tasks/${subtask.id}`}
                       className="flex items-center justify-between gap-3 py-2 text-sm hover:text-purple-700"
                     >
-                      <span className="text-gray-900">{subtask.title}</span>
+                      <span className="flex min-w-0 items-center gap-2 text-gray-900">
+                        <span className={TASK_NUMBER_BADGE_CLASS}>#{subtask.taskNumber}</span>
+                        <span className="truncate">{subtask.title}</span>
+                      </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskStatusBadgeClass(subtask.status)}`}
                       >

@@ -36,6 +36,9 @@ public class Project {
     @Column(nullable = false)
     private boolean archived = false;
 
+    @Column(name = "next_task_number", nullable = false)
+    private int nextTaskNumber = 1;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -88,6 +91,10 @@ public class Project {
 
     public void setArchived(boolean archived) {
         this.archived = archived;
+    }
+
+    public int getNextTaskNumber() {
+        return nextTaskNumber;
     }
 
     public Instant getCreatedAt() {

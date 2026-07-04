@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { taskStatusBadgeClass, taskUrgencyBadgeClass } from '../../lib/constants'
+import { TASK_NUMBER_BADGE_CLASS, taskStatusBadgeClass, taskUrgencyBadgeClass } from '../../lib/constants'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { msUntil } from '../../lib/timeUntil'
 
@@ -28,7 +28,10 @@ export function ActiveTaskCard({ task }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-xs text-gray-500">{task.projectName}</p>
-            <p className="truncate font-medium text-gray-900">{task.title}</p>
+            <p className="flex items-center gap-2 font-medium text-gray-900">
+              <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+              <span className="min-w-0 truncate">{task.title}</span>
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs">

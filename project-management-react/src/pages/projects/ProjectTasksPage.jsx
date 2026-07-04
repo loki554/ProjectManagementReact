@@ -21,7 +21,7 @@ import { useProject, useProjectMembers } from '../../api/projectsQueries'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import { TASK_NUMBER_BADGE_CLASS, TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildCreateTaskSchema(t) {
@@ -81,7 +81,10 @@ function TaskCard({ task, disabled, onOpen }) {
       onClick={onOpen}
       className="block w-full cursor-pointer rounded-md border border-gray-200 bg-white p-2 text-left text-sm hover:border-purple-300 hover:bg-purple-50"
     >
-      <p className="font-medium text-gray-900">{task.title}</p>
+      <p className="flex items-center gap-2 font-medium text-gray-900">
+        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+        <span className="min-w-0 truncate">{task.title}</span>
+      </p>
       <p className="mt-1 text-xs text-gray-500">{task.assigneeLabel}</p>
     </div>
   )
@@ -90,7 +93,10 @@ function TaskCard({ task, disabled, onOpen }) {
 function TaskCardOverlay({ task }) {
   return (
     <div className="block w-full rounded-md border border-purple-300 bg-white p-2 text-left text-sm shadow-lg">
-      <p className="font-medium text-gray-900">{task.title}</p>
+      <p className="flex items-center gap-2 font-medium text-gray-900">
+        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+        <span className="min-w-0 truncate">{task.title}</span>
+      </p>
       <p className="mt-1 text-xs text-gray-500">{task.assigneeLabel}</p>
     </div>
   )

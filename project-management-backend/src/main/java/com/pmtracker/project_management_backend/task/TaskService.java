@@ -14,6 +14,7 @@ import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectMemberRepository;
+import com.pmtracker.project_management_backend.project.ProjectRepository;
 import com.pmtracker.project_management_backend.project.ProjectRole;
 import com.pmtracker.project_management_backend.tag.Tag;
 import com.pmtracker.project_management_backend.tag.TagRepository;
@@ -45,17 +46,20 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectRepository projectRepository;
     private final TagRepository tagRepository;
     private final TimeLogRepository timeLogRepository;
 
     public TaskService(TaskRepository taskRepository,
                         ProjectAccessService projectAccessService,
                         ProjectMemberRepository projectMemberRepository,
+                        ProjectRepository projectRepository,
                         TagRepository tagRepository,
                         TimeLogRepository timeLogRepository) {
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
+        this.projectRepository = projectRepository;
         this.tagRepository = tagRepository;
         this.timeLogRepository = timeLogRepository;
     }
@@ -69,6 +73,7 @@ public class TaskService {
         Task task = new Task();
         task.setProject(project);
         task.setParentTask(null);
+        task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
                 request.dueDate(), request.tagId());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
@@ -200,6 +205,7 @@ public class TaskService {
         Task task = new Task();
         task.setProject(parent.getProject());
         task.setParentTask(parent);
+        task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
                 request.dueDate(), request.tagId());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
