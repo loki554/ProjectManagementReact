@@ -132,6 +132,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("TASK_STATUS_CONFLICT", ex.getMessage()));
     }
 
+    @ExceptionHandler(TimeLogNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTimeLogNotFound(TimeLogNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("TIME_LOG_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NotTimeLogOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleNotTimeLogOwner(NotTimeLogOwnerException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("NOT_TIME_LOG_OWNER", ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
