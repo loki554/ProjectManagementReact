@@ -6,7 +6,7 @@ import com.pmtracker.project_management_backend.task.TaskStatus;
 import com.pmtracker.project_management_backend.task.TaskUrgency;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 
 public record MyActiveTaskResponse(
@@ -16,7 +16,7 @@ public record MyActiveTaskResponse(
         String title,
         TaskStatus status,
         TaskUrgency urgency,
-        LocalDate dueDate,
+        Instant dueDate,
         TagSummary tag,
         BigDecimal totalHoursSpent
 ) {

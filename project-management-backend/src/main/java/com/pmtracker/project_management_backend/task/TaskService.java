@@ -31,7 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -213,11 +214,18 @@ public class TaskService {
 
     private static final int MY_ACTIVE_TASKS_PAGE_SIZE = 8;
     private static final List<TaskStatus> INACTIVE_STATUSES = List.of(TaskStatus.DONE, TaskStatus.REJECTED);
+    // Задачи с дедлайном внутри этого окна (включая уже просроченные) поднимаются в списке
+    // "моих активных задач" выше вообще всего, независимо от urgency — см. findActiveByAssignee.
+    // Совпадает с порогом на фронтенде, при котором карточка подсвечивается красным
+    // (ActiveTaskCard.DUE_SOON_THRESHOLD_MS) — а не с порогом перехода на часовой отсчёт (тот
+    // отдельный, более узкий: меньше суток, см. ActiveTaskCard.isLessThanADay).
+    private static final Duration URGENT_DUE_WINDOW = Duration.ofDays(3);
 
     @Transactional(readOnly = true)
     public PageResponse<MyActiveTaskResponse> listMyActiveTasks(User currentUser, int page) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), MY_ACTIVE_TASKS_PAGE_SIZE);
-        Page<Task> result = taskRepository.findActiveByAssignee(currentUser.getId(), INACTIVE_STATUSES, pageable);
+        Instant urgentCutoff = Instant.now().plus(URGENT_DUE_WINDOW);
+        Page<Task> result = taskRepository.findActiveByAssignee(currentUser.getId(), INACTIVE_STATUSES, urgentCutoff, pageable);
         Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(result.getContent().stream().map(Task::getId).toList());
         List<MyActiveTaskResponse> items = result.getContent().stream()
                 .map(t -> MyActiveTaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
@@ -226,7 +234,7 @@ public class TaskService {
     }
 
     private void applyCommonFields(Task task, UUID projectId, String title, String description, UUID assigneeId,
-                                    LocalDate dueDate, UUID tagId) {
+                                    Instant dueDate, UUID tagId) {
         task.setTitle(title);
         task.setDescription(description);
         task.setAssignee(resolveAssignee(projectId, assigneeId));

@@ -8,7 +8,6 @@ import com.pmtracker.project_management_backend.task.TaskUrgency;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.UUID;
 
 public record TaskResponse(
@@ -22,7 +21,7 @@ public record TaskResponse(
         UUID createdBy,
         int position,
         TaskUrgency urgency,
-        LocalDate dueDate,
+        Instant dueDate,
         TagSummary tag,
         BigDecimal totalHoursSpent,
         Instant createdAt,

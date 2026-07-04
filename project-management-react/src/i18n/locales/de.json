@@ -196,7 +196,12 @@
     "myActiveTasks": {
       "loading": "Aufgaben werden geladen...",
       "empty": "Sie haben derzeit keine aktiven Aufgaben",
-      "error": "Ihre aktiven Aufgaben konnten nicht geladen werden"
+      "error": "Ihre aktiven Aufgaben konnten nicht geladen werden",
+      "dueSoon_one": "Noch {{count}} Tag!",
+      "dueSoon_other": "Noch {{count}} Tage!",
+      "dueSoonHours_one": "Noch {{count}} Stunde!",
+      "dueSoonHours_other": "Noch {{count}} Stunden!",
+      "overdue": "Aufgabe überfällig"
     }
   },
   "pagination": {

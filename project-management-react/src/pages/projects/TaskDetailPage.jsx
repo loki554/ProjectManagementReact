@@ -30,6 +30,7 @@ import { downloadBlob } from '../../lib/downloadBlob'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { formatFileSize } from '../../lib/formatFileSize'
 import { tagBadgeStyle } from '../../lib/tagColor'
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/datetimeLocal'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildTaskSchema(t) {
@@ -133,7 +134,7 @@ export function TaskDetailPage() {
           status: task.status,
           assigneeId: task.assignee?.id ?? '',
           urgency: task.urgency,
-          dueDate: task.dueDate ?? '',
+          dueDate: toDatetimeLocalValue(task.dueDate),
           tagId: task.tag?.id ?? '',
         }
       : undefined,
@@ -164,7 +165,7 @@ export function TaskDetailPage() {
       status: values.status,
       assigneeId: values.assigneeId || null,
       urgency: values.urgency,
-      dueDate: values.dueDate || null,
+      dueDate: fromDatetimeLocalValue(values.dueDate),
       tagId: values.tagId || null,
     })
   }
@@ -273,7 +274,7 @@ export function TaskDetailPage() {
                     </select>
                   </Field>
                   <Field label={t('tasks.detail.dueDateLabel')}>
-                    <input type="date" className={inputClass} {...register('dueDate')} />
+                    <input type="datetime-local" className={inputClass} {...register('dueDate')} />
                   </Field>
                   <Field label={t('tasks.detail.tagLabel')}>
                     <select className={inputClass} {...register('tagId')}>
@@ -340,7 +341,14 @@ export function TaskDetailPage() {
                   >
                     {t(`urgency.${task.urgency}`)}
                   </span>
-                  {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString(i18n.language)}</span>}
+                  {task.dueDate && (
+                    <span>
+                      {new Date(task.dueDate).toLocaleString(i18n.language, {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
+                    </span>
+                  )}
                   {task.tag && (
                     <span
                       className="rounded-full px-2 py-0.5 text-xs font-medium"

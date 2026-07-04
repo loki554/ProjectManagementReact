@@ -17,7 +17,6 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -62,7 +61,7 @@ public class Task {
     private TaskUrgency urgency;
 
     @Column(name = "due_date")
-    private LocalDate dueDate;
+    private Instant dueDate;
 
     @ManyToOne
     @JoinColumn(name = "tag_id")
@@ -162,11 +161,11 @@ public class Task {
         this.urgency = urgency;
     }
 
-    public LocalDate getDueDate() {
+    public Instant getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(Instant dueDate) {
         this.dueDate = dueDate;
     }
 

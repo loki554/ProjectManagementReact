@@ -5,7 +5,7 @@ import com.pmtracker.project_management_backend.task.TaskUrgency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 
 public record CreateTaskRequest(
@@ -14,7 +14,7 @@ public record CreateTaskRequest(
         UUID assigneeId,
         TaskStatus status,
         TaskUrgency urgency,
-        LocalDate dueDate,
+        Instant dueDate,
         UUID tagId
 ) {
 }

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 
 public record UpdateTaskRequest(
@@ -15,7 +15,7 @@ public record UpdateTaskRequest(
         @NotNull TaskStatus status,
         UUID assigneeId,
         @NotNull TaskUrgency urgency,
-        LocalDate dueDate,
+        Instant dueDate,
         UUID tagId
 ) {
 }

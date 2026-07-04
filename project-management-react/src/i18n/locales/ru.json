@@ -196,7 +196,16 @@
     "myActiveTasks": {
       "loading": "Загрузка задач...",
       "empty": "У вас пока нет активных задач",
-      "error": "Не удалось загрузить активные задачи"
+      "error": "Не удалось загрузить активные задачи",
+      "dueSoon_one": "Осталось {{count}} день!",
+      "dueSoon_few": "Осталось {{count}} дня!",
+      "dueSoon_many": "Осталось {{count}} дней!",
+      "dueSoon_other": "Осталось {{count}} дней!",
+      "dueSoonHours_one": "Осталось {{count}} час!",
+      "dueSoonHours_few": "Осталось {{count}} часа!",
+      "dueSoonHours_many": "Осталось {{count}} часов!",
+      "dueSoonHours_other": "Осталось {{count}} часов!",
+      "overdue": "Задача просрочена"
     }
   },
   "pagination": {

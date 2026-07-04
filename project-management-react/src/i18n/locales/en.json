@@ -196,7 +196,12 @@
     "myActiveTasks": {
       "loading": "Loading tasks...",
       "empty": "You don't have any active tasks",
-      "error": "Failed to load your active tasks"
+      "error": "Failed to load your active tasks",
+      "dueSoon_one": "{{count}} day left!",
+      "dueSoon_other": "{{count}} days left!",
+      "dueSoonHours_one": "{{count}} hour left!",
+      "dueSoonHours_other": "{{count}} hours left!",
+      "overdue": "Task is overdue"
     }
   },
   "pagination": {

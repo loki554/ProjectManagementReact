@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,12 +65,17 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     /**
      * "Мои активные задачи" (кросс-проектный список для главной страницы): assignee = текущий
-     * пользователь, статус не в excludedStatuses (DONE/REJECTED). Сортировка — urgency по убыванию
-     * важности (CASE, т.к. urgency хранится как VARCHAR, а не native enum — алфавитная сортировка
-     * дала бы неверный порядок), затем due_date по возрастанию (NULL — в конце). join fetch на
-     * project/tag закрывает N+1 для полей ответа (Task.project — ManyToOne без явного FetchType,
-     * но ad-hoc HQL без fetch join всё равно требует отдельного select per row у Hibernate).
-     * Явный countQuery — авто-вывод COUNT из запроса с fetch join не всегда корректен в Spring Data.
+     * пользователь, статус не в excludedStatuses (DONE/REJECTED). Сортировка в три уровня:
+     * 1) задачи с дедлайном внутри urgentCutoff (т.е. просроченные или истекающие в ближайшие
+     *    URGENT_DUE_WINDOW, см. TaskService) поднимаются выше вообще всего, независимо от urgency,
+     *    и внутри этой группы сортируются по due_date (самый горящий срок — первым);
+     * 2) остальные задачи — по urgency по убыванию важности (CASE, т.к. urgency хранится как
+     *    VARCHAR, а не native enum — алфавитная сортировка дала бы неверный порядок);
+     * 3) затем due_date по возрастанию (NULL — в конце) как финальный тай-брейк.
+     * join fetch на project/tag закрывает N+1 для полей ответа (Task.project — ManyToOne без
+     * явного FetchType, но ad-hoc HQL без fetch join всё равно требует отдельного select per row
+     * у Hibernate). Явный countQuery — авто-вывод COUNT из запроса с fetch join не всегда корректен
+     * в Spring Data.
      */
     @Query(value = """
             select t from Task t
@@ -78,6 +84,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             where t.assignee.id = :userId
               and t.status not in :excludedStatuses
             order by
+              case when t.dueDate is not null and t.dueDate <= :urgentCutoff then 0 else 1 end asc,
+              case when t.dueDate is not null and t.dueDate <= :urgentCutoff then t.dueDate end asc,
               case t.urgency
                 when com.pmtracker.project_management_backend.task.TaskUrgency.URGENT then 0
                 when com.pmtracker.project_management_backend.task.TaskUrgency.HIGH then 1
@@ -91,5 +99,5 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             where t.assignee.id = :userId
               and t.status not in :excludedStatuses
             """)
-    Page<Task> findActiveByAssignee(UUID userId, List<TaskStatus> excludedStatuses, Pageable pageable);
+    Page<Task> findActiveByAssignee(UUID userId, List<TaskStatus> excludedStatuses, Instant urgentCutoff, Pageable pageable);
 }
