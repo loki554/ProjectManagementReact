@@ -13,4 +13,18 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, UUID> {
 
     @Query("select coalesce(sum(t.hours), 0) from TimeLog t where t.task.id = :taskId")
     BigDecimal sumHoursByTaskId(UUID taskId);
+
+    // Батч-версия sumHoursByTaskId для списков задач (список проекта, подзадачи, my-active-tasks) —
+    // один запрос на весь список вместо N+1 по отдельному запросу на каждую задачу.
+    @Query("""
+            select tl.task.id as taskId, coalesce(sum(tl.hours), 0) as totalHours
+            from TimeLog tl where tl.task.id in :taskIds group by tl.task.id
+            """)
+    List<TaskHoursTotal> sumHoursByTaskIds(List<UUID> taskIds);
+
+    interface TaskHoursTotal {
+        UUID getTaskId();
+
+        BigDecimal getTotalHours();
+    }
 }

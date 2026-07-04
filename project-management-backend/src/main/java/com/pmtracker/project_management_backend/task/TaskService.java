@@ -1,10 +1,13 @@
 package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
+import com.pmtracker.project_management_backend.common.exception.TagNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.TagProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.TaskStatusConflictException;
 import com.pmtracker.project_management_backend.project.Project;
@@ -12,16 +15,28 @@ import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectMemberRepository;
 import com.pmtracker.project_management_backend.project.ProjectRole;
+import com.pmtracker.project_management_backend.tag.Tag;
+import com.pmtracker.project_management_backend.tag.TagRepository;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
+import com.pmtracker.project_management_backend.task.dto.MyActiveTaskResponse;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskStatusRequest;
+import com.pmtracker.project_management_backend.timelog.TimeLogRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -29,13 +44,19 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final TagRepository tagRepository;
+    private final TimeLogRepository timeLogRepository;
 
     public TaskService(TaskRepository taskRepository,
                         ProjectAccessService projectAccessService,
-                        ProjectMemberRepository projectMemberRepository) {
+                        ProjectMemberRepository projectMemberRepository,
+                        TagRepository tagRepository,
+                        TimeLogRepository timeLogRepository) {
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
+        this.tagRepository = tagRepository;
+        this.timeLogRepository = timeLogRepository;
     }
 
     @Transactional
@@ -47,13 +68,16 @@ public class TaskService {
         Task task = new Task();
         task.setProject(project);
         task.setParentTask(null);
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId());
+        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
+                request.dueDate(), request.tagId());
+        TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
+        task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
         task.setStatus(status);
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 
     @Transactional(readOnly = true)
@@ -71,14 +95,17 @@ public class TaskService {
         } else {
             tasks = taskRepository.findTopLevel(projectId, status, assigneeId);
         }
-        return tasks.stream().map(TaskResponse::from).toList();
+        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(tasks.stream().map(Task::getId).toList());
+        return tasks.stream()
+                .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public TaskResponse getById(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
         projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
     }
 
     @Transactional
@@ -88,10 +115,12 @@ public class TaskService {
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
 
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId());
+        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
+                request.dueDate(), request.tagId());
         task.setStatus(request.status());
+        task.setUrgency(request.urgency());
         taskRepository.save(task);
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
     }
 
     @Transactional
@@ -132,7 +161,7 @@ public class TaskService {
             renumber(newColumn);
         }
 
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
     }
 
     private void renumber(List<Task> orderedColumn) {
@@ -153,8 +182,10 @@ public class TaskService {
     public List<TaskResponse> listSubtasks(User currentUser, UUID parentTaskId) {
         Task parent = findTaskOrThrow(parentTaskId);
         projectAccessService.requireMembership(parent.getProject().getId(), currentUser);
-        return taskRepository.findByParentTaskIdOrderByPositionAsc(parentTaskId).stream()
-                .map(TaskResponse::from)
+        List<Task> subtasks = taskRepository.findByParentTaskIdOrderByPositionAsc(parentTaskId);
+        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(subtasks.stream().map(Task::getId).toList());
+        return subtasks.stream()
+                .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
                 .toList();
     }
 
@@ -168,19 +199,39 @@ public class TaskService {
         Task task = new Task();
         task.setProject(parent.getProject());
         task.setParentTask(parent);
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId());
+        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
+                request.dueDate(), request.tagId());
+        TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
+        task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
         task.setStatus(status);
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
-        return TaskResponse.from(task);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 
-    private void applyCommonFields(Task task, UUID projectId, String title, String description, UUID assigneeId) {
+    private static final int MY_ACTIVE_TASKS_PAGE_SIZE = 8;
+    private static final List<TaskStatus> INACTIVE_STATUSES = List.of(TaskStatus.DONE, TaskStatus.REJECTED);
+
+    @Transactional(readOnly = true)
+    public PageResponse<MyActiveTaskResponse> listMyActiveTasks(User currentUser, int page) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), MY_ACTIVE_TASKS_PAGE_SIZE);
+        Page<Task> result = taskRepository.findActiveByAssignee(currentUser.getId(), INACTIVE_STATUSES, pageable);
+        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(result.getContent().stream().map(Task::getId).toList());
+        List<MyActiveTaskResponse> items = result.getContent().stream()
+                .map(t -> MyActiveTaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
+                .toList();
+        return PageResponse.from(new PageImpl<>(items, pageable, result.getTotalElements()));
+    }
+
+    private void applyCommonFields(Task task, UUID projectId, String title, String description, UUID assigneeId,
+                                    LocalDate dueDate, UUID tagId) {
         task.setTitle(title);
         task.setDescription(description);
         task.setAssignee(resolveAssignee(projectId, assigneeId));
+        task.setDueDate(dueDate);
+        task.setTag(resolveTag(projectId, tagId));
     }
 
     private Task findTaskOrThrow(UUID taskId) {
@@ -198,5 +249,25 @@ public class TaskService {
         ProjectMember assigneeMembership = projectMemberRepository.findByProjectIdAndUserId(projectId, assigneeId)
                 .orElseThrow(AssigneeNotProjectMemberException::new);
         return assigneeMembership.getUser();
+    }
+
+    private Tag resolveTag(UUID projectId, UUID tagId) {
+        if (tagId == null) {
+            return null;
+        }
+        Tag tag = tagRepository.findById(tagId).orElseThrow(TagNotFoundException::new);
+        if (!tag.getProject().getId().equals(projectId)) {
+            throw new TagProjectMismatchException();
+        }
+        return tag;
+    }
+
+    private Map<UUID, BigDecimal> loadHoursTotals(List<UUID> taskIds) {
+        if (taskIds.isEmpty()) {
+            return Map.of();
+        }
+        return timeLogRepository.sumHoursByTaskIds(taskIds).stream()
+                .collect(Collectors.toMap(TimeLogRepository.TaskHoursTotal::getTaskId,
+                        TimeLogRepository.TaskHoursTotal::getTotalHours));
     }
 }

@@ -23,6 +23,21 @@ export function taskStatusBadgeClass(status) {
   return TASK_STATUS_BADGE_CLASSES[status] ?? TASK_STATUS_BADGE_CLASSES.NEW
 }
 
+// Фиксированный набор уровней срочности — зеркало TaskUrgency на бэкенде
+// (task/TaskUrgency.java). Порядок — по возрастанию важности (для рендера select-опций).
+export const TASK_URGENCIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
+
+const TASK_URGENCY_BADGE_CLASSES = {
+  LOW: 'bg-gray-100 text-gray-700',
+  MEDIUM: 'bg-blue-100 text-blue-700',
+  HIGH: 'bg-amber-100 text-amber-700',
+  URGENT: 'bg-red-100 text-red-700',
+}
+
+export function taskUrgencyBadgeClass(urgency) {
+  return TASK_URGENCY_BADGE_CLASSES[urgency] ?? TASK_URGENCY_BADGE_CLASSES.MEDIUM
+}
+
 // Клиентская подсказка для <input accept>, зеркало whitelist на бэкенде
 // (attachment/AttachmentService.java, ALLOWED_CONTENT_TYPES) — окончательную проверку
 // всё равно делает сервер, это только UX (не открывать системный файловый диалог на

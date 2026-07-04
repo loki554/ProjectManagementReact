@@ -166,6 +166,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("NOT_ATTACHMENT_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(TagNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTagNotFound(TagNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("TAG_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateTagNameException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateTagName(DuplicateTagNameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_TAG_NAME", ex.getMessage()));
+    }
+
+    @ExceptionHandler(TagProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTagProjectMismatch(TagProjectMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("TAG_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
     // Единая точка форматирования для ВСЕХ исключений, которые сама MVC резолвит через
     // ResponseEntityExceptionHandler (битый JSON, MethodArgumentTypeMismatchException на
     // /api/tasks/{id} с невалидным UUID, HttpRequestMethodNotSupportedException, а начиная

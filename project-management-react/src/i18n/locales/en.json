@@ -87,6 +87,30 @@
     "MEMBER": "Member",
     "VIEWER": "Viewer"
   },
+  "urgency": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "URGENT": "Urgent"
+  },
+  "tags": {
+    "navLabel": "Tags",
+    "title": "Tags of \"{{project}}\"",
+    "name": "Name",
+    "color": "Color",
+    "create": "Create tag",
+    "creating": "Creating...",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this tag? It will be removed from any tasks using it.",
+    "empty": "No tags yet",
+    "loading": "Loading tags...",
+    "validation": {
+      "invalidColor": "Enter a valid color"
+    }
+  },
   "tasks": {
     "title": "Tasks in \"{{project}}\"",
     "newTaskLabel": "New task",
@@ -96,6 +120,7 @@
     "loading": "Loading tasks...",
     "columnEmpty": "No tasks",
     "unassigned": "Unassigned",
+    "noTag": "No tag",
     "status": {
       "NEW": "New",
       "IN_PROGRESS": "In progress",
@@ -111,6 +136,9 @@
       "titleLabel": "Title",
       "statusLabel": "Status",
       "assigneeLabel": "Assignee",
+      "urgencyLabel": "Urgency",
+      "dueDateLabel": "Due date",
+      "tagLabel": "Tag",
       "descriptionLabel": "Description",
       "noDescription": "No description",
       "save": "Save",
@@ -162,6 +190,19 @@
       "closePreview": "Close"
     }
   },
+  "home": {
+    "myActiveTasksTitle": "My active tasks",
+    "myActiveTasks": {
+      "loading": "Loading tasks...",
+      "empty": "You don't have any active tasks",
+      "error": "Failed to load your active tasks"
+    }
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {{page}} of {{total}}"
+  },
   "profile": {
     "title": "Profile",
     "backToDashboard": "← Back",
@@ -202,6 +243,9 @@
     "NOT_TIME_LOG_OWNER": "Only the author or a project admin can delete this entry",
     "ATTACHMENT_NOT_FOUND": "Attachment not found",
     "NOT_ATTACHMENT_OWNER": "Only the uploader or a project admin can delete this attachment",
+    "TAG_NOT_FOUND": "Tag not found",
+    "DUPLICATE_TAG_NAME": "A tag with this name already exists in this project",
+    "TAG_PROJECT_MISMATCH": "This tag belongs to a different project",
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again"
   }

@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.project.Project;
+import com.pmtracker.project_management_backend.tag.Tag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +17,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -54,6 +56,17 @@ public class Task {
 
     @Column(nullable = false)
     private int position;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TaskUrgency urgency;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @ManyToOne
+    @JoinColumn(name = "tag_id")
+    private Tag tag;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -139,6 +152,30 @@ public class Task {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public TaskUrgency getUrgency() {
+        return urgency;
+    }
+
+    public void setUrgency(TaskUrgency urgency) {
+        this.urgency = urgency;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public Tag getTag() {
+        return tag;
+    }
+
+    public void setTag(Tag tag) {
+        this.tag = tag;
     }
 
     public Instant getCreatedAt() {

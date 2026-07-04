@@ -1,10 +1,14 @@
 package com.pmtracker.project_management_backend.task.dto;
 
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.tag.dto.TagSummary;
 import com.pmtracker.project_management_backend.task.Task;
 import com.pmtracker.project_management_backend.task.TaskStatus;
+import com.pmtracker.project_management_backend.task.TaskUrgency;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record TaskResponse(
@@ -17,10 +21,14 @@ public record TaskResponse(
         UserSummary assignee,
         UUID createdBy,
         int position,
+        TaskUrgency urgency,
+        LocalDate dueDate,
+        TagSummary tag,
+        BigDecimal totalHoursSpent,
         Instant createdAt,
         Instant updatedAt
 ) {
-    public static TaskResponse from(Task task) {
+    public static TaskResponse from(Task task, BigDecimal totalHoursSpent) {
         return new TaskResponse(
                 task.getId(),
                 task.getProject().getId(),
@@ -31,6 +39,10 @@ public record TaskResponse(
                 task.getAssignee() != null ? UserSummary.from(task.getAssignee()) : null,
                 task.getCreatedBy().getId(),
                 task.getPosition(),
+                task.getUrgency(),
+                task.getDueDate(),
+                task.getTag() != null ? TagSummary.from(task.getTag()) : null,
+                totalHoursSpent,
                 task.getCreatedAt(),
                 task.getUpdatedAt()
         );

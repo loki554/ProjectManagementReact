@@ -62,7 +62,14 @@ export function ProjectMembersPage() {
           {t('projects.backToProject')}
         </Link>
 
-        <h1 className="mt-4 mb-6 text-2xl font-semibold text-gray-900">
+        <div className="mt-4 mb-6 flex items-center gap-4 text-sm">
+          <span className="font-medium text-purple-700">{t('projects.members')}</span>
+          <Link to={`/projects/${projectId}/settings/tags`} className="text-gray-500 hover:text-purple-700">
+            {t('tags.navLabel')}
+          </Link>
+        </div>
+
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900">
           {t('members.title', { project: project?.name ?? '' })}
         </h1>
 

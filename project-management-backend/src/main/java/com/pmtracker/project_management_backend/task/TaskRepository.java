@@ -1,5 +1,7 @@
 package com.pmtracker.project_management_backend.task;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -59,4 +61,35 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Modifying
     @Query("delete from Task t where t.id = :id")
     void deleteById(UUID id);
+
+    /**
+     * "Мои активные задачи" (кросс-проектный список для главной страницы): assignee = текущий
+     * пользователь, статус не в excludedStatuses (DONE/REJECTED). Сортировка — urgency по убыванию
+     * важности (CASE, т.к. urgency хранится как VARCHAR, а не native enum — алфавитная сортировка
+     * дала бы неверный порядок), затем due_date по возрастанию (NULL — в конце). join fetch на
+     * project/tag закрывает N+1 для полей ответа (Task.project — ManyToOne без явного FetchType,
+     * но ad-hoc HQL без fetch join всё равно требует отдельного select per row у Hibernate).
+     * Явный countQuery — авто-вывод COUNT из запроса с fetch join не всегда корректен в Spring Data.
+     */
+    @Query(value = """
+            select t from Task t
+            join fetch t.project
+            left join fetch t.tag
+            where t.assignee.id = :userId
+              and t.status not in :excludedStatuses
+            order by
+              case t.urgency
+                when com.pmtracker.project_management_backend.task.TaskUrgency.URGENT then 0
+                when com.pmtracker.project_management_backend.task.TaskUrgency.HIGH then 1
+                when com.pmtracker.project_management_backend.task.TaskUrgency.MEDIUM then 2
+                else 3
+              end asc,
+              t.dueDate asc nulls last
+            """,
+            countQuery = """
+            select count(t) from Task t
+            where t.assignee.id = :userId
+              and t.status not in :excludedStatuses
+            """)
+    Page<Task> findActiveByAssignee(UUID userId, List<TaskStatus> excludedStatuses, Pageable pageable);
 }

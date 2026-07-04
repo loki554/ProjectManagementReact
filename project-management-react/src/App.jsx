@@ -11,6 +11,7 @@ import { NewProjectPage } from './pages/projects/NewProjectPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectRedirectPage } from './pages/projects/ProjectRedirectPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
+import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
 import { TaskDetailPage } from './pages/projects/TaskDetailPage'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
@@ -83,6 +84,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ProjectMembersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/settings/tags"
+          element={
+            <ProtectedRoute>
+              <ProjectTagsPage />
             </ProtectedRoute>
           }
         />

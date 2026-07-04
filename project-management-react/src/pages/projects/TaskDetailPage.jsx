@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { downloadAttachment } from '../../api/attachmentsApi'
 import { useAttachments, useDeleteAttachment, useUploadAttachment } from '../../api/attachmentsQueries'
 import { useProjectMembers } from '../../api/projectsQueries'
+import { useTags } from '../../api/tagsQueries'
 import { useCreateSubtask, useDeleteTask, useSubtasks, useTask, useUpdateTask } from '../../api/tasksQueries'
 import { useCreateTimeLog, useDeleteTimeLog, useTimeLogs } from '../../api/timeLogsQueries'
 import { AttachmentDropzone } from '../../components/attachments/AttachmentDropzone'
@@ -17,10 +18,18 @@ import { AppHeader } from '../../components/layout/AppHeader'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
-import { ATTACHMENT_ACCEPT, TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import {
+  ATTACHMENT_ACCEPT,
+  TASK_STATUSES,
+  TASK_URGENCIES,
+  roleIsAtLeast,
+  taskStatusBadgeClass,
+  taskUrgencyBadgeClass,
+} from '../../lib/constants'
 import { downloadBlob } from '../../lib/downloadBlob'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { formatFileSize } from '../../lib/formatFileSize'
+import { tagBadgeStyle } from '../../lib/tagColor'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildTaskSchema(t) {
@@ -29,6 +38,9 @@ function buildTaskSchema(t) {
     description: z.string().optional(),
     status: z.enum(TASK_STATUSES),
     assigneeId: z.string().optional(),
+    urgency: z.enum(TASK_URGENCIES),
+    dueDate: z.string().optional(),
+    tagId: z.string().optional(),
   })
 }
 
@@ -62,6 +74,7 @@ export function TaskDetailPage() {
 
   const { data: task, isLoading, isError, error } = useTask(taskId)
   const { data: members } = useProjectMembers(projectId)
+  const { data: tags } = useTags(projectId)
   const {
     data: subtasks,
     isLoading: subtasksLoading,
@@ -119,6 +132,9 @@ export function TaskDetailPage() {
           description: task.description ?? '',
           status: task.status,
           assigneeId: task.assignee?.id ?? '',
+          urgency: task.urgency,
+          dueDate: task.dueDate ?? '',
+          tagId: task.tag?.id ?? '',
         }
       : undefined,
   })
@@ -147,6 +163,9 @@ export function TaskDetailPage() {
       description: values.description || null,
       status: values.status,
       assigneeId: values.assigneeId || null,
+      urgency: values.urgency,
+      dueDate: values.dueDate || null,
+      tagId: values.tagId || null,
     })
   }
 
@@ -243,6 +262,31 @@ export function TaskDetailPage() {
                   </Field>
                 </div>
 
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Field label={t('tasks.detail.urgencyLabel')}>
+                    <select className={inputClass} {...register('urgency')}>
+                      {TASK_URGENCIES.map((urgency) => (
+                        <option key={urgency} value={urgency}>
+                          {t(`urgency.${urgency}`)}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label={t('tasks.detail.dueDateLabel')}>
+                    <input type="date" className={inputClass} {...register('dueDate')} />
+                  </Field>
+                  <Field label={t('tasks.detail.tagLabel')}>
+                    <select className={inputClass} {...register('tagId')}>
+                      <option value="">{t('tasks.noTag')}</option>
+                      {tags?.map((tag) => (
+                        <option key={tag.id} value={tag.id}>
+                          {tag.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
                 <Controller
                   name="description"
                   control={control}
@@ -291,6 +335,20 @@ export function TaskDetailPage() {
                       ? `${task.assignee.lastName} ${task.assignee.firstName}`
                       : t('tasks.unassigned')}
                   </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskUrgencyBadgeClass(task.urgency)}`}
+                  >
+                    {t(`urgency.${task.urgency}`)}
+                  </span>
+                  {task.dueDate && <span>{new Date(task.dueDate).toLocaleDateString(i18n.language)}</span>}
+                  {task.tag && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={tagBadgeStyle(task.tag.color)}
+                    >
+                      {task.tag.name}
+                    </span>
+                  )}
                 </div>
                 {task.description ? (
                   <MarkdownRenderer>{task.description}</MarkdownRenderer>

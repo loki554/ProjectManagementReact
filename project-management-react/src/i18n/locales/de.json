@@ -87,6 +87,30 @@
     "MEMBER": "Mitglied",
     "VIEWER": "Betrachter"
   },
+  "urgency": {
+    "LOW": "Niedrig",
+    "MEDIUM": "Mittel",
+    "HIGH": "Hoch",
+    "URGENT": "Dringend"
+  },
+  "tags": {
+    "navLabel": "Tags",
+    "title": "Tags von „{{project}}“",
+    "name": "Name",
+    "color": "Farbe",
+    "create": "Tag erstellen",
+    "creating": "Wird erstellt...",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleteConfirm": "Diesen Tag löschen? Er wird von allen Aufgaben entfernt, die ihn verwenden.",
+    "empty": "Noch keine Tags",
+    "loading": "Tags werden geladen...",
+    "validation": {
+      "invalidColor": "Geben Sie eine gültige Farbe ein"
+    }
+  },
   "tasks": {
     "title": "Aufgaben von „{{project}}“",
     "newTaskLabel": "Neue Aufgabe",
@@ -96,6 +120,7 @@
     "loading": "Aufgaben werden geladen...",
     "columnEmpty": "Keine Aufgaben",
     "unassigned": "Nicht zugewiesen",
+    "noTag": "Kein Tag",
     "status": {
       "NEW": "Neu",
       "IN_PROGRESS": "In Bearbeitung",
@@ -111,6 +136,9 @@
       "titleLabel": "Titel",
       "statusLabel": "Status",
       "assigneeLabel": "Zuständig",
+      "urgencyLabel": "Dringlichkeit",
+      "dueDateLabel": "Fälligkeitsdatum",
+      "tagLabel": "Tag",
       "descriptionLabel": "Beschreibung",
       "noDescription": "Keine Beschreibung",
       "save": "Speichern",
@@ -162,6 +190,19 @@
       "closePreview": "Schließen"
     }
   },
+  "home": {
+    "myActiveTasksTitle": "Meine aktiven Aufgaben",
+    "myActiveTasks": {
+      "loading": "Aufgaben werden geladen...",
+      "empty": "Sie haben derzeit keine aktiven Aufgaben",
+      "error": "Ihre aktiven Aufgaben konnten nicht geladen werden"
+    }
+  },
+  "pagination": {
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pageInfo": "Seite {{page}} von {{total}}"
+  },
   "profile": {
     "title": "Profil",
     "backToDashboard": "← Zurück",
@@ -202,6 +243,9 @@
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
     "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",
     "NOT_ATTACHMENT_OWNER": "Nur die hochladende Person oder ein Projekt-Administrator kann diesen Anhang löschen",
+    "TAG_NOT_FOUND": "Tag nicht gefunden",
+    "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",
+    "TAG_PROJECT_MISMATCH": "Dieser Tag gehört zu einem anderen Projekt",
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
