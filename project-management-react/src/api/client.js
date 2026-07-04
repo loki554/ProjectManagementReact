@@ -1,5 +1,7 @@
 import axios from 'axios'
+import i18n from '../i18n'
 import { useAuthStore } from '../stores/authStore'
+import { useToastStore } from '../stores/toastStore'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
@@ -54,8 +56,15 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const { refreshToken, setSession, clearSession } = useAuthStore.getState()
+    const { accessToken, refreshToken, setSession, clearSession } = useAuthStore.getState()
     if (!refreshToken) {
+      // accessToken ещё есть — значит для приложения (и пользователя) это первый сигнал,
+      // что сессия невалидна, стоит объяснить, почему он вот-вот окажется на /login.
+      // Если accessToken уже null, это повторный 401 после того, как сессию уже сбросили
+      // (например, параллельный запрос) — тост уже был показан, не дублируем.
+      if (accessToken) {
+        notifySessionExpired()
+      }
       clearSession()
       return Promise.reject(error)
     }
@@ -75,8 +84,15 @@ apiClient.interceptors.response.use(
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
       return apiClient(originalRequest)
     } catch (refreshError) {
+      if (useAuthStore.getState().accessToken) {
+        notifySessionExpired()
+      }
       clearSession()
       return Promise.reject(refreshError)
     }
   },
 )
+
+function notifySessionExpired() {
+  useToastStore.getState().pushToast(i18n.t('app.sessionExpired'), 'error')
+}

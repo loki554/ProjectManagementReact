@@ -1,7 +1,8 @@
 {
   "app": {
     "loading": "Wird geladen...",
-    "name": "PM Tracker"
+    "name": "PM Tracker",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen, bitte melden Sie sich erneut an"
   },
   "header": {
     "profile": "Profil",
@@ -201,6 +202,7 @@
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
     "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",
     "NOT_ATTACHMENT_OWNER": "Nur die hochladende Person oder ein Projekt-Administrator kann diesen Anhang löschen",
+    "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
   }
 }

@@ -1,7 +1,8 @@
 {
   "app": {
     "loading": "Loading...",
-    "name": "PM Tracker"
+    "name": "PM Tracker",
+    "sessionExpired": "Your session has expired, please sign in again"
   },
   "header": {
     "profile": "Profile",
@@ -201,6 +202,7 @@
     "NOT_TIME_LOG_OWNER": "Only the author or a project admin can delete this entry",
     "ATTACHMENT_NOT_FOUND": "Attachment not found",
     "NOT_ATTACHMENT_OWNER": "Only the uploader or a project admin can delete this attachment",
+    "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again"
   }
 }

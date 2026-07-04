@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ToastContainer } from './components/ui/ToastContainer'
 import { ProfilePage } from './pages/ProfilePage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
@@ -21,18 +22,21 @@ function App() {
   // ещё до того, как токен реально обновится.
   const bootstrapped = useAuthBootstrap()
 
-  if (!bootstrapped) {
-    return (
-      <div className="flex min-h-svh items-center justify-center text-gray-500">
-        {t('app.loading')}
-      </div>
-    )
-  }
-
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <>
+      {/* Вне BrowserRouter/условного рендера ниже — тост про "сессия истекла" может
+          прилететь ещё во время useAuthBootstrap, до того как маршруты вообще смонтированы. */}
+      <ToastContainer />
+      {!bootstrapped ? (
+        <div className="flex min-h-svh items-center justify-center text-gray-500">
+          {t('app.loading')}
+        </div>
+      ) : (
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      )}
+    </>
   )
 }
 

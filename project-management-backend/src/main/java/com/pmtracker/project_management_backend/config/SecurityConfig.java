@@ -79,6 +79,15 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        // Без этого Boot форвардит ЛЮБОЕ необработанное исключение (даже уже
+                        // корректно разрешённое в 400 через DefaultHandlerExceptionResolver,
+                        // например HttpMessageNotReadableException на публичном /api/auth/login)
+                        // на /error, а этот forward заново проходит через security filter chain.
+                        // Т.к. /error не был в permitAll, анонимный forward ловил
+                        // .anyRequest().authenticated() и подменял настоящий статус/тело ответа
+                        // на 401 UNAUTHENTICATED — даже для уже аутентифицированных запросов
+                        // (см. Phase 8, найдено при аудите единого обработчика ошибок).
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))
