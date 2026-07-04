@@ -49,4 +49,13 @@ public class ProjectTaskController {
                                                      @RequestParam(required = false) UUID parentId) {
         return ResponseEntity.ok(taskService.list(currentUser, projectId, status, assigneeId, parentId));
     }
+
+    @GetMapping("/by-number/{taskNumber}")
+    @Operation(summary = "Детали задачи по её порядковому номеру в проекте",
+            description = "Используется фронтендом для читаемых URL (/projects/{slug}/tasks/{taskNumber})")
+    public ResponseEntity<TaskResponse> getByNumber(@AuthenticationPrincipal User currentUser,
+                                                      @PathVariable UUID projectId,
+                                                      @PathVariable int taskNumber) {
+        return ResponseEntity.ok(taskService.getByProjectAndNumber(currentUser, projectId, taskNumber));
+    }
 }

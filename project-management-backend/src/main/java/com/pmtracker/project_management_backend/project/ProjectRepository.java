@@ -5,9 +5,14 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
+
+    Optional<Project> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
 
     /**
      * Атомарно резервирует следующий порядковый номер задачи (#1, #2, ...) для проекта:

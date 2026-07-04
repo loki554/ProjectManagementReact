@@ -20,6 +20,16 @@ export function useProject(projectId) {
   })
 }
 
+// Разрешает slug (или, для обратной совместимости, сырой UUID) из URL в полный проект —
+// используется страницами, зашедшими по читаемому пути /projects/:projectSlug/...
+export function useProjectBySlug(slug) {
+  return useQuery({
+    queryKey: ['projects', 'by-slug', slug],
+    queryFn: () => projectsApi.fetchProjectBySlug(slug),
+    enabled: Boolean(slug),
+  })
+}
+
 export function useCreateProject() {
   const queryClient = useQueryClient()
   return useMutation({

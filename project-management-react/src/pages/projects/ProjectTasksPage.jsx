@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useCreateTask, useTasks, useUpdateTaskStatus } from '../../api/tasksQueries'
-import { useProject, useProjectMembers } from '../../api/projectsQueries'
+import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -118,7 +118,7 @@ function KanbanColumn({ status, tasks, disabled, onOpenTask, t }) {
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
           {tasks.length === 0 && <p className="px-1 py-2 text-xs text-gray-400">{t('tasks.columnEmpty')}</p>}
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} disabled={disabled} onOpen={() => onOpenTask(task.id)} />
+            <TaskCard key={task.id} task={task} disabled={disabled} onOpen={() => onOpenTask(task.taskNumber)} />
           ))}
         </SortableContext>
       </div>
@@ -128,12 +128,13 @@ function KanbanColumn({ status, tasks, disabled, onOpenTask, t }) {
 
 export function ProjectTasksPage() {
   const { t, i18n } = useTranslation()
-  const { projectId } = useParams()
+  const { projectSlug } = useParams()
   const navigate = useNavigate()
   const currentUser = useAuthStore((state) => state.user)
   const [activeTaskId, setActiveTaskId] = useState(null)
 
-  const { data: project } = useProject(projectId)
+  const { data: project } = useProjectBySlug(projectSlug)
+  const projectId = project?.id
   const { data: members } = useProjectMembers(projectId)
   const { data: tasks, isLoading, isError, error } = useTasks(projectId)
   const createTask = useCreateTask(projectId)
@@ -209,7 +210,7 @@ export function ProjectTasksPage() {
             {t('tasks.title', { project: project?.name ?? '' })}
           </h1>
           <Link
-            to={`/projects/${projectId}/settings/members`}
+            to={`/projects/${projectSlug}/settings/members`}
             className="text-sm text-purple-600 hover:underline"
           >
             {t('projects.members')}
@@ -262,7 +263,7 @@ export function ProjectTasksPage() {
                   status={status}
                   tasks={tasksByStatus[status]}
                   disabled={!canManage}
-                  onOpenTask={(taskId) => navigate(`/projects/${projectId}/tasks/${taskId}`)}
+                  onOpenTask={(taskNumber) => navigate(`/projects/${projectSlug}/tasks/${taskNumber}`)}
                   t={t}
                 />
               ))}

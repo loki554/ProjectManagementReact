@@ -26,6 +26,11 @@ public class Project {
     @Column(nullable = false)
     private String name;
 
+    // Генерируется один раз при создании (ProjectService.create) и не меняется при
+    // переименовании проекта — см. комментарий в V9__project_slug.sql.
+    @Column(nullable = false, unique = true, updatable = false)
+    private String slug;
+
     @Column(columnDefinition = "text")
     private String description;
 
@@ -67,6 +72,14 @@ public class Project {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 
     public String getDescription() {

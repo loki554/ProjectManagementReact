@@ -52,6 +52,14 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getById(currentUser, id));
     }
 
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Детали проекта по человекочитаемому slug",
+            description = "Используется фронтендом для читаемых URL (/projects/{slug}/...). "
+                    + "Для обратной совместимости со старыми ссылками также принимает сырой UUID проекта.")
+    public ResponseEntity<ProjectResponse> getBySlug(@AuthenticationPrincipal User currentUser, @PathVariable String slug) {
+        return ResponseEntity.ok(projectService.getBySlugOrId(currentUser, slug));
+    }
+
     @PatchMapping("/{id}")
     @Operation(summary = "Редактировать проект", description = "Только OWNER (см. таблицу ролей): name/description/archived")
     public ResponseEntity<ProjectResponse> update(@AuthenticationPrincipal User currentUser,

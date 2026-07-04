@@ -80,7 +80,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/projects/:projectId/settings/members"
+          path="/projects/:projectSlug/settings/members"
           element={
             <ProtectedRoute>
               <ProjectMembersPage />
@@ -88,7 +88,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/projects/:projectId/settings/tags"
+          path="/projects/:projectSlug/settings/tags"
           element={
             <ProtectedRoute>
               <ProjectTagsPage />
@@ -96,7 +96,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/projects/:projectId/board"
+          path="/projects/:projectSlug/board"
           element={
             <ProtectedRoute>
               <ProjectTasksPage />
@@ -104,7 +104,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/projects/:projectId/tasks/:taskId"
+          path="/projects/:projectSlug/tasks/:taskNumber"
           element={
             <ProtectedRoute>
               <TaskDetailPage />
@@ -112,7 +112,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/projects/:projectId"
+          path="/projects/:projectSlug"
           element={
             <ProtectedRoute>
               <ProjectRedirectPage />

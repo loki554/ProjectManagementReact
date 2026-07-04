@@ -114,6 +114,18 @@ public class TaskService {
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
     }
 
+    // Для читаемых URL (/projects/{slug}/tasks/{taskNumber}, см. taskNumber в Task.java) —
+    // номер уникален только в пределах проекта, поэтому в отличие от getById проекту нужно
+    // передавать явно.
+    @Transactional(readOnly = true)
+    public TaskResponse getByProjectAndNumber(User currentUser, UUID projectId, int taskNumber) {
+        projectAccessService.findProjectOrThrow(projectId);
+        projectAccessService.requireMembership(projectId, currentUser);
+        Task task = taskRepository.findByProjectIdAndTaskNumber(projectId, taskNumber)
+                .orElseThrow(TaskNotFoundException::new);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
+    }
+
     @Transactional
     public TaskResponse update(User currentUser, UUID taskId, UpdateTaskRequest request) {
         Task task = findTaskOrThrow(taskId);

@@ -70,7 +70,10 @@
     "description": "Beschreibung (optional)",
     "create": "Erstellen",
     "creating": "Wird erstellt...",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "validation": {
+      "nameLatinOnly": "Der Name darf nur lateinische Buchstaben, Ziffern und übliche Satzzeichen enthalten"
+    }
   },
   "members": {
     "title": "Mitglieder von „{{project}}“",
@@ -234,6 +237,8 @@
     "INVALID_FILE": "Ungültige Datei",
     "NOT_FOUND": "Nicht gefunden",
     "PROJECT_NOT_FOUND": "Projekt nicht gefunden",
+    "PROJECT_NAME_ALREADY_EXISTS": "Ein Projekt mit diesem Namen existiert bereits",
+    "PROJECT_NAME_INVALID": "Der Name muss mindestens einen Buchstaben oder eine Ziffer enthalten",
     "NOT_A_PROJECT_MEMBER": "Sie sind kein Mitglied dieses Projekts",
     "INSUFFICIENT_ROLE": "Sie haben keine Berechtigung für diese Aktion",
     "USER_NOT_FOUND_FOR_INVITE": "Kein registrierter Benutzer mit dieser E-Mail-Adresse",

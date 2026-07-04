@@ -6,7 +6,7 @@ export function ProjectCard({ project }) {
 
   return (
     <li className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <Link to={`/projects/${project.id}`} className="block">
+      <Link to={`/projects/${project.slug}`} className="block">
         <h2 className="font-medium text-gray-900">{project.name}</h2>
         {project.description && (
           <p className="mt-1 line-clamp-2 text-sm text-gray-600">{project.description}</p>
@@ -18,13 +18,13 @@ export function ProjectCard({ project }) {
         </span>
         <div className="flex items-center gap-3">
           <Link
-            to={`/projects/${project.id}/settings/tags`}
+            to={`/projects/${project.slug}/settings/tags`}
             className="text-xs text-purple-600 hover:underline"
           >
             {t('tags.navLabel')}
           </Link>
           <Link
-            to={`/projects/${project.id}/settings/members`}
+            to={`/projects/${project.slug}/settings/members`}
             className="text-xs text-purple-600 hover:underline"
           >
             {t('projects.members')}

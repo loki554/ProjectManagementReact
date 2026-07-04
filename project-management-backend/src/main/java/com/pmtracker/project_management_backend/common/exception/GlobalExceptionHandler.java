@@ -76,6 +76,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("PROJECT_NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(ProjectNameAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleProjectNameAlreadyExists(ProjectNameAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("PROJECT_NAME_ALREADY_EXISTS", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidProjectNameException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidProjectName(InvalidProjectNameException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("PROJECT_NAME_INVALID", ex.getMessage()));
+    }
+
     @ExceptionHandler(NotProjectMemberException.class)
     public ResponseEntity<ErrorResponse> handleNotProjectMember(NotProjectMemberException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

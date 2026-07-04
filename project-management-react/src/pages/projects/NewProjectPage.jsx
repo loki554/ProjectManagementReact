@@ -11,7 +11,13 @@ import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 
 function buildSchema(t) {
   return z.object({
-    name: z.string().min(1, t('auth.validation.required')).max(255),
+    // Только печатаемая латиница/ASCII — имя используется для генерации slug в URL
+    // (/projects/{slug}/...), зеркалирует @Pattern на CreateProjectRequest (бэкенд).
+    name: z
+      .string()
+      .min(1, t('auth.validation.required'))
+      .max(255)
+      .regex(/^[\x20-\x7E]+$/, t('projects.validation.nameLatinOnly')),
     description: z.string().optional(),
   })
 }
@@ -31,7 +37,7 @@ export function NewProjectPage() {
 
   function onSubmit(values) {
     createProject.mutate(values, {
-      onSuccess: (project) => navigate(`/projects/${project.id}`),
+      onSuccess: (project) => navigate(`/projects/${project.slug}`),
     })
   }
 

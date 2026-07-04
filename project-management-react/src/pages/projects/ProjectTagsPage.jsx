@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { z } from 'zod'
-import { useProject, useProjectMembers } from '../../api/projectsQueries'
+import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '../../api/tagsQueries'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
@@ -23,10 +23,11 @@ function buildTagSchema(t) {
 
 export function ProjectTagsPage() {
   const { t, i18n } = useTranslation()
-  const { projectId } = useParams()
+  const { projectSlug } = useParams()
   const currentUser = useAuthStore((state) => state.user)
 
-  const { data: project } = useProject(projectId)
+  const { data: project } = useProjectBySlug(projectSlug)
+  const projectId = project?.id
   const { data: members } = useProjectMembers(projectId)
   const { data: tags, isLoading, isError, error } = useTags(projectId)
   const createTag = useCreateTag(projectId)
@@ -82,12 +83,12 @@ export function ProjectTagsPage() {
       <AppHeader />
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Link to={`/projects/${projectId}`} className="text-sm text-purple-600 hover:underline">
+        <Link to={`/projects/${projectSlug}`} className="text-sm text-purple-600 hover:underline">
           {t('projects.backToProject')}
         </Link>
 
         <div className="mt-4 mb-6 flex items-center gap-4 text-sm">
-          <Link to={`/projects/${projectId}/settings/members`} className="text-gray-500 hover:text-purple-700">
+          <Link to={`/projects/${projectSlug}/settings/members`} className="text-gray-500 hover:text-purple-700">
             {t('projects.members')}
           </Link>
           <span className="font-medium text-purple-700">{t('tags.navLabel')}</span>
@@ -131,7 +132,7 @@ export function ProjectTagsPage() {
         {isLoading && <p className="text-gray-500">{t('tags.loading')}</p>}
         {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
 
-        {!isLoading && !isError && (
+        {!isLoading && !isError && tags && (
           <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
             {tags.length === 0 && <li className="px-4 py-3 text-sm text-gray-400">{t('tags.empty')}</li>}
             {tags.map((tag) =>

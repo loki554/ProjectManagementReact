@@ -6,8 +6,10 @@ export function fetchTasks(projectId, filters = {}) {
     .then((res) => res.data)
 }
 
-export function fetchTask(taskId) {
-  return apiClient.get(`/tasks/${taskId}`).then((res) => res.data)
+// taskNumber — порядковый номер задачи внутри проекта (#1, #2, ...), используется в читаемых
+// URL (/projects/:projectSlug/tasks/:taskNumber) вместо UUID задачи.
+export function fetchTaskByNumber(projectId, taskNumber) {
+  return apiClient.get(`/projects/${projectId}/tasks/by-number/${taskNumber}`).then((res) => res.data)
 }
 
 export function createTask(projectId, payload) {

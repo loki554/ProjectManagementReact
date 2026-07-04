@@ -7,9 +7,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { downloadAttachment } from '../../api/attachmentsApi'
 import { useAttachments, useDeleteAttachment, useUploadAttachment } from '../../api/attachmentsQueries'
-import { useProjectMembers } from '../../api/projectsQueries'
+import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useCreateSubtask, useDeleteTask, useSubtasks, useTask, useUpdateTask } from '../../api/tasksQueries'
+import { useCreateSubtask, useDeleteTask, useSubtasks, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
 import { useCreateTimeLog, useDeleteTimeLog, useTimeLogs } from '../../api/timeLogsQueries'
 import { AttachmentDropzone } from '../../components/attachments/AttachmentDropzone'
 import { AttachmentPreviewModal } from '../../components/attachments/AttachmentPreviewModal'
@@ -70,11 +70,20 @@ function buildTimeLogSchema(t) {
 
 export function TaskDetailPage() {
   const { t, i18n } = useTranslation()
-  const { projectId, taskId } = useParams()
+  const { projectSlug, taskNumber } = useParams()
   const navigate = useNavigate()
   const currentUser = useAuthStore((state) => state.user)
 
-  const { data: task, isLoading, isError, error } = useTask(taskId)
+  const { data: project, isLoading: projectLoading } = useProjectBySlug(projectSlug)
+  const projectId = project?.id
+  const {
+    data: task,
+    isLoading: taskLoading,
+    isError,
+    error,
+  } = useTaskByNumber(projectId, taskNumber)
+  const taskId = task?.id
+  const isLoading = projectLoading || taskLoading
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
   const {
@@ -181,8 +190,8 @@ export function TaskDetailPage() {
         onSuccess: () => {
           navigate(
             task.parentTaskId
-              ? `/projects/${projectId}/tasks/${task.parentTaskId}`
-              : `/projects/${projectId}/board`,
+              ? `/projects/${projectSlug}/tasks/${task.parentTaskNumber}`
+              : `/projects/${projectSlug}/board`,
           )
         },
       },
@@ -219,8 +228,8 @@ export function TaskDetailPage() {
   }
 
   const backLink = task?.parentTaskId
-    ? `/projects/${projectId}/tasks/${task.parentTaskId}`
-    : `/projects/${projectId}/board`
+    ? `/projects/${projectSlug}/tasks/${task.parentTaskNumber}`
+    : `/projects/${projectSlug}/board`
 
   return (
     <div className="min-h-svh bg-gray-50">
@@ -384,7 +393,7 @@ export function TaskDetailPage() {
               <p className="text-sm text-red-600">{getLocalizedErrorMessage(subtasksError, t)}</p>
             )}
 
-            {!subtasksLoading && !subtasksIsError && (
+            {!subtasksLoading && !subtasksIsError && subtasks && (
               <ul className="mb-4 divide-y divide-gray-100">
                 {subtasks.length === 0 && (
                   <li className="py-2 text-sm text-gray-400">{t('tasks.subtasks.empty')}</li>
@@ -392,7 +401,7 @@ export function TaskDetailPage() {
                 {subtasks.map((subtask) => (
                   <li key={subtask.id}>
                     <Link
-                      to={`/projects/${projectId}/tasks/${subtask.id}`}
+                      to={`/projects/${projectSlug}/tasks/${subtask.taskNumber}`}
                       className="flex items-center justify-between gap-3 py-2 text-sm hover:text-purple-700"
                     >
                       <span className="flex min-w-0 items-center gap-2 text-gray-900">
@@ -450,7 +459,7 @@ export function TaskDetailPage() {
               <p className="text-sm text-red-600">{getLocalizedErrorMessage(timeLogsError, t)}</p>
             )}
 
-            {!timeLogsLoading && !timeLogsIsError && (
+            {!timeLogsLoading && !timeLogsIsError && timeLogs && (
               <ul className="mb-4 divide-y divide-gray-100">
                 {timeLogs.items.length === 0 && (
                   <li className="py-2 text-sm text-gray-400">{t('tasks.timeLogs.empty')}</li>
@@ -519,7 +528,7 @@ export function TaskDetailPage() {
               <p className="text-sm text-red-600">{getLocalizedErrorMessage(attachmentsError, t)}</p>
             )}
 
-            {!attachmentsLoading && !attachmentsIsError && (
+            {!attachmentsLoading && !attachmentsIsError && attachments && (
               <ul className="mb-4 divide-y divide-gray-100">
                 {attachments.length === 0 && (
                   <li className="py-2 text-sm text-gray-400">{t('tasks.attachments.empty')}</li>

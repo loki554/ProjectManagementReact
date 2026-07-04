@@ -6,7 +6,7 @@ import { Link, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import {
   useInviteMember,
-  useProject,
+  useProjectBySlug,
   useProjectMembers,
   useRemoveMember,
   useUpdateMemberRole,
@@ -26,10 +26,11 @@ function buildInviteSchema(t) {
 
 export function ProjectMembersPage() {
   const { t, i18n } = useTranslation()
-  const { projectId } = useParams()
+  const { projectSlug } = useParams()
   const currentUser = useAuthStore((state) => state.user)
 
-  const { data: project } = useProject(projectId)
+  const { data: project } = useProjectBySlug(projectSlug)
+  const projectId = project?.id
   const { data: members, isLoading, isError, error } = useProjectMembers(projectId)
   const inviteMember = useInviteMember(projectId)
   const updateMemberRole = useUpdateMemberRole(projectId)
@@ -58,13 +59,13 @@ export function ProjectMembersPage() {
       <AppHeader />
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Link to={`/projects/${projectId}`} className="text-sm text-purple-600 hover:underline">
+        <Link to={`/projects/${projectSlug}`} className="text-sm text-purple-600 hover:underline">
           {t('projects.backToProject')}
         </Link>
 
         <div className="mt-4 mb-6 flex items-center gap-4 text-sm">
           <span className="font-medium text-purple-700">{t('projects.members')}</span>
-          <Link to={`/projects/${projectId}/settings/tags`} className="text-gray-500 hover:text-purple-700">
+          <Link to={`/projects/${projectSlug}/settings/tags`} className="text-gray-500 hover:text-purple-700">
             {t('tags.navLabel')}
           </Link>
         </div>
@@ -113,7 +114,7 @@ export function ProjectMembersPage() {
         {isLoading && <p className="text-gray-500">{t('members.loading')}</p>}
         {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
 
-        {!isLoading && !isError && (
+        {!isLoading && !isError && members && (
           <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
             {members.map((member) => (
               <li key={member.userId} className="flex items-center justify-between gap-4 px-4 py-3">

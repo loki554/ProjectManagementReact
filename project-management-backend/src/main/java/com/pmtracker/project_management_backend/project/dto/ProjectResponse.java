@@ -9,6 +9,7 @@ import java.util.UUID;
 public record ProjectResponse(
         UUID id,
         String name,
+        String slug,
         String description,
         boolean archived,
         ProjectRole myRole,
@@ -20,6 +21,7 @@ public record ProjectResponse(
         return new ProjectResponse(
                 project.getId(),
                 project.getName(),
+                project.getSlug(),
                 project.getDescription(),
                 project.isArchived(),
                 myRole,

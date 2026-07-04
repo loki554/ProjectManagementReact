@@ -14,6 +14,9 @@ public record TaskResponse(
         UUID id,
         UUID projectId,
         UUID parentTaskId,
+        // Номер родительской задачи (не UUID) — нужен фронтенду для читаемой ссылки
+        // "назад к родительской задаче" (/projects/{slug}/tasks/{parentTaskNumber}).
+        Integer parentTaskNumber,
         int taskNumber,
         String title,
         String description,
@@ -33,6 +36,7 @@ public record TaskResponse(
                 task.getId(),
                 task.getProject().getId(),
                 task.getParentTask() != null ? task.getParentTask().getId() : null,
+                task.getParentTask() != null ? task.getParentTask().getTaskNumber() : null,
                 task.getTaskNumber(),
                 task.getTitle(),
                 task.getDescription(),

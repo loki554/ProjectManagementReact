@@ -13,11 +13,13 @@ export function useTasks(projectId, filters = {}) {
   })
 }
 
-export function useTask(taskId) {
+// Разрешает (projectId, taskNumber) из читаемого URL в полную задачу (с её реальным UUID) —
+// projectId здесь уже настоящий UUID проекта (разрешён из slug выше по цепочке страницей).
+export function useTaskByNumber(projectId, taskNumber) {
   return useQuery({
-    queryKey: taskKey(taskId),
-    queryFn: () => tasksApi.fetchTask(taskId),
-    enabled: Boolean(taskId),
+    queryKey: ['projects', projectId, 'tasks', 'by-number', taskNumber],
+    queryFn: () => tasksApi.fetchTaskByNumber(projectId, taskNumber),
+    enabled: Boolean(projectId) && Boolean(taskNumber),
   })
 }
 

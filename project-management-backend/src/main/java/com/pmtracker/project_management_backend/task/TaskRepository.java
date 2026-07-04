@@ -8,9 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
+
+    Optional<Task> findByProjectIdAndTaskNumber(UUID projectId, int taskNumber);
 
     @Query("""
             select t from Task t

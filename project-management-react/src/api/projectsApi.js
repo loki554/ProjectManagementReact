@@ -8,6 +8,13 @@ export function fetchProject(projectId) {
   return apiClient.get(`/projects/${projectId}`).then((res) => res.data)
 }
 
+// slug (человекочитаемый, используется в URL) или, для обратной совместимости со старыми
+// ссылками, сырой UUID — оба формата принимает один и тот же backend-эндпоинт (см.
+// ProjectController.getBySlug).
+export function fetchProjectBySlug(slug) {
+  return apiClient.get(`/projects/slug/${slug}`).then((res) => res.data)
+}
+
 export function createProject(payload) {
   return apiClient.post('/projects', payload).then((res) => res.data)
 }

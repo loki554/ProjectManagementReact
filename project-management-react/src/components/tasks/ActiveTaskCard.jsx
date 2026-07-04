@@ -24,7 +24,7 @@ export function ActiveTaskCard({ task }) {
         isDueSoon ? 'border-r-4 border-r-red-500' : ''
       }`}
     >
-      <Link to={`/projects/${task.projectId}/tasks/${task.taskId}`} className="block">
+      <Link to={`/projects/${task.projectSlug}/tasks/${task.taskNumber}`} className="block">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="truncate text-xs text-gray-500">{task.projectName}</p>
