@@ -1,5 +1,6 @@
 package com.pmtracker.project_management_backend.timelog;
 
+import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.exception.NotTimeLogOwnerException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
@@ -15,6 +16,7 @@ import com.pmtracker.project_management_backend.timelog.dto.TimeLogsResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -23,13 +25,16 @@ public class TimeLogService {
     private final TimeLogRepository timeLogRepository;
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
+    private final ActivityService activityService;
 
     public TimeLogService(TimeLogRepository timeLogRepository,
                            TaskRepository taskRepository,
-                           ProjectAccessService projectAccessService) {
+                           ProjectAccessService projectAccessService,
+                           ActivityService activityService) {
         this.timeLogRepository = timeLogRepository;
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
+        this.activityService = activityService;
     }
 
     @Transactional
@@ -45,6 +50,9 @@ public class TimeLogService {
         timeLog.setSpentOn(request.spentOn());
         timeLog.setDescription(request.description());
         timeLogRepository.save(timeLog);
+        // hours — BigDecimal, в jsonb уедет числом; фронтенд показывает как есть.
+        activityService.record(task.getProject(), currentUser, "time_logged", task,
+                Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle(), "hours", request.hours()));
         return TimeLogResponse.from(timeLog);
     }
 

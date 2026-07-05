@@ -111,6 +111,36 @@
     "updatedBy": "Aktualisiert von {{user}}, {{date}}",
     "deletedUser": "gelöschter Benutzer"
   },
+  "activity": {
+    "title": "Aktivität",
+    "loading": "Aktivität wird geladen...",
+    "loadingMore": "Wird geladen...",
+    "showMore": "Mehr anzeigen",
+    "empty": "Noch nichts — Ereignisse werden seit Einführung des Feeds aufgezeichnet",
+    "justNow": "gerade eben",
+    "deletedUser": "Gelöschter Benutzer",
+    "none": "—",
+    "task_created": "hat die Aufgabe „{{title}}“ erstellt",
+    "task_status_changed": "hat den Status von „{{title}}“ geändert: {{old}} → {{new}}",
+    "task_deleted": "hat die Aufgabe „{{title}}“ gelöscht",
+    "task_title_changed": "hat die Aufgabe „{{old}}“ in „{{new}}“ umbenannt",
+    "task_assignee_changed": "hat den Bearbeiter von „{{title}}“ geändert: {{old}} → {{new}}",
+    "task_urgency_changed": "hat die Dringlichkeit von „{{title}}“ geändert: {{old}} → {{new}}",
+    "task_due_date_changed": "hat die Frist von „{{title}}“ geändert: {{old}} → {{new}}",
+    "task_tag_changed": "hat das Tag von „{{title}}“ geändert: {{old}} → {{new}}",
+    "member_added": "hat {{userName}} als {{role}} hinzugefügt",
+    "member_removed": "hat {{userName}} entfernt",
+    "member_role_changed": "hat die Rolle von {{userName}} geändert: {{oldRole}} → {{newRole}}",
+    "project_updated": "hat die Projekteinstellungen aktualisiert ({{fields}})",
+    "time_logged": "hat {{hours}} Std. für „{{title}}“ erfasst",
+    "attachment_added": "hat {{fileName}} an „{{title}}“ angehängt",
+    "wiki_updated": "hat das Projekt-Wiki aktualisiert",
+    "fields": {
+      "name": "Name",
+      "description": "Beschreibung",
+      "archived": "Archivierung"
+    }
+  },
   "projectStar": {
     "star": "Star",
     "starred": "Starred"

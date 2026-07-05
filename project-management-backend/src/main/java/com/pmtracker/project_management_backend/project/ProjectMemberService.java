@@ -1,5 +1,6 @@
 package com.pmtracker.project_management_backend.project;
 
+import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.auth.UserRepository;
 import com.pmtracker.project_management_backend.common.exception.AlreadyProjectMemberException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -21,13 +23,16 @@ public class ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ProjectAccessService projectAccessService;
+    private final ActivityService activityService;
 
     public ProjectMemberService(ProjectMemberRepository projectMemberRepository,
                                  UserRepository userRepository,
-                                 ProjectAccessService projectAccessService) {
+                                 ProjectAccessService projectAccessService,
+                                 ActivityService activityService) {
         this.projectMemberRepository = projectMemberRepository;
         this.userRepository = userRepository;
         this.projectAccessService = projectAccessService;
+        this.activityService = activityService;
     }
 
     @Transactional(readOnly = true)
@@ -59,12 +64,15 @@ public class ProjectMemberService {
         member.setRole(request.role());
         projectMemberRepository.save(member);
 
+        activityService.record(project, currentUser, "member_added", null,
+                Map.of("userName", displayName(invitee), "role", request.role().name()));
+
         return MemberResponse.from(member);
     }
 
     @Transactional
     public MemberResponse updateRole(User currentUser, UUID projectId, UUID targetUserId, UpdateMemberRoleRequest request) {
-        projectAccessService.findProjectOrThrow(projectId);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectMember myMembership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(myMembership, ProjectRole.ADMIN);
 
@@ -74,14 +82,22 @@ public class ProjectMemberService {
             requireAnotherOwnerExists(projectId);
         }
 
+        ProjectRole oldRole = target.getRole();
         target.setRole(request.role());
         projectMemberRepository.save(target);
+
+        // Повторный сабмит той же роли — не событие.
+        if (oldRole != request.role()) {
+            activityService.record(project, currentUser, "member_role_changed", null,
+                    Map.of("userName", displayName(target.getUser()),
+                            "oldRole", oldRole.name(), "newRole", request.role().name()));
+        }
         return MemberResponse.from(target);
     }
 
     @Transactional
     public void remove(User currentUser, UUID projectId, UUID targetUserId) {
-        projectAccessService.findProjectOrThrow(projectId);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectMember myMembership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(myMembership, ProjectRole.ADMIN);
 
@@ -92,11 +108,17 @@ public class ProjectMemberService {
         }
 
         projectMemberRepository.delete(target);
+        activityService.record(project, currentUser, "member_removed", null,
+                Map.of("userName", displayName(target.getUser())));
     }
 
     private ProjectMember findMemberOrThrow(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+    }
+
+    private static String displayName(User user) {
+        return user.getLastName() + " " + user.getFirstName();
     }
 
     private void requireAnotherOwnerExists(UUID projectId) {

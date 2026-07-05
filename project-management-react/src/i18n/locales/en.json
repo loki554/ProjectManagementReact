@@ -111,6 +111,36 @@
     "updatedBy": "Updated by {{user}}, {{date}}",
     "deletedUser": "deleted user"
   },
+  "activity": {
+    "title": "Activity",
+    "loading": "Loading activity...",
+    "loadingMore": "Loading...",
+    "showMore": "Show more",
+    "empty": "Nothing here yet — events are recorded since the feed was introduced",
+    "justNow": "just now",
+    "deletedUser": "Deleted user",
+    "none": "—",
+    "task_created": "created task \"{{title}}\"",
+    "task_status_changed": "changed the status of \"{{title}}\": {{old}} → {{new}}",
+    "task_deleted": "deleted task \"{{title}}\"",
+    "task_title_changed": "renamed task \"{{old}}\" to \"{{new}}\"",
+    "task_assignee_changed": "changed the assignee of \"{{title}}\": {{old}} → {{new}}",
+    "task_urgency_changed": "changed the urgency of \"{{title}}\": {{old}} → {{new}}",
+    "task_due_date_changed": "changed the due date of \"{{title}}\": {{old}} → {{new}}",
+    "task_tag_changed": "changed the tag of \"{{title}}\": {{old}} → {{new}}",
+    "member_added": "added member {{userName}} as {{role}}",
+    "member_removed": "removed member {{userName}}",
+    "member_role_changed": "changed the role of {{userName}}: {{oldRole}} → {{newRole}}",
+    "project_updated": "updated project settings ({{fields}})",
+    "time_logged": "logged {{hours}}h on \"{{title}}\"",
+    "attachment_added": "attached {{fileName}} to \"{{title}}\"",
+    "wiki_updated": "updated the project wiki",
+    "fields": {
+      "name": "name",
+      "description": "description",
+      "archived": "archiving"
+    }
+  },
   "projectStar": {
     "star": "Star",
     "starred": "Starred"

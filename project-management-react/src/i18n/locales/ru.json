@@ -111,6 +111,36 @@
     "updatedBy": "Обновлено: {{user}}, {{date}}",
     "deletedUser": "удалённый пользователь"
   },
+  "activity": {
+    "title": "Активность",
+    "loading": "Загрузка событий...",
+    "loadingMore": "Загружаем...",
+    "showMore": "Показать ещё",
+    "empty": "Пока пусто — события записываются с момента появления ленты",
+    "justNow": "только что",
+    "deletedUser": "Удалённый пользователь",
+    "none": "—",
+    "task_created": "создал(а) задачу «{{title}}»",
+    "task_status_changed": "изменил(а) статус задачи «{{title}}»: {{old}} → {{new}}",
+    "task_deleted": "удалил(а) задачу «{{title}}»",
+    "task_title_changed": "переименовал(а) задачу «{{old}}» в «{{new}}»",
+    "task_assignee_changed": "изменил(а) исполнителя задачи «{{title}}»: {{old}} → {{new}}",
+    "task_urgency_changed": "изменил(а) срочность задачи «{{title}}»: {{old}} → {{new}}",
+    "task_due_date_changed": "изменил(а) срок задачи «{{title}}»: {{old}} → {{new}}",
+    "task_tag_changed": "изменил(а) тэг задачи «{{title}}»: {{old}} → {{new}}",
+    "member_added": "добавил(а) участника {{userName}} с ролью «{{role}}»",
+    "member_removed": "исключил(а) участника {{userName}}",
+    "member_role_changed": "изменил(а) роль участника {{userName}}: {{oldRole}} → {{newRole}}",
+    "project_updated": "обновил(а) настройки проекта ({{fields}})",
+    "time_logged": "отметил(а) {{hours}} ч по задаче «{{title}}»",
+    "attachment_added": "прикрепил(а) файл {{fileName}} к задаче «{{title}}»",
+    "wiki_updated": "обновил(а) вики проекта",
+    "fields": {
+      "name": "название",
+      "description": "описание",
+      "archived": "архивация"
+    }
+  },
   "projectStar": {
     "star": "Star",
     "starred": "Starred"

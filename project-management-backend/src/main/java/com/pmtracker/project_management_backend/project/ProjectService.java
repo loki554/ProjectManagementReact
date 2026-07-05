@@ -1,5 +1,6 @@
 package com.pmtracker.project_management_backend.project;
 
+import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.InvalidProjectNameException;
@@ -18,9 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,15 +42,18 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectAccessService projectAccessService;
     private final FileStorageService fileStorageService;
+    private final ActivityService activityService;
 
     public ProjectService(ProjectRepository projectRepository,
                            ProjectMemberRepository projectMemberRepository,
                            ProjectAccessService projectAccessService,
-                           FileStorageService fileStorageService) {
+                           FileStorageService fileStorageService,
+                           ActivityService activityService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectAccessService = projectAccessService;
         this.fileStorageService = fileStorageService;
+        this.activityService = activityService;
     }
 
     @Transactional
@@ -113,10 +120,28 @@ public class ProjectService {
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.OWNER);
 
+        // Список кодов изменённых полей — фронтенд переводит их сам; пустой дифф
+        // (сабмит без правок) событием не считается.
+        List<String> changedFields = new ArrayList<>();
+        if (!Objects.equals(project.getName(), request.name())) {
+            changedFields.add("name");
+        }
+        if (!Objects.equals(project.getDescription(), request.description())) {
+            changedFields.add("description");
+        }
+        if (project.isArchived() != request.archived()) {
+            changedFields.add("archived");
+        }
+
         project.setName(request.name());
         project.setDescription(request.description());
         project.setArchived(request.archived());
         projectRepository.save(project);
+
+        if (!changedFields.isEmpty()) {
+            activityService.record(project, currentUser, "project_updated", null,
+                    Map.of("changedFields", changedFields));
+        }
 
         return ProjectResponse.from(project, membership.getRole());
     }

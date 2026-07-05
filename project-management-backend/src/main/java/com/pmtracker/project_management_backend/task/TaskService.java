@@ -1,5 +1,6 @@
 package com.pmtracker.project_management_backend.task;
 
+import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
@@ -35,8 +36,10 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -49,19 +52,22 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final TagRepository tagRepository;
     private final TimeLogRepository timeLogRepository;
+    private final ActivityService activityService;
 
     public TaskService(TaskRepository taskRepository,
                         ProjectAccessService projectAccessService,
                         ProjectMemberRepository projectMemberRepository,
                         ProjectRepository projectRepository,
                         TagRepository tagRepository,
-                        TimeLogRepository timeLogRepository) {
+                        TimeLogRepository timeLogRepository,
+                        ActivityService activityService) {
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.tagRepository = tagRepository;
         this.timeLogRepository = timeLogRepository;
+        this.activityService = activityService;
     }
 
     @Transactional
@@ -83,6 +89,8 @@ public class TaskService {
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
+        activityService.record(project, currentUser, "task_created", task,
+                Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 
@@ -133,12 +141,59 @@ public class TaskService {
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
 
+        // Снапшот "до" — после applyCommonFields по одному событию на каждое реально
+        // изменившееся поле (описание сознательно не в ленте: диффы длинного текста шумят).
+        String oldTitle = task.getTitle();
+        TaskStatus oldStatus = task.getStatus();
+        String oldAssignee = displayName(task.getAssignee());
+        TaskUrgency oldUrgency = task.getUrgency();
+        Instant oldDueDate = task.getDueDate();
+        String oldTag = task.getTag() != null ? task.getTag().getName() : null;
+
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
                 request.dueDate(), request.tagId());
         task.setStatus(request.status());
         task.setUrgency(request.urgency());
         taskRepository.save(task);
+
+        if (!Objects.equals(oldTitle, task.getTitle())) {
+            recordFieldChange(task, currentUser, "task_title_changed", oldTitle, task.getTitle());
+        }
+        if (oldStatus != task.getStatus()) {
+            recordFieldChange(task, currentUser, "task_status_changed", oldStatus.name(), task.getStatus().name());
+        }
+        if (!Objects.equals(oldAssignee, displayName(task.getAssignee()))) {
+            recordFieldChange(task, currentUser, "task_assignee_changed", oldAssignee, displayName(task.getAssignee()));
+        }
+        if (oldUrgency != task.getUrgency()) {
+            recordFieldChange(task, currentUser, "task_urgency_changed", oldUrgency.name(), task.getUrgency().name());
+        }
+        if (!Objects.equals(oldDueDate, task.getDueDate())) {
+            recordFieldChange(task, currentUser, "task_due_date_changed",
+                    oldDueDate != null ? oldDueDate.toString() : null,
+                    task.getDueDate() != null ? task.getDueDate().toString() : null);
+        }
+        String newTag = task.getTag() != null ? task.getTag().getName() : null;
+        if (!Objects.equals(oldTag, newTag)) {
+            recordFieldChange(task, currentUser, "task_tag_changed", oldTag, newTag);
+        }
+
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
+    }
+
+    // Instant в payload сериализуем строками заранее (см. task_due_date_changed), а null'ы
+    // допустимы ("поле снято") — поэтому LinkedHashMap, а не Map.of.
+    private void recordFieldChange(Task task, User actor, String type, Object oldValue, Object newValue) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("taskNumber", task.getTaskNumber());
+        payload.put("title", task.getTitle());
+        payload.put("old", oldValue);
+        payload.put("new", newValue);
+        activityService.record(task.getProject(), actor, type, task, payload);
+    }
+
+    private static String displayName(User user) {
+        return user != null ? user.getLastName() + " " + user.getFirstName() : null;
     }
 
     @Transactional
@@ -177,6 +232,9 @@ public class TaskService {
             task.setStatus(newStatus);
             newColumn.add(targetIndex, task);
             renumber(newColumn);
+            // Перестановка внутри колонки (oldStatus == newStatus) — не событие для ленты,
+            // фиксируем только реальную смену статуса.
+            recordFieldChange(task, currentUser, "task_status_changed", oldStatus.name(), newStatus.name());
         }
 
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
@@ -193,6 +251,11 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
         ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        // task = null сразу: ссылаться на задачу, удаляемую в этой же транзакции, нельзя
+        // (Hibernate падает на flush из-за висячей ссылки managed-сущности), а после
+        // удаления FK всё равно был бы обнулён. Идентичность задачи — в снапшоте payload.
+        activityService.record(task.getProject(), currentUser, "task_deleted", null,
+                Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         taskRepository.deleteById(taskId);
     }
 
@@ -227,6 +290,8 @@ public class TaskService {
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
+        activityService.record(parent.getProject(), currentUser, "task_created", task,
+                Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 

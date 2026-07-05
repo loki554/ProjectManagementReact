@@ -2,6 +2,7 @@ import { Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { ActivityFeed } from '../../components/projects/ActivityFeed'
 import { StarButton } from '../../components/projects/StarButton'
 import { secondaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -76,7 +77,7 @@ export function ProjectOverviewPage() {
             </div>
           </div>
 
-          {/* Место под ленту активности проекта (фаза 6). */}
+          <ActivityFeed projectId={project.id} projectSlug={projectSlug} />
         </div>
 
         <aside className="w-full shrink-0 space-y-4 lg:w-72">

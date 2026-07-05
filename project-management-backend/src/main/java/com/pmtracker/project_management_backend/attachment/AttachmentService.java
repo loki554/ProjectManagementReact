@@ -1,5 +1,6 @@
 package com.pmtracker.project_management_backend.attachment;
 
+import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.attachment.dto.AttachmentResponse;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.exception.AttachmentNotFoundException;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
@@ -49,15 +51,18 @@ public class AttachmentService {
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final FileStorageService fileStorageService;
+    private final ActivityService activityService;
 
     public AttachmentService(AttachmentRepository attachmentRepository,
                               TaskRepository taskRepository,
                               ProjectAccessService projectAccessService,
-                              FileStorageService fileStorageService) {
+                              FileStorageService fileStorageService,
+                              ActivityService activityService) {
         this.attachmentRepository = attachmentRepository;
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.fileStorageService = fileStorageService;
+        this.activityService = activityService;
     }
 
     @Transactional
@@ -91,6 +96,10 @@ public class AttachmentService {
         attachment.setContentType(file.getContentType());
         attachment.setSizeBytes(stored.sizeBytes());
         attachmentRepository.save(attachment);
+
+        activityService.record(task.getProject(), currentUser, "attachment_added", task,
+                Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle(),
+                        "fileName", String.valueOf(file.getOriginalFilename())));
 
         return AttachmentResponse.from(attachment);
     }
