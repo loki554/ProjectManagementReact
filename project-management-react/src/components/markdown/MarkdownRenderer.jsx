@@ -16,7 +16,9 @@ const markdownClass =
   '[&_li]:mb-0.5 [&_a]:text-purple-600 [&_a]:underline [&_strong]:font-semibold ' +
   '[&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs ' +
   '[&_pre]:mb-2 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-3 ' +
-  '[&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:text-gray-600'
+  '[&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:text-gray-600 ' +
+  '[&_table]:mb-2 [&_table]:border-collapse [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left ' +
+  '[&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1'
 
 export function MarkdownRenderer({ children }) {
   if (!children) {

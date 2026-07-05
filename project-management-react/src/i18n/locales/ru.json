@@ -81,6 +81,7 @@
     "taskList": "Список задач",
     "kanban": "Канбан",
     "members": "Участники",
+    "wiki": "Вики",
     "tags": "Тэги",
     "collapse": "Свернуть",
     "expand": "Развернуть"
@@ -97,6 +98,18 @@
     "allAssignees": "Все исполнители",
     "allTags": "Все тэги",
     "empty": "Ничего не найдено"
+  },
+  "wiki": {
+    "title": "Вики",
+    "loading": "Загрузка вики...",
+    "empty": "Вики пока пуста",
+    "edit": "Редактировать",
+    "save": "Сохранить",
+    "saving": "Сохраняем...",
+    "cancel": "Отмена",
+    "placeholder": "Документация проекта в Markdown...",
+    "updatedBy": "Обновлено: {{user}}, {{date}}",
+    "deletedUser": "удалённый пользователь"
   },
   "projectStar": {
     "star": "Star",

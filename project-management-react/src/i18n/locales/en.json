@@ -81,6 +81,7 @@
     "taskList": "Task list",
     "kanban": "Kanban",
     "members": "Members",
+    "wiki": "Wiki",
     "tags": "Tags",
     "collapse": "Collapse",
     "expand": "Expand"
@@ -97,6 +98,18 @@
     "allAssignees": "All assignees",
     "allTags": "All tags",
     "empty": "Nothing found"
+  },
+  "wiki": {
+    "title": "Wiki",
+    "loading": "Loading wiki...",
+    "empty": "The wiki is empty for now",
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "placeholder": "Project documentation in Markdown...",
+    "updatedBy": "Updated by {{user}}, {{date}}",
+    "deletedUser": "deleted user"
   },
   "projectStar": {
     "star": "Star",

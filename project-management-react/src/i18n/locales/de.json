@@ -81,6 +81,7 @@
     "taskList": "Aufgabenliste",
     "kanban": "Kanban",
     "members": "Mitglieder",
+    "wiki": "Wiki",
     "tags": "Tags",
     "collapse": "Einklappen",
     "expand": "Ausklappen"
@@ -97,6 +98,18 @@
     "allAssignees": "Alle Bearbeiter",
     "allTags": "Alle Tags",
     "empty": "Nichts gefunden"
+  },
+  "wiki": {
+    "title": "Wiki",
+    "loading": "Wiki wird geladen...",
+    "empty": "Das Wiki ist noch leer",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "placeholder": "Projektdokumentation in Markdown...",
+    "updatedBy": "Aktualisiert von {{user}}, {{date}}",
+    "deletedUser": "gelöschter Benutzer"
   },
   "projectStar": {
     "star": "Star",

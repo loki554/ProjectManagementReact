@@ -1,16 +1,16 @@
-import { ChevronsLeft, ChevronsRight, List, SquareKanban, Tag, Users } from 'lucide-react'
+import { BookOpen, ChevronsLeft, ChevronsRight, List, SquareKanban, Tag, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useUiStore } from '../../stores/uiStore'
 
-// Пункт «Вики» появится вместе со своей страницей в следующей фазе рефакторинга.
 // end у «Списка задач» — чтобы пункт не подсвечивался на странице конкретной задачи
 // (tasks/:taskNumber), куда обычно приходят с канбана.
 const NAV_ITEMS = [
   { to: 'tasks', icon: List, labelKey: 'projectSidebar.taskList', end: true },
   { to: 'board', icon: SquareKanban, labelKey: 'projectSidebar.kanban' },
   { to: 'settings/members', icon: Users, labelKey: 'projectSidebar.members' },
+  { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
 ]
 

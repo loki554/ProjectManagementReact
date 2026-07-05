@@ -16,6 +16,7 @@ import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
+import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
 import { TaskDetailPage } from './pages/projects/TaskDetailPage'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
 
@@ -96,6 +97,7 @@ function AppRoutes() {
           <Route path="tasks" element={<ProjectTaskListPage />} />
           <Route path="board" element={<ProjectTasksPage />} />
           <Route path="tasks/:taskNumber" element={<TaskDetailPage />} />
+          <Route path="wiki" element={<ProjectWikiPage />} />
           <Route path="settings/members" element={<ProjectMembersPage />} />
           <Route path="settings/tags" element={<ProjectTagsPage />} />
           <Route path="settings/edit" element={<ProjectEditPage />} />
