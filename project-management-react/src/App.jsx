@@ -13,6 +13,7 @@ import { ProjectEditPage } from './pages/projects/ProjectEditPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
+import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
 import { TaskDetailPage } from './pages/projects/TaskDetailPage'
@@ -92,6 +93,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<ProjectOverviewPage />} />
+          <Route path="tasks" element={<ProjectTaskListPage />} />
           <Route path="board" element={<ProjectTasksPage />} />
           <Route path="tasks/:taskNumber" element={<TaskDetailPage />} />
           <Route path="settings/members" element={<ProjectMembersPage />} />

@@ -78,6 +78,7 @@
     }
   },
   "projectSidebar": {
+    "taskList": "Список задач",
     "kanban": "Канбан",
     "members": "Участники",
     "tags": "Тэги",
@@ -89,6 +90,13 @@
     "noDescription": "Без описания",
     "allMembers": "Все участники →",
     "edit": "Редактировать"
+  },
+  "taskList": {
+    "searchPlaceholder": "Поиск по названию...",
+    "allStatuses": "Все статусы",
+    "allAssignees": "Все исполнители",
+    "allTags": "Все тэги",
+    "empty": "Ничего не найдено"
   },
   "projectStar": {
     "star": "Star",

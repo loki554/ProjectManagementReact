@@ -78,6 +78,7 @@
     }
   },
   "projectSidebar": {
+    "taskList": "Task list",
     "kanban": "Kanban",
     "members": "Members",
     "tags": "Tags",
@@ -89,6 +90,13 @@
     "noDescription": "No description",
     "allMembers": "All members →",
     "edit": "Edit"
+  },
+  "taskList": {
+    "searchPlaceholder": "Search by title...",
+    "allStatuses": "All statuses",
+    "allAssignees": "All assignees",
+    "allTags": "All tags",
+    "empty": "Nothing found"
   },
   "projectStar": {
     "star": "Star",

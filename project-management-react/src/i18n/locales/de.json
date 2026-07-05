@@ -78,6 +78,7 @@
     }
   },
   "projectSidebar": {
+    "taskList": "Aufgabenliste",
     "kanban": "Kanban",
     "members": "Mitglieder",
     "tags": "Tags",
@@ -89,6 +90,13 @@
     "noDescription": "Keine Beschreibung",
     "allMembers": "Alle Mitglieder →",
     "edit": "Bearbeiten"
+  },
+  "taskList": {
+    "searchPlaceholder": "Nach Titel suchen...",
+    "allStatuses": "Alle Status",
+    "allAssignees": "Alle Bearbeiter",
+    "allTags": "Alle Tags",
+    "empty": "Nichts gefunden"
   },
   "projectStar": {
     "star": "Star",

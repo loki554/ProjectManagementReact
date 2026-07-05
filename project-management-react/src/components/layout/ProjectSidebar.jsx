@@ -1,12 +1,14 @@
-import { ChevronsLeft, ChevronsRight, SquareKanban, Tag, Users } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, List, SquareKanban, Tag, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useUiStore } from '../../stores/uiStore'
 
-// Пункты «Список задач» и «Вики» появятся вместе со своими страницами
-// в следующих фазах рефакторинга.
+// Пункт «Вики» появится вместе со своей страницей в следующей фазе рефакторинга.
+// end у «Списка задач» — чтобы пункт не подсвечивался на странице конкретной задачи
+// (tasks/:taskNumber), куда обычно приходят с канбана.
 const NAV_ITEMS = [
+  { to: 'tasks', icon: List, labelKey: 'projectSidebar.taskList', end: true },
   { to: 'board', icon: SquareKanban, labelKey: 'projectSidebar.kanban' },
   { to: 'settings/members', icon: Users, labelKey: 'projectSidebar.members' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
@@ -47,10 +49,11 @@ export function ProjectSidebar({ project }) {
       </NavLink>
 
       <nav className="flex-1 space-y-1 p-2">
-        {NAV_ITEMS.map(({ to, icon: Icon, labelKey }) => (
+        {NAV_ITEMS.map(({ to, icon: Icon, labelKey, end }) => (
           <NavLink
             key={to}
             to={to}
+            end={end}
             title={collapsed ? t(labelKey) : undefined}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
