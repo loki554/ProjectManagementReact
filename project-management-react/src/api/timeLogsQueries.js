@@ -12,7 +12,7 @@ export function useTimeLogs(taskId) {
 }
 
 // taskId фиксируется на хуке, как useCreateSubtask — используется со страницы деталей
-// одной конкретной задачи (TaskDetailPage).
+// одной конкретной задачи (TaskViewPage).
 export function useCreateTimeLog(taskId) {
   const queryClient = useQueryClient()
   return useMutation({

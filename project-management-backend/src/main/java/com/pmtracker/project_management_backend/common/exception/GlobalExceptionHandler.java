@@ -178,6 +178,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("NOT_ATTACHMENT_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(CommentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCommentNotFound(CommentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("COMMENT_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(NotCommentOwnerException.class)
+    public ResponseEntity<ErrorResponse> handleNotCommentOwner(NotCommentOwnerException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("NOT_COMMENT_OWNER", ex.getMessage()));
+    }
+
     @ExceptionHandler(TagNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTagNotFound(TagNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

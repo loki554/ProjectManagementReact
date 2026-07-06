@@ -36,7 +36,7 @@ export function useCreateTask(projectId) {
 }
 
 // taskId фиксируется на хуке, как в useUpdateProject — предполагается использование
-// со страницы деталей одной конкретной задачи (TaskDetailPage).
+// со страницы редактирования одной конкретной задачи (TaskEditPage).
 export function useUpdateTask(taskId) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -59,7 +59,7 @@ export function useDeleteTask(projectId) {
   return useMutation({
     mutationFn: ({ taskId }) => tasksApi.deleteTask(taskId),
     // Намеренно НЕ используем removeQueries(taskKey(taskId))/removeQueries(subtasksKey(taskId)):
-    // TaskDetailPage, с которой обычно вызывается удаление, ещё смонтирована в момент onSuccess
+    // TaskEditPage, с которой обычно вызывается удаление, ещё смонтирована в момент onSuccess
     // (навигация происходит асинхронно) и подписана на эти же ключи через useTask/useSubtasks —
     // removeQueries на активный запрос заставляет react-query тут же перезапросить удалённую
     // задачу и словить 404 в консоли прямо перед уходом со страницы. Инвалидации родительских
@@ -143,7 +143,7 @@ export function useSubtasks(taskId) {
   })
 }
 
-// parentTaskId фиксируется на хуке — используется из TaskDetailPage конкретной родительской задачи.
+// parentTaskId фиксируется на хуке — используется из TaskViewPage конкретной родительской задачи.
 export function useCreateSubtask(parentTaskId) {
   const queryClient = useQueryClient()
   return useMutation({

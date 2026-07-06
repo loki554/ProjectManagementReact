@@ -28,10 +28,12 @@ public class ActivityController {
 
     @GetMapping
     @Operation(summary = "Лента активности проекта",
-            description = "Свежие события сверху; page size фиксирован = 20. Доступно любому участнику проекта, включая VIEWER")
+            description = "Свежие события сверху; page size фиксирован = 20. Доступно любому участнику проекта, включая VIEWER. "
+                    + "taskId сужает ленту до событий одной задачи (вкладка «Активность» на странице задачи)")
     public ResponseEntity<PageResponse<ActivityResponse>> list(@AuthenticationPrincipal User currentUser,
                                                                @PathVariable UUID projectId,
+                                                               @RequestParam(required = false) UUID taskId,
                                                                @RequestParam(defaultValue = "0") int page) {
-        return ResponseEntity.ok(activityService.list(currentUser, projectId, page));
+        return ResponseEntity.ok(activityService.list(currentUser, projectId, taskId, page));
     }
 }

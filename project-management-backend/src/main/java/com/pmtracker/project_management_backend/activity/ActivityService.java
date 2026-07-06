@@ -46,13 +46,13 @@ public class ActivityService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ActivityResponse> list(User currentUser, UUID projectId, int page) {
+    public PageResponse<ActivityResponse> list(User currentUser, UUID projectId, UUID taskId, int page) {
         projectAccessService.findProjectOrThrow(projectId);
         projectAccessService.requireMembership(projectId, currentUser);
-        return PageResponse.from(
-                projectActivityRepository
-                        .findByProjectIdOrderByCreatedAtDesc(projectId, PageRequest.of(Math.max(page, 0), PAGE_SIZE))
-                        .map(ActivityResponse::from)
-        );
+        var pageRequest = PageRequest.of(Math.max(page, 0), PAGE_SIZE);
+        var activityPage = taskId != null
+                ? projectActivityRepository.findByProjectIdAndTaskIdOrderByCreatedAtDesc(projectId, taskId, pageRequest)
+                : projectActivityRepository.findByProjectIdOrderByCreatedAtDesc(projectId, pageRequest);
+        return PageResponse.from(activityPage.map(ActivityResponse::from));
     }
 }

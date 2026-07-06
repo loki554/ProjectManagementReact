@@ -134,6 +134,7 @@
     "project_updated": "hat die Projekteinstellungen aktualisiert ({{fields}})",
     "time_logged": "hat {{hours}} Std. für „{{title}}“ erfasst",
     "attachment_added": "hat {{fileName}} an „{{title}}“ angehängt",
+    "comment_added": "hat „{{title}}“ kommentiert",
     "wiki_updated": "hat das Projekt-Wiki aktualisiert",
     "fields": {
       "name": "Name",
@@ -211,6 +212,7 @@
     },
     "detail": {
       "backToParent": "← Zurück zur übergeordneten Aufgabe",
+      "backToTask": "← Zurück zur Aufgabe",
       "loading": "Aufgabe wird geladen...",
       "titleLabel": "Titel",
       "statusLabel": "Status",
@@ -221,9 +223,16 @@
       "tagLabel": "Tag",
       "descriptionLabel": "Beschreibung",
       "noDescription": "Keine Beschreibung",
+      "createdBy": "Erstellt von",
+      "hoursSpentLabel": "Aufwand",
+      "edit": "Bearbeiten",
+      "cancel": "Abbrechen",
+      "tabs": {
+        "comments": "Kommentare",
+        "activity": "Aktivität"
+      },
       "save": "Speichern",
       "saving": "Wird gespeichert...",
-      "saved": "Gespeichert",
       "delete": "Aufgabe löschen",
       "deleting": "Wird gelöscht...",
       "deleteConfirm": "Diese Aufgabe und alle ihre Unteraufgaben löschen?"
@@ -268,6 +277,18 @@
       "zoomOut": "Verkleinern",
       "resetZoom": "Zoom zurücksetzen",
       "closePreview": "Schließen"
+    },
+    "comments": {
+      "loading": "Kommentare werden geladen...",
+      "empty": "Noch keine Kommentare",
+      "addPlaceholder": "Kommentar schreiben...",
+      "add": "Senden",
+      "adding": "Wird gesendet...",
+      "delete": "Löschen",
+      "deleteConfirm": "Diesen Kommentar löschen?",
+      "sortLabel": "Sortierung der Kommentare",
+      "sortNewest": "Neueste zuerst",
+      "sortOldest": "Älteste zuerst"
     }
   },
   "home": {
@@ -330,6 +351,8 @@
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
     "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",
     "NOT_ATTACHMENT_OWNER": "Nur die hochladende Person oder ein Projekt-Administrator kann diesen Anhang löschen",
+    "COMMENT_NOT_FOUND": "Kommentar nicht gefunden",
+    "NOT_COMMENT_OWNER": "Nur die verfassende Person oder ein Projekt-Administrator kann diesen Kommentar löschen",
     "TAG_NOT_FOUND": "Tag nicht gefunden",
     "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",
     "TAG_PROJECT_MISMATCH": "Dieser Tag gehört zu einem anderen Projekt",

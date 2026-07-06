@@ -9,7 +9,7 @@ function extensionLabel(filename) {
 // Небольшая превьюшка в списке вложений: для изображений — уменьшенная (через CSS,
 // без серверной генерации миниатюр — вне скоупа MVP) картинка, по клику открывающая
 // AttachmentPreviewModal в полный размер; для остальных типов — просто иконка-заглушка
-// с расширением файла, без клика (сам файл скачивается по имени в списке, см. TaskDetailPage).
+// с расширением файла, без клика (сам файл скачивается по имени в списке, см. TaskViewPage).
 export function AttachmentThumbnail({ attachment, onPreview }) {
   const isImage = isImageAttachment(attachment)
   const imageUrl = useAuthenticatedImage(isImage ? `/attachments/${attachment.id}/download` : null)

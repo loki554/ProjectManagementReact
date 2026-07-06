@@ -12,7 +12,7 @@ export function useAttachments(taskId) {
 }
 
 // taskId фиксируется на хуке, как useCreateTimeLog — используется со страницы деталей
-// одной конкретной задачи (TaskDetailPage).
+// одной конкретной задачи (TaskViewPage).
 export function useUploadAttachment(taskId) {
   const queryClient = useQueryClient()
   return useMutation({

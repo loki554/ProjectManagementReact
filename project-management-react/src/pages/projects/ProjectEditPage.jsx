@@ -63,7 +63,7 @@ export function ProjectEditPage() {
   } = useForm({
     resolver: zodResolver(schema),
     // values (не defaultValues) держит форму синхронизированной с кэшем react-query —
-    // тот же приём, что и в TaskDetailPage/ProfilePage.
+    // тот же приём, что и в TaskEditPage/ProfilePage.
     values: project
       ? {
           name: project.name,

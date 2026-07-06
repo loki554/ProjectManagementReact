@@ -3,24 +3,7 @@ import { Link } from 'react-router-dom'
 import { useProjectActivity } from '../../api/activityQueries'
 import { TASK_NUMBER_BADGE_CLASS } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
-
-// Аватар — отдельный компонент, т.к. useAuthenticatedImage — хук и в map по событиям
-// его звать нельзя (тот же приём, что MemberAvatar на overview).
-function ActorAvatar({ actor }) {
-  const avatarUrl = useAuthenticatedImage(actor?.avatarUrl)
-  return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-[10px] font-medium text-gray-600">
-      {avatarUrl ? (
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span aria-hidden="true">
-          {actor ? (actor.lastName?.[0] ?? '') + (actor.firstName?.[0] ?? '') : '?'}
-        </span>
-      )}
-    </div>
-  )
-}
+import { UserAvatar } from '../ui/UserAvatar'
 
 // Событие → параметры интерполяции для t('activity.<type>'). Коды (статусы, срочность,
 // роли, названия полей проекта) переводятся здесь; имена/названия приходят готовыми
@@ -54,7 +37,8 @@ function buildMessageParams(item, t, formatDate) {
       }
     default:
       // task_created / task_deleted / task_title_changed / member_removed /
-      // time_logged / attachment_added / wiki_updated — payload подставляется как есть.
+      // time_logged / attachment_added / comment_added / wiki_updated —
+      // payload подставляется как есть.
       return { ...p }
   }
 }
@@ -91,7 +75,7 @@ function FeedItem({ item, projectSlug }) {
 
   return (
     <li className="flex gap-3 py-3">
-      <ActorAvatar actor={item.actor} />
+      <UserAvatar user={item.actor} />
       <div className="min-w-0 flex-1">
         <p className="text-sm text-gray-700">
           <span className="font-medium text-gray-900">{actorName}</span> {message}
@@ -120,16 +104,19 @@ function FeedItem({ item, projectSlug }) {
   )
 }
 
-export function ActivityFeed({ projectId, projectSlug }) {
+// taskId — лента одной задачи (вкладка «Активность» на странице просмотра задачи);
+// embedded — без карточной обёртки и заголовка, когда лента живёт внутри чужой
+// карточки с собственными вкладками.
+export function ActivityFeed({ projectId, projectSlug, taskId, embedded = false }) {
   const { t } = useTranslation()
   const { data, isLoading, isError, error, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useProjectActivity(projectId)
+    useProjectActivity(projectId, taskId)
 
   const items = data?.pages.flatMap((page) => page.items) ?? []
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h2 className="text-sm font-semibold text-gray-900">{t('activity.title')}</h2>
+    <div className={embedded ? undefined : 'rounded-lg border border-gray-200 bg-white p-6'}>
+      {!embedded && <h2 className="text-sm font-semibold text-gray-900">{t('activity.title')}</h2>}
 
       {isLoading && <p className="mt-3 text-sm text-gray-500">{t('activity.loading')}</p>}
       {isError && (
