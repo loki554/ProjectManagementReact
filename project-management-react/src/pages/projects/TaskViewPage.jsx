@@ -218,7 +218,20 @@ export function TaskViewPage() {
               </div>
 
               <div className="rounded-lg border border-gray-200 bg-white p-6">
-                <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('tasks.subtasks.title')}</h2>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-semibold text-gray-900">{t('tasks.subtasks.title')}</h2>
+                  {/* Quick-add ниже создаёт подзадачу только с названием; полная форма
+                      (описание, исполнитель, срок и т.д.) — отдельная страница создания
+                      с родителем в URL (?parent=<taskNumber>). */}
+                  {canManage && (
+                    <Link
+                      to={`/projects/${projectSlug}/tasks/new?parent=${task.taskNumber}`}
+                      className="shrink-0 text-xs text-purple-600 hover:underline"
+                    >
+                      {t('tasks.subtasks.fullForm')}
+                    </Link>
+                  )}
+                </div>
 
                 {subtasksLoading && <p className="text-sm text-gray-500">{t('tasks.subtasks.loading')}</p>}
                 {subtasksIsError && (

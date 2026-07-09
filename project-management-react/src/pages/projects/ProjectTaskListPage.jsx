@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useTasks } from '../../api/tasksQueries'
-import { inputClass } from '../../components/ui/FormKit'
+import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
   TASK_URGENCIES,
+  roleIsAtLeast,
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { tagBadgeStyle } from '../../lib/tagColor'
+import { useAuthStore } from '../../stores/authStore'
 
 const UNASSIGNED = '__unassigned__'
 
@@ -64,12 +66,16 @@ export function ProjectTaskListPage() {
   const { t, i18n } = useTranslation()
   const { projectSlug } = useParams()
   const navigate = useNavigate()
+  const currentUser = useAuthStore((state) => state.user)
 
   const { data: project } = useProjectBySlug(projectSlug)
   const projectId = project?.id
   const { data: tasks, isLoading, isError, error } = useTasks(projectId)
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
+
+  const myMembership = members?.find((member) => member.userId === currentUser?.id)
+  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -144,6 +150,14 @@ export function ProjectTaskListPage() {
             </option>
           ))}
         </select>
+        {canManage && (
+          <Link
+            to={`/projects/${projectSlug}/tasks/new`}
+            className={`${primaryButtonClass} ml-auto whitespace-nowrap`}
+          >
+            + {t('taskList.newTask')}
+          </Link>
+        )}
       </div>
 
       {isLoading && <p className="text-gray-500">{t('tasks.loading')}</p>}

@@ -97,7 +97,8 @@
     "allStatuses": "All statuses",
     "allAssignees": "All assignees",
     "allTags": "All tags",
-    "empty": "Nothing found"
+    "empty": "Nothing found",
+    "newTask": "New task"
   },
   "wiki": {
     "title": "Wiki",
@@ -237,13 +238,22 @@
       "deleting": "Deleting...",
       "deleteConfirm": "Delete this task along with all of its subtasks?"
     },
+    "create": {
+      "title": "New task",
+      "subtaskTitle": "New subtask",
+      "parentLabel": "Parent task",
+      "submit": "Create task",
+      "creating": "Creating...",
+      "backToList": "← Back to task list"
+    },
     "subtasks": {
       "title": "Subtasks",
       "loading": "Loading subtasks...",
       "empty": "No subtasks yet",
       "addPlaceholder": "Subtask title",
       "add": "Add subtask",
-      "adding": "Adding..."
+      "adding": "Adding...",
+      "fullForm": "Full form →"
     },
     "timeLogs": {
       "title": "Time tracking",

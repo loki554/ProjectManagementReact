@@ -97,7 +97,8 @@
     "allStatuses": "Alle Status",
     "allAssignees": "Alle Bearbeiter",
     "allTags": "Alle Tags",
-    "empty": "Nichts gefunden"
+    "empty": "Nichts gefunden",
+    "newTask": "Neue Aufgabe"
   },
   "wiki": {
     "title": "Wiki",
@@ -237,13 +238,22 @@
       "deleting": "Wird gelöscht...",
       "deleteConfirm": "Diese Aufgabe und alle ihre Unteraufgaben löschen?"
     },
+    "create": {
+      "title": "Neue Aufgabe",
+      "subtaskTitle": "Neue Unteraufgabe",
+      "parentLabel": "Übergeordnete Aufgabe",
+      "submit": "Aufgabe erstellen",
+      "creating": "Wird erstellt...",
+      "backToList": "← Zur Aufgabenliste"
+    },
     "subtasks": {
       "title": "Unteraufgaben",
       "loading": "Unteraufgaben werden geladen...",
       "empty": "Noch keine Unteraufgaben",
       "addPlaceholder": "Titel der Unteraufgabe",
       "add": "Unteraufgabe hinzufügen",
-      "adding": "Wird hinzugefügt..."
+      "adding": "Wird hinzugefügt...",
+      "fullForm": "Vollständiges Formular →"
     },
     "timeLogs": {
       "title": "Zeiterfassung",
