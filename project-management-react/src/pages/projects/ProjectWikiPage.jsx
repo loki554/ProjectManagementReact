@@ -40,7 +40,7 @@ export function ProjectWikiPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold text-gray-900">{t('wiki.title')}</h1>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('wiki.title')}</h1>
         {canEdit && !editing && !isLoading && !isError && (
           <button type="button" onClick={startEditing} className={`${secondaryButtonClass} flex items-center gap-2`}>
             <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -49,18 +49,18 @@ export function ProjectWikiPage() {
         )}
       </div>
 
-      {isLoading && <p className="text-gray-500">{t('wiki.loading')}</p>}
-      {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('wiki.loading')}</p>}
+      {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && !editing && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
           {wiki?.content ? (
             <MarkdownRenderer>{wiki.content}</MarkdownRenderer>
           ) : (
-            <p className="text-sm text-gray-400">{t('wiki.empty')}</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">{t('wiki.empty')}</p>
           )}
           {wiki?.updatedAt && (
-            <p className="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-400">
+            <p className="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500">
               {t('wiki.updatedBy', {
                 user: wiki.updatedBy
                   ? `${wiki.updatedBy.lastName} ${wiki.updatedBy.firstName}`
@@ -79,7 +79,7 @@ export function ProjectWikiPage() {
         <div className="space-y-3">
           <MarkdownEditor value={draft} onChange={setDraft} placeholder={t('wiki.placeholder')} />
           {updateWiki.isError && (
-            <p className="text-sm text-red-600">{getLocalizedErrorMessage(updateWiki.error, t)}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateWiki.error, t)}</p>
           )}
           <div className="flex gap-3">
             <button

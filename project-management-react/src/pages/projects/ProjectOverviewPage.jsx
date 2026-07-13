@@ -17,7 +17,7 @@ function MemberAvatar({ member }) {
   return (
     <div
       title={fullName}
-      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-xs font-medium text-gray-600"
+      className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
     >
       {avatarUrl ? (
         <img src={avatarUrl} alt={fullName} className="h-full w-full object-cover" />
@@ -39,10 +39,10 @@ export function ProjectOverviewPage() {
   const previewImageUrl = useAuthenticatedImage(project?.previewImageUrl)
 
   if (isLoading) {
-    return <p className="px-4 py-8 text-gray-500">{t('projectOverview.loading')}</p>
+    return <p className="px-4 py-8 text-gray-500 dark:text-gray-400">{t('projectOverview.loading')}</p>
   }
   if (isError) {
-    return <p className="px-4 py-8 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>
+    return <p className="px-4 py-8 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>
   }
   if (!project) {
     return null
@@ -52,27 +52,27 @@ export function ProjectOverviewPage() {
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
-          <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-6">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+          <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
               {previewImageUrl && (
                 <img src={previewImageUrl} alt="" className="h-full w-full object-cover" />
               )}
             </div>
             <div className="min-w-0">
-              <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold text-gray-900">
+              <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 <span className="min-w-0 break-words">{project.name}</span>
                 {project.archived && (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400">
                     {t('projects.archived')}
                   </span>
                 )}
               </h1>
               {project.description ? (
-                <p className="mt-2 text-sm whitespace-pre-wrap text-gray-600">
+                <p className="mt-2 text-sm whitespace-pre-wrap text-gray-600 dark:text-gray-400">
                   {project.description}
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-gray-400">{t('projectOverview.noDescription')}</p>
+                <p className="mt-2 text-sm text-gray-400 dark:text-gray-500">{t('projectOverview.noDescription')}</p>
               )}
             </div>
           </div>
@@ -94,8 +94,8 @@ export function ProjectOverviewPage() {
             </Link>
           )}
 
-          <div className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="text-sm font-semibold text-gray-900">{t('projects.members')}</h2>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('projects.members')}</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {members?.map((member) => (
                 <MemberAvatar key={member.userId} member={member} />
@@ -103,7 +103,7 @@ export function ProjectOverviewPage() {
             </div>
             <Link
               to="settings/members"
-              className="mt-3 block text-sm text-purple-600 hover:underline"
+              className="mt-3 block text-sm text-purple-600 hover:underline dark:text-purple-400"
             >
               {t('projectOverview.allMembers')}
             </Link>

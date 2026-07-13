@@ -20,15 +20,15 @@ export function ActiveTaskCard({ task }) {
 
   return (
     <li
-      className={`rounded-lg border border-gray-200 bg-white p-4 shadow-sm ${
+      className={`rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 ${
         isDueSoon ? 'border-r-4 border-r-red-500' : ''
       }`}
     >
       <Link to={`/projects/${task.projectSlug}/tasks/${task.taskNumber}`} className="block">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-xs text-gray-500">{task.projectName}</p>
-            <p className="flex items-center gap-2 font-medium text-gray-900">
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{task.projectName}</p>
+            <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
               <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
               <span className="min-w-0 truncate">{task.title}</span>
             </p>
@@ -42,7 +42,7 @@ export function ActiveTaskCard({ task }) {
               {t(`urgency.${task.urgency}`)}
             </span>
             {task.dueDate && (
-              <span className="text-gray-500">
+              <span className="text-gray-500 dark:text-gray-400">
                 {t(`tasks.detail.dueDateUntil`)}{' '}
                 {new Date(task.dueDate).toLocaleString(i18n.language, { dateStyle: 'short', timeStyle: 'short' })}
               </span>
@@ -52,14 +52,14 @@ export function ActiveTaskCard({ task }) {
                 {task.tag.name}
               </span>
             )}
-            <span className="text-gray-500">
+            <span className="text-gray-500 dark:text-gray-400">
               {Number(task.totalHoursSpent).toFixed(2)} {t('tasks.timeLogs.hoursShort')}
             </span>
           </div>
         </div>
 
         {isDueSoon && (
-          <p className="mt-2 text-sm font-medium text-red-600">
+          <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
             {isOverdue
               ? t('home.myActiveTasks.overdue')
               : isLessThanADay

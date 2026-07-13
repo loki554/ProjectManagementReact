@@ -29,20 +29,20 @@ export function AttachmentPreviewModal({ imageUrl, filename, onClose }) {
         className="flex max-h-full max-w-full flex-col items-center gap-3"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm shadow">
+        <div className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm shadow dark:bg-gray-800">
           <button
             type="button"
             onClick={() => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_STEP))}
-            className="px-2 text-base font-medium text-gray-700 hover:text-purple-700"
+            className="px-2 text-base font-medium text-gray-700 hover:text-purple-700 dark:text-gray-300 dark:hover:text-purple-400"
             aria-label={t('tasks.attachments.zoomOut')}
           >
             −
           </button>
-          <span className="w-12 text-center text-gray-600">{Math.round(zoom * 100)}%</span>
+          <span className="w-12 text-center text-gray-600 dark:text-gray-400">{Math.round(zoom * 100)}%</span>
           <button
             type="button"
             onClick={() => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_STEP))}
-            className="px-2 text-base font-medium text-gray-700 hover:text-purple-700"
+            className="px-2 text-base font-medium text-gray-700 hover:text-purple-700 dark:text-gray-300 dark:hover:text-purple-400"
             aria-label={t('tasks.attachments.zoomIn')}
           >
             +
@@ -50,20 +50,20 @@ export function AttachmentPreviewModal({ imageUrl, filename, onClose }) {
           <button
             type="button"
             onClick={() => setZoom(1)}
-            className="ml-1 text-xs text-gray-500 hover:text-purple-700"
+            className="ml-1 text-xs text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-400"
           >
             {t('tasks.attachments.resetZoom')}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="ml-3 text-gray-500 hover:text-red-600"
+            className="ml-3 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
             aria-label={t('tasks.attachments.closePreview')}
           >
             ✕
           </button>
         </div>
-        <div className="max-h-[80vh] max-w-[90vw] overflow-auto rounded bg-white p-2">
+        <div className="max-h-[80vh] max-w-[90vw] overflow-auto rounded bg-white p-2 dark:bg-gray-800">
           <img
             src={imageUrl}
             alt={filename}

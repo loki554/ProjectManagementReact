@@ -50,7 +50,7 @@ function SortableHeader({ colKey, sort, onSort, children, className = '' }) {
         type="button"
         onClick={() => onSort(colKey)}
         className={`flex items-center gap-1 text-left text-xs font-semibold uppercase tracking-wide ${
-          active ? 'text-purple-700' : 'text-gray-500 hover:text-gray-800'
+          active ? 'text-purple-700 dark:text-purple-400' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
         }`}
       >
         {children}
@@ -160,13 +160,13 @@ export function ProjectTaskListPage() {
         )}
       </div>
 
-      {isLoading && <p className="text-gray-500">{t('tasks.loading')}</p>}
-      {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
+      {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
           <table className="w-full min-w-200 text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50">
+            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40">
               <tr>
                 <SortableHeader colKey="number" sort={sort} onSort={toggleSort} className="w-16">
                   №
@@ -194,10 +194,10 @@ export function ProjectTaskListPage() {
                 </SortableHeader>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {visibleTasks.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-sm text-gray-400">
+                  <td colSpan={8} className="px-3 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
                     {t('taskList.empty')}
                   </td>
                 </tr>
@@ -206,12 +206,12 @@ export function ProjectTaskListPage() {
                 <tr
                   key={task.id}
                   onClick={() => navigate(`/projects/${projectSlug}/tasks/${task.taskNumber}`)}
-                  className="cursor-pointer hover:bg-purple-50"
+                  className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30"
                 >
                   <td className="px-3 py-2">
                     <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
                   </td>
-                  <td className="max-w-90 truncate px-3 py-2 font-medium text-gray-900">
+                  <td className="max-w-90 truncate px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
                     {task.title}
                   </td>
                   <td className="px-3 py-2">
@@ -221,9 +221,9 @@ export function ProjectTaskListPage() {
                       {t(`tasks.status.${task.status}`)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-gray-600">
+                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
                     {task.assignee ? assigneeLabelOf(task) : (
-                      <span className="text-gray-400">{t('tasks.unassigned')}</span>
+                      <span className="text-gray-400 dark:text-gray-500">{t('tasks.unassigned')}</span>
                     )}
                   </td>
                   <td className="px-3 py-2">
@@ -233,7 +233,7 @@ export function ProjectTaskListPage() {
                       {t(`urgency.${task.urgency}`)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600">
+                  <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-400">
                     {task.dueDate
                       ? new Date(task.dueDate).toLocaleString(i18n.language, {
                           dateStyle: 'short',
@@ -251,7 +251,7 @@ export function ProjectTaskListPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-gray-600">
+                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
                     {Number(task.totalHoursSpent).toFixed(2)}
                   </td>
                 </tr>

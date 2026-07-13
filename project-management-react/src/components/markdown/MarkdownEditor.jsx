@@ -1,9 +1,10 @@
 import MDEditor from '@uiw/react-md-editor'
+import { useUiStore } from '../../stores/uiStore'
 
-// Тёмная тема не в скоупе MVP (см. §9 плана) — принудительно light.
 export function MarkdownEditor({ value, onChange, placeholder }) {
+  const theme = useUiStore((state) => state.theme)
   return (
-    <div data-color-mode="light">
+    <div data-color-mode={theme}>
       <MDEditor
         value={value ?? ''}
         onChange={(next) => onChange(next ?? '')}

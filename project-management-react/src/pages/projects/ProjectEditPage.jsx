@@ -116,24 +116,24 @@ export function ProjectEditPage() {
   }
 
   if (isLoading) {
-    return <p className="px-4 py-8 text-gray-500">{t('projectOverview.loading')}</p>
+    return <p className="px-4 py-8 text-gray-500 dark:text-gray-400">{t('projectOverview.loading')}</p>
   }
   if (isError) {
-    return <p className="px-4 py-8 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>
+    return <p className="px-4 py-8 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>
   }
   if (!project) {
     return null
   }
   // Косметическое скрытие — сервер всё равно вернёт INSUFFICIENT_ROLE на PATCH.
   if (project.myRole !== 'OWNER') {
-    return <p className="px-4 py-8 text-sm text-red-600">{t('errors.INSUFFICIENT_ROLE')}</p>
+    return <p className="px-4 py-8 text-sm text-red-600 dark:text-red-400">{t('errors.INSUFFICIENT_ROLE')}</p>
   }
 
   const isPending = updateProject.isPending || uploadPreviewImage.isPending
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold text-gray-900">{t('projectEdit.title')}</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('projectEdit.title')}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field label={t('projects.name')} error={errors.name?.message}>
@@ -144,7 +144,7 @@ export function ProjectEditPage() {
         </Field>
 
         <div className="flex items-center gap-4">
-          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700">
             {(pendingImagePreviewUrl ?? currentImageUrl) && (
               <img
                 src={pendingImagePreviewUrl ?? currentImageUrl}
@@ -169,22 +169,22 @@ export function ProjectEditPage() {
             >
               {t('projectEdit.changeImage')}
             </button>
-            <p className="mt-1 text-xs text-gray-500">{t('projects.previewImageHint')}</p>
-            {imageError && <p className="mt-1 text-xs text-red-600">{imageError}</p>}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('projects.previewImageHint')}</p>
+            {imageError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{imageError}</p>}
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+            className="h-4 w-4 rounded border-gray-300 accent-purple-600 dark:border-gray-600"
             {...register('archived')}
           />
           {t('projectEdit.archived')}
         </label>
 
         {updateProject.isError && (
-          <p className="text-sm text-red-600">{getLocalizedErrorMessage(updateProject.error, t)}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateProject.error, t)}</p>
         )}
 
         <div className="flex gap-3">

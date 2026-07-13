@@ -37,8 +37,8 @@ export function RegisterPage() {
   if (mutation.isSuccess) {
     return (
       <AuthLayout title={t('auth.register.successTitle')}>
-        <p className="text-gray-600">{t('auth.register.successMessage')}</p>
-        <Link to="/login" className="mt-4 inline-block text-purple-600 hover:underline">
+        <p className="text-gray-600 dark:text-gray-400">{t('auth.register.successMessage')}</p>
+        <Link to="/login" className="mt-4 inline-block text-purple-600 hover:underline dark:text-purple-400">
           {t('auth.register.backToLogin')}
         </Link>
       </AuthLayout>
@@ -70,7 +70,7 @@ export function RegisterPage() {
         </Field>
 
         {mutation.isError && (
-          <p className="text-sm text-red-600">{getLocalizedErrorMessage(mutation.error, t)}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(mutation.error, t)}</p>
         )}
 
         <button type="submit" disabled={mutation.isPending} className={submitButtonClass}>
@@ -78,9 +78,9 @@ export function RegisterPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         {t('auth.register.hasAccount')}{' '}
-        <Link to="/login" className="text-purple-600 hover:underline">
+        <Link to="/login" className="text-purple-600 hover:underline dark:text-purple-400">
           {t('auth.register.login')}
         </Link>
       </p>

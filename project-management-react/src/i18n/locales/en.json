@@ -14,6 +14,10 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "theme": {
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme"
+  },
   "auth": {
     "login": {
       "title": "Sign in",

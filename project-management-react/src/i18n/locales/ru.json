@@ -14,6 +14,10 @@
     "en": "English",
     "de": "Deutsch"
   },
+  "theme": {
+    "switchToLight": "Переключить на светлую тему",
+    "switchToDark": "Переключить на тёмную тему"
+  },
   "auth": {
     "login": {
       "title": "Вход",

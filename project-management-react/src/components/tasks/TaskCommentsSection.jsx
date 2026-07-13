@@ -50,13 +50,13 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
 
   return (
     <div>
-      {isLoading && <p className="text-sm text-gray-500">{t('tasks.comments.loading')}</p>}
-      {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="text-sm text-gray-500 dark:text-gray-400">{t('tasks.comments.loading')}</p>}
+      {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && comments && (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-gray-100 dark:divide-gray-700">
           {comments.length === 0 && (
-            <li className="py-2 text-sm text-gray-400">{t('tasks.comments.empty')}</li>
+            <li className="py-2 text-sm text-gray-400 dark:text-gray-500">{t('tasks.comments.empty')}</li>
           )}
           {comments.map((comment) => {
             const isAuthor = comment.author.id === currentUser?.id
@@ -66,19 +66,19 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
                 <UserAvatar user={comment.author} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 text-sm">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {comment.author.lastName} {comment.author.firstName}
                     </span>
-                    <span className="text-xs text-gray-400">{formatDate(comment.createdAt)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(comment.createdAt)}</span>
                   </div>
-                  <p className="mt-0.5 text-sm whitespace-pre-wrap text-gray-700">{comment.body}</p>
+                  <p className="mt-0.5 text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">{comment.body}</p>
                 </div>
                 {canDelete && (
                   <button
                     type="button"
                     onClick={() => onDelete(comment.id)}
                     disabled={deleteComment.isPending}
-                    className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60"
+                    className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
                   >
                     {t('tasks.comments.delete')}
                   </button>
@@ -89,7 +89,7 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
         </ul>
       )}
       {deleteComment.isError && (
-        <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(deleteComment.error, t)}</p>
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(deleteComment.error, t)}</p>
       )}
 
       {canComment && (
@@ -100,9 +100,9 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
             placeholder={t('tasks.comments.addPlaceholder')}
             {...register('body')}
           />
-          {errors.body && <p className="text-xs text-red-600">{errors.body.message}</p>}
+          {errors.body && <p className="text-xs text-red-600 dark:text-red-400">{errors.body.message}</p>}
           {createComment.isError && (
-            <p className="text-sm text-red-600">{getLocalizedErrorMessage(createComment.error, t)}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createComment.error, t)}</p>
           )}
           <button type="submit" disabled={createComment.isPending} className={primaryButtonClass}>
             {createComment.isPending ? t('tasks.comments.adding') : t('tasks.comments.add')}

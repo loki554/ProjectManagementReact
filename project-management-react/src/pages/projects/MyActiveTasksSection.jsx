@@ -12,12 +12,12 @@ export function MyActiveTasksSection() {
 
   return (
     <div>
-      {isLoading && <p className="text-gray-500">{t('home.myActiveTasks.loading')}</p>}
-      {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('home.myActiveTasks.loading')}</p>}
+      {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && data.items.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-16 text-center">
-          <p className="text-gray-600">{t('home.myActiveTasks.empty')}</p>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-16 text-center dark:border-gray-600 dark:bg-gray-800">
+          <p className="text-gray-600 dark:text-gray-400">{t('home.myActiveTasks.empty')}</p>
         </div>
       )}
 

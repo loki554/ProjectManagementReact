@@ -78,25 +78,25 @@ function TaskCard({ task, disabled, onOpen }) {
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className="block w-full cursor-pointer rounded-md border border-gray-200 bg-white p-2 text-left text-sm hover:border-purple-300 hover:bg-purple-50"
+      className="block w-full cursor-pointer rounded-md border border-gray-200 bg-white p-2 text-left text-sm hover:border-purple-300 hover:bg-purple-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-purple-700 dark:hover:bg-purple-950/30"
     >
-      <p className="flex items-center gap-2 font-medium text-gray-900">
+      <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
         <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
         <span className="min-w-0 truncate">{task.title}</span>
       </p>
-      <p className="mt-1 text-xs text-gray-500">{task.assigneeLabel}</p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{task.assigneeLabel}</p>
     </div>
   )
 }
 
 function TaskCardOverlay({ task }) {
   return (
-    <div className="block w-full rounded-md border border-purple-300 bg-white p-2 text-left text-sm shadow-lg">
-      <p className="flex items-center gap-2 font-medium text-gray-900">
+    <div className="block w-full rounded-md border border-purple-300 bg-white p-2 text-left text-sm shadow-lg dark:border-purple-700 dark:bg-gray-800">
+      <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
         <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
         <span className="min-w-0 truncate">{task.title}</span>
       </p>
-      <p className="mt-1 text-xs text-gray-500">{task.assigneeLabel}</p>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{task.assigneeLabel}</p>
     </div>
   )
 }
@@ -105,17 +105,17 @@ function KanbanColumn({ status, tasks, disabled, onOpenTask, t }) {
   const { setNodeRef } = useDroppable({ id: `column-${status}`, data: { type: 'column', status } })
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 dark:border-gray-700">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskStatusBadgeClass(status)}`}>
           {t(`tasks.status.${status}`)}
         </span>
-        <span className="text-xs text-gray-400">{tasks.length}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{tasks.length}</span>
       </div>
 
       <div ref={setNodeRef} className="min-h-16 space-y-2 p-2">
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-          {tasks.length === 0 && <p className="px-1 py-2 text-xs text-gray-400">{t('tasks.columnEmpty')}</p>}
+          {tasks.length === 0 && <p className="px-1 py-2 text-xs text-gray-400 dark:text-gray-500">{t('tasks.columnEmpty')}</p>}
           {tasks.map((task) => (
             <TaskCard key={task.id} task={task} disabled={disabled} onOpen={() => onOpenTask(task.taskNumber)} />
           ))}
@@ -200,7 +200,7 @@ export function ProjectTasksPage() {
         {canManage && (
           <form
             onSubmit={handleSubmit(onCreate)}
-            className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4"
+            className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="min-w-64 flex-1">
               <Field label={t('tasks.newTaskLabel')} error={errors.title?.message}>
@@ -219,14 +219,14 @@ export function ProjectTasksPage() {
         )}
 
         {createTask.isError && (
-          <p className="mb-4 text-sm text-red-600">{getLocalizedErrorMessage(createTask.error, t)}</p>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createTask.error, t)}</p>
         )}
         {updateTaskStatus.isError && (
-          <p className="mb-4 text-sm text-red-600">{getLocalizedErrorMessage(updateTaskStatus.error, t)}</p>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateTaskStatus.error, t)}</p>
         )}
 
-        {isLoading && <p className="text-gray-500">{t('tasks.loading')}</p>}
-        {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+        {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
+        {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
         {!isLoading && !isError && (
           <DndContext

@@ -108,25 +108,25 @@ export function TaskCreatePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <Link to={backPath} className="text-sm text-purple-600 hover:underline">
+      <Link to={backPath} className="text-sm text-purple-600 hover:underline dark:text-purple-400">
         {parentNumber ? t('tasks.detail.backToParent') : t('tasks.create.backToList')}
       </Link>
 
-      {isLoading && <p className="mt-4 text-gray-500">{t('app.loading')}</p>}
+      {isLoading && <p className="mt-4 text-gray-500 dark:text-gray-400">{t('app.loading')}</p>}
       {parentIsError && (
-        <p className="mt-4 text-sm text-red-600">{getLocalizedErrorMessage(parentError, t)}</p>
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(parentError, t)}</p>
       )}
 
       {!isLoading && !parentIsError && (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
-          <h1 className="text-lg font-semibold text-gray-900">
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {parentNumber ? t('tasks.create.subtaskTitle') : t('tasks.create.title')}
           </h1>
 
           {parentTask && (
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               {t('tasks.create.parentLabel')}:{' '}
-              <Link to={backPath} className="text-purple-700 hover:underline">
+              <Link to={backPath} className="text-purple-700 hover:underline dark:text-purple-400">
                 <span className={TASK_NUMBER_BADGE_CLASS}>#{parentTask.taskNumber}</span>{' '}
                 {parentTask.title}
               </Link>
@@ -196,7 +196,7 @@ export function TaskCreatePage() {
             />
 
             {activeMutation.isError && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-red-600 dark:text-red-400">
                 {getLocalizedErrorMessage(activeMutation.error, t)}
               </p>
             )}

@@ -26,26 +26,26 @@ export function VerifyEmailPage() {
   if (!token) {
     return (
       <AuthLayout title={t('auth.verifyEmail.title')}>
-        <p className="text-red-600">{t('auth.verifyEmail.missingToken')}</p>
+        <p className="text-red-600 dark:text-red-400">{t('auth.verifyEmail.missingToken')}</p>
       </AuthLayout>
     )
   }
 
   return (
     <AuthLayout title={t('auth.verifyEmail.title')}>
-      {query.isPending && <p className="text-gray-600">{t('auth.verifyEmail.pending')}</p>}
+      {query.isPending && <p className="text-gray-600 dark:text-gray-400">{t('auth.verifyEmail.pending')}</p>}
 
       {query.isSuccess && (
         <>
-          <p className="text-green-700">{t('auth.verifyEmail.success')}</p>
-          <Link to="/login" className="mt-4 inline-block text-purple-600 hover:underline">
+          <p className="text-green-700 dark:text-green-400">{t('auth.verifyEmail.success')}</p>
+          <Link to="/login" className="mt-4 inline-block text-purple-600 hover:underline dark:text-purple-400">
             {t('auth.verifyEmail.goToLogin')}
           </Link>
         </>
       )}
 
       {query.isError && (
-        <p className="text-red-600">{getLocalizedErrorMessage(query.error, t)}</p>
+        <p className="text-red-600 dark:text-red-400">{getLocalizedErrorMessage(query.error, t)}</p>
       )}
     </AuthLayout>
   )

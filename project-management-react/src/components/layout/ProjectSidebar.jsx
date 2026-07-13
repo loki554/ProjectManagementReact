@@ -22,7 +22,7 @@ export function ProjectSidebar({ project }) {
 
   return (
     <aside
-      className={`flex shrink-0 flex-col border-r border-gray-200 bg-white transition-[width] duration-200 ${
+      className={`flex shrink-0 flex-col border-r border-gray-200 bg-white transition-[width] duration-200 dark:border-gray-700 dark:bg-gray-800 ${
         collapsed ? 'w-16' : 'w-64'
       }`}
     >
@@ -31,18 +31,18 @@ export function ProjectSidebar({ project }) {
         end
         title={collapsed ? project?.name : undefined}
         className={({ isActive }) =>
-          `flex items-center gap-3 border-b border-gray-200 p-3 ${
+          `flex items-center gap-3 border-b border-gray-200 p-3 dark:border-gray-700 ${
             collapsed ? 'justify-center' : ''
-          } ${isActive ? 'bg-purple-50' : 'hover:bg-gray-50'}`
+          } ${isActive ? 'bg-purple-50 dark:bg-purple-950/40' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`
         }
       >
-        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700">
           {previewImageUrl && (
             <img src={previewImageUrl} alt="" className="h-full w-full object-cover" />
           )}
         </div>
         {!collapsed && (
-          <span className="min-w-0 truncate text-sm font-semibold text-gray-900">
+          <span className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
             {project?.name}
           </span>
         )}
@@ -58,7 +58,11 @@ export function ProjectSidebar({ project }) {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium ${
                 collapsed ? 'justify-center px-0' : ''
-              } ${isActive ? 'bg-purple-50 text-purple-700' : 'text-gray-700 hover:bg-gray-50'}`
+              } ${
+                isActive
+                  ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
+                  : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`
             }
           >
             <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -71,7 +75,7 @@ export function ProjectSidebar({ project }) {
         type="button"
         onClick={toggleSidebar}
         title={collapsed ? t('projectSidebar.expand') : undefined}
-        className={`flex items-center gap-3 border-t border-gray-200 px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 ${
+        className={`flex items-center gap-3 border-t border-gray-200 px-3 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 ${
           collapsed ? 'justify-center px-0' : ''
         }`}
       >

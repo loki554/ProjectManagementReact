@@ -77,8 +77,8 @@ function FeedItem({ item, projectSlug }) {
     <li className="flex gap-3 py-3">
       <UserAvatar user={item.actor} />
       <div className="min-w-0 flex-1">
-        <p className="text-sm text-gray-700">
-          <span className="font-medium text-gray-900">{actorName}</span> {message}
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="font-medium text-gray-900 dark:text-gray-100">{actorName}</span> {message}
           {taskNumber != null && (
             <>
               {' '}
@@ -96,7 +96,7 @@ function FeedItem({ item, projectSlug }) {
             </>
           )}
         </p>
-        <p className="mt-0.5 text-xs text-gray-400" title={formatDate(item.createdAt)}>
+        <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500" title={formatDate(item.createdAt)}>
           {formatWhen(item.createdAt)}
         </p>
       </div>
@@ -115,20 +115,20 @@ export function ActivityFeed({ projectId, projectSlug, taskId, embedded = false 
   const items = data?.pages.flatMap((page) => page.items) ?? []
 
   return (
-    <div className={embedded ? undefined : 'rounded-lg border border-gray-200 bg-white p-6'}>
-      {!embedded && <h2 className="text-sm font-semibold text-gray-900">{t('activity.title')}</h2>}
+    <div className={embedded ? undefined : 'rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800'}>
+      {!embedded && <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('activity.title')}</h2>}
 
-      {isLoading && <p className="mt-3 text-sm text-gray-500">{t('activity.loading')}</p>}
+      {isLoading && <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t('activity.loading')}</p>}
       {isError && (
-        <p className="mt-3 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>
       )}
 
       {!isLoading && !isError && items.length === 0 && (
-        <p className="mt-3 text-sm text-gray-400">{t('activity.empty')}</p>
+        <p className="mt-3 text-sm text-gray-400 dark:text-gray-500">{t('activity.empty')}</p>
       )}
 
       {items.length > 0 && (
-        <ul className="mt-2 divide-y divide-gray-100">
+        <ul className="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
           {items.map((item) => (
             <FeedItem key={item.id} item={item} projectSlug={projectSlug} />
           ))}
@@ -140,7 +140,7 @@ export function ActivityFeed({ projectId, projectSlug, taskId, embedded = false 
           type="button"
           onClick={() => fetchNextPage()}
           disabled={isFetchingNextPage}
-          className="mt-2 text-sm font-medium text-purple-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 text-sm font-medium text-purple-600 hover:underline disabled:cursor-not-allowed disabled:opacity-60 dark:text-purple-400"
         >
           {isFetchingNextPage ? t('activity.loadingMore') : t('activity.showMore')}
         </button>

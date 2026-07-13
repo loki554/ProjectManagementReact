@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
+/* Тёмная тема переключается классом .dark на <html> (см. stores/uiStore.js),
+   а не через prefers-color-scheme — чтобы ручной переключатель работал
+   независимо от системной темы. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -9,7 +18,16 @@ body {
   color: #111827;
 }
 
+:root.dark body {
+  color: #e5e7eb;
+}
+
 #root {
   min-height: 100svh;
   background-image: url('./assets/geometry-pattern.png');
+}
+
+:root.dark #root {
+  background-image: none;
+  background-color: #1f2937;
 }

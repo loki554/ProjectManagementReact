@@ -8,7 +8,7 @@ export function UserAvatar({ user, sizeClass = 'h-8 w-8' }) {
   const avatarUrl = useAuthenticatedImage(user?.avatarUrl)
   return (
     <div
-      className={`flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-[10px] font-medium text-gray-600`}
+      className={`flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300`}
     >
       {avatarUrl ? (
         <img src={avatarUrl} alt="" className="h-full w-full object-cover" />

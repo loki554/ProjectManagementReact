@@ -79,12 +79,12 @@ export function ProjectTagsPage() {
 
   return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold text-gray-900">{t('tags.navLabel')}</h1>
+        <h1 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('tags.navLabel')}</h1>
 
         {canManage && (
           <form
             onSubmit={handleSubmit(onCreate)}
-            className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4"
+            className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="min-w-48 flex-1">
               <Field label={t('tags.name')} error={errors.name?.message}>
@@ -93,7 +93,7 @@ export function ProjectTagsPage() {
             </div>
             <div>
               <Field label={t('tags.color')} error={errors.color?.message}>
-                <input type="color" className="h-10 w-16 rounded-md border border-gray-300" {...register('color')} />
+                <input type="color" className="h-10 w-16 rounded-md border border-gray-300 dark:border-gray-600" {...register('color')} />
               </Field>
             </div>
             <button type="submit" disabled={createTag.isPending} className={primaryButtonClass}>
@@ -103,21 +103,21 @@ export function ProjectTagsPage() {
         )}
 
         {createTag.isError && (
-          <p className="mb-4 text-sm text-red-600">{getLocalizedErrorMessage(createTag.error, t)}</p>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createTag.error, t)}</p>
         )}
         {updateTag.isError && (
-          <p className="mb-4 text-sm text-red-600">{getLocalizedErrorMessage(updateTag.error, t)}</p>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateTag.error, t)}</p>
         )}
         {deleteTag.isError && (
-          <p className="mb-4 text-sm text-red-600">{getLocalizedErrorMessage(deleteTag.error, t)}</p>
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(deleteTag.error, t)}</p>
         )}
 
-        {isLoading && <p className="text-gray-500">{t('tags.loading')}</p>}
-        {isError && <p className="text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+        {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tags.loading')}</p>}
+        {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
         {!isLoading && !isError && tags && (
-          <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
-            {tags.length === 0 && <li className="px-4 py-3 text-sm text-gray-400">{t('tags.empty')}</li>}
+          <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
+            {tags.length === 0 && <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">{t('tags.empty')}</li>}
             {tags.map((tag) =>
               editingTagId === tag.id ? (
                 <li key={tag.id} className="px-4 py-3">
@@ -134,7 +134,7 @@ export function ProjectTagsPage() {
                       <Field label={t('tags.color')} error={editErrors.color?.message}>
                         <input
                           type="color"
-                          className="h-10 w-16 rounded-md border border-gray-300"
+                          className="h-10 w-16 rounded-md border border-gray-300 dark:border-gray-600"
                           {...registerEdit('color')}
                         />
                       </Field>
@@ -145,7 +145,7 @@ export function ProjectTagsPage() {
                     <button
                       type="button"
                       onClick={() => setEditingTagId(null)}
-                      className="text-sm text-gray-500 hover:underline"
+                      className="text-sm text-gray-500 hover:underline dark:text-gray-400"
                     >
                       {t('tags.cancel')}
                     </button>
@@ -165,7 +165,7 @@ export function ProjectTagsPage() {
                       <button
                         type="button"
                         onClick={() => startEdit(tag)}
-                        className="text-xs text-purple-600 hover:underline"
+                        className="text-xs text-purple-600 hover:underline dark:text-purple-400"
                       >
                         {t('tags.edit')}
                       </button>
@@ -173,7 +173,7 @@ export function ProjectTagsPage() {
                         type="button"
                         onClick={() => onDelete(tag.id)}
                         disabled={deleteTag.isPending}
-                        className="text-xs text-red-600 hover:underline disabled:opacity-60"
+                        className="text-xs text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
                       >
                         {t('tags.delete')}
                       </button>

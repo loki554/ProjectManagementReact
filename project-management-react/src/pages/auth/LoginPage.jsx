@@ -60,13 +60,13 @@ export function LoginPage() {
         </Field>
 
         {loginMutation.isError && !isEmailNotVerified && (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-red-600 dark:text-red-400">
             {getLocalizedErrorMessage(loginMutation.error, t)}
           </p>
         )}
 
         {isEmailNotVerified && (
-          <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
             <p>{getLocalizedErrorMessage(loginMutation.error, t)}</p>
             {resendMutation.isSuccess ? (
               <p className="mt-2 font-medium">{t('auth.login.resendVerificationSuccess')}</p>
@@ -75,7 +75,7 @@ export function LoginPage() {
                 type="button"
                 onClick={() => resendMutation.mutate(getValues('email'))}
                 disabled={resendMutation.isPending}
-                className="mt-2 font-medium text-purple-700 hover:underline disabled:opacity-60"
+                className="mt-2 font-medium text-purple-700 hover:underline disabled:opacity-60 dark:text-purple-400"
               >
                 {resendMutation.isPending
                   ? t('auth.login.resendVerificationPending')
@@ -90,9 +90,9 @@ export function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-4 text-sm text-gray-600">
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         {t('auth.login.noAccount')}{' '}
-        <Link to="/register" className="text-purple-600 hover:underline">
+        <Link to="/register" className="text-purple-600 hover:underline dark:text-purple-400">
           {t('auth.login.register')}
         </Link>
       </p>

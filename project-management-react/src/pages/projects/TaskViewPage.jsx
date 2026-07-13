@@ -163,8 +163,8 @@ export function TaskViewPage() {
   const tabClass = (tab) =>
     `border-b-2 px-1 pb-2 text-sm font-medium ${
       activeTab === tab
-        ? 'border-purple-600 text-purple-700'
-        : 'border-transparent text-gray-500 hover:text-gray-700'
+        ? 'border-purple-600 text-purple-700 dark:text-purple-400'
+        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
     }`
 
   return (
@@ -173,32 +173,32 @@ export function TaskViewPage() {
         {task?.parentTaskId && (
           <Link
             to={`/projects/${projectSlug}/tasks/${task.parentTaskNumber}`}
-            className="text-sm text-purple-600 hover:underline"
+            className="text-sm text-purple-600 hover:underline dark:text-purple-400"
           >
             {t('tasks.detail.backToParent')}
           </Link>
         )}
 
-        {isLoading && <p className="mt-4 text-gray-500">{t('tasks.detail.loading')}</p>}
-        {isError && <p className="mt-4 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+        {isLoading && <p className="mt-4 text-gray-500 dark:text-gray-400">{t('tasks.detail.loading')}</p>}
+        {isError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
         {!isLoading && !isError && task && (
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
             {/* ── Основная колонка ── */}
             <div className="min-w-0 space-y-6">
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 {/* Без flex-wrap: при длинном названии блок «Создал» должен остаться
                     справа (название переносится, а не выталкивает блок вниз). */}
                 <div className="flex items-start justify-between gap-4">
-                  <h1 className="flex min-w-0 flex-1 items-start gap-2 text-xl font-semibold text-gray-900">
+                  <h1 className="flex min-w-0 flex-1 items-start gap-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
                     <span className={`${TASK_NUMBER_BADGE_CLASS} mt-1`}>#{task.taskNumber}</span>
                     <span className="min-w-0 break-words">{task.title}</span>
                   </h1>
-                  <div className="flex shrink-0 items-center gap-2 text-sm text-gray-500">
+                  <div className="flex shrink-0 items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <div className="text-right">
                       <div>
                         {t('tasks.detail.createdBy')}{' '}
-                        <span className="font-medium text-gray-700">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
                           {task.createdBy.lastName} {task.createdBy.firstName}
                         </span>
                       </div>
@@ -208,48 +208,48 @@ export function TaskViewPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 border-t border-gray-100 pt-4">
+                <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
                   {task.description ? (
                     <MarkdownRenderer>{task.description}</MarkdownRenderer>
                   ) : (
-                    <p className="text-sm text-gray-400">{t('tasks.detail.noDescription')}</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">{t('tasks.detail.noDescription')}</p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-semibold text-gray-900">{t('tasks.subtasks.title')}</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('tasks.subtasks.title')}</h2>
                   {/* Quick-add ниже создаёт подзадачу только с названием; полная форма
                       (описание, исполнитель, срок и т.д.) — отдельная страница создания
                       с родителем в URL (?parent=<taskNumber>). */}
                   {canManage && (
                     <Link
                       to={`/projects/${projectSlug}/tasks/new?parent=${task.taskNumber}`}
-                      className="shrink-0 text-xs text-purple-600 hover:underline"
+                      className="shrink-0 text-xs text-purple-600 hover:underline dark:text-purple-400"
                     >
                       {t('tasks.subtasks.fullForm')}
                     </Link>
                   )}
                 </div>
 
-                {subtasksLoading && <p className="text-sm text-gray-500">{t('tasks.subtasks.loading')}</p>}
+                {subtasksLoading && <p className="text-sm text-gray-500 dark:text-gray-400">{t('tasks.subtasks.loading')}</p>}
                 {subtasksIsError && (
-                  <p className="text-sm text-red-600">{getLocalizedErrorMessage(subtasksError, t)}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(subtasksError, t)}</p>
                 )}
 
                 {!subtasksLoading && !subtasksIsError && subtasks && (
-                  <ul className="mb-4 divide-y divide-gray-100">
+                  <ul className="mb-4 divide-y divide-gray-100 dark:divide-gray-700">
                     {subtasks.length === 0 && (
-                      <li className="py-2 text-sm text-gray-400">{t('tasks.subtasks.empty')}</li>
+                      <li className="py-2 text-sm text-gray-400 dark:text-gray-500">{t('tasks.subtasks.empty')}</li>
                     )}
                     {subtasks.map((subtask) => (
                       <li key={subtask.id}>
                         <Link
                           to={`/projects/${projectSlug}/tasks/${subtask.taskNumber}`}
-                          className="flex items-center justify-between gap-3 py-2 text-sm hover:text-purple-700"
+                          className="flex items-center justify-between gap-3 py-2 text-sm hover:text-purple-700 dark:hover:text-purple-400"
                         >
-                          <span className="flex min-w-0 items-center gap-2 text-gray-900">
+                          <span className="flex min-w-0 items-center gap-2 text-gray-900 dark:text-gray-100">
                             <span className={TASK_NUMBER_BADGE_CLASS}>#{subtask.taskNumber}</span>
                             <span className="truncate">{subtask.title}</span>
                           </span>
@@ -274,7 +274,7 @@ export function TaskViewPage() {
                         {...registerSubtask('title')}
                       />
                       {subtaskErrors.title && (
-                        <p className="mt-1 text-xs text-red-600">{subtaskErrors.title.message}</p>
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{subtaskErrors.title.message}</p>
                       )}
                     </div>
                     <button type="submit" disabled={createSubtask.isPending} className={primaryButtonClass}>
@@ -283,22 +283,22 @@ export function TaskViewPage() {
                   </form>
                 )}
                 {createSubtask.isError && (
-                  <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(createSubtask.error, t)}</p>
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createSubtask.error, t)}</p>
                 )}
               </div>
 
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
-                <h2 className="mb-3 text-sm font-semibold text-gray-900">{t('tasks.attachments.title')}</h2>
+              <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{t('tasks.attachments.title')}</h2>
 
-                {attachmentsLoading && <p className="text-sm text-gray-500">{t('tasks.attachments.loading')}</p>}
+                {attachmentsLoading && <p className="text-sm text-gray-500 dark:text-gray-400">{t('tasks.attachments.loading')}</p>}
                 {attachmentsIsError && (
-                  <p className="text-sm text-red-600">{getLocalizedErrorMessage(attachmentsError, t)}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(attachmentsError, t)}</p>
                 )}
 
                 {!attachmentsLoading && !attachmentsIsError && attachments && (
-                  <ul className="mb-4 divide-y divide-gray-100">
+                  <ul className="mb-4 divide-y divide-gray-100 dark:divide-gray-700">
                     {attachments.length === 0 && (
-                      <li className="py-2 text-sm text-gray-400">{t('tasks.attachments.empty')}</li>
+                      <li className="py-2 text-sm text-gray-400 dark:text-gray-500">{t('tasks.attachments.empty')}</li>
                     )}
                     {attachments.map((attachment) => {
                       const isUploader = attachment.uploadedBy.id === currentUser?.id
@@ -314,11 +314,11 @@ export function TaskViewPage() {
                               type="button"
                               onClick={() => downloadAttachmentMutation.mutate(attachment)}
                               disabled={downloadAttachmentMutation.isPending}
-                              className="block max-w-full truncate text-left text-purple-700 hover:underline disabled:opacity-60"
+                              className="block max-w-full truncate text-left text-purple-700 hover:underline disabled:opacity-60 dark:text-purple-400"
                             >
                               {attachment.originalFilename}
                             </button>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
                               {formatFileSize(attachment.sizeBytes)} · {attachment.uploadedBy.lastName}{' '}
                               {attachment.uploadedBy.firstName} ·{' '}
                               {new Date(attachment.createdAt).toLocaleDateString(i18n.language)}
@@ -329,7 +329,7 @@ export function TaskViewPage() {
                               type="button"
                               onClick={() => onDeleteAttachment(attachment.id)}
                               disabled={deleteAttachmentMutation.isPending}
-                              className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60"
+                              className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
                             >
                               {t('tasks.attachments.delete')}
                             </button>
@@ -351,39 +351,39 @@ export function TaskViewPage() {
                   />
                 )}
                 {uploadAttachment.isError && (
-                  <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(uploadAttachment.error, t)}</p>
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(uploadAttachment.error, t)}</p>
                 )}
                 {deleteAttachmentMutation.isError && (
-                  <p className="mt-2 text-sm text-red-600">
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">
                     {getLocalizedErrorMessage(deleteAttachmentMutation.error, t)}
                   </p>
                 )}
                 {downloadAttachmentMutation.isError && (
-                  <p className="mt-2 text-sm text-red-600">
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">
                     {getLocalizedErrorMessage(downloadAttachmentMutation.error, t)}
                   </p>
                 )}
               </div>
 
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-gray-900">{t('tasks.timeLogs.title')}</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('tasks.timeLogs.title')}</h2>
                   {timeLogs && (
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       {t('tasks.timeLogs.totalLabel', { hours: Number(timeLogs.totalHours).toFixed(2) })}
                     </span>
                   )}
                 </div>
 
-                {timeLogsLoading && <p className="text-sm text-gray-500">{t('tasks.timeLogs.loading')}</p>}
+                {timeLogsLoading && <p className="text-sm text-gray-500 dark:text-gray-400">{t('tasks.timeLogs.loading')}</p>}
                 {timeLogsIsError && (
-                  <p className="text-sm text-red-600">{getLocalizedErrorMessage(timeLogsError, t)}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(timeLogsError, t)}</p>
                 )}
 
                 {!timeLogsLoading && !timeLogsIsError && timeLogs && (
-                  <ul className="mb-4 divide-y divide-gray-100">
+                  <ul className="mb-4 divide-y divide-gray-100 dark:divide-gray-700">
                     {timeLogs.items.length === 0 && (
-                      <li className="py-2 text-sm text-gray-400">{t('tasks.timeLogs.empty')}</li>
+                      <li className="py-2 text-sm text-gray-400 dark:text-gray-500">{t('tasks.timeLogs.empty')}</li>
                     )}
                     {timeLogs.items.map((entry) => {
                       const isAuthor = entry.user.id === currentUser?.id
@@ -391,18 +391,18 @@ export function TaskViewPage() {
                       return (
                         <li key={entry.id} className="flex items-start justify-between gap-3 py-2 text-sm">
                           <div>
-                            <div className="text-gray-900">
+                            <div className="text-gray-900 dark:text-gray-100">
                               {entry.spentOn} · {Number(entry.hours).toFixed(2)} {t('tasks.timeLogs.hoursShort')} ·{' '}
                               {entry.user.lastName} {entry.user.firstName}
                             </div>
-                            {entry.description && <div className="text-gray-500">{entry.description}</div>}
+                            {entry.description && <div className="text-gray-500 dark:text-gray-400">{entry.description}</div>}
                           </div>
                           {canDelete && (
                             <button
                               type="button"
                               onClick={() => onDeleteTimeLog(entry.id)}
                               disabled={deleteTimeLog.isPending}
-                              className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60"
+                              className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
                             >
                               {t('tasks.timeLogs.delete')}
                             </button>
@@ -432,15 +432,15 @@ export function TaskViewPage() {
                   </form>
                 )}
                 {createTimeLog.isError && (
-                  <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(createTimeLog.error, t)}</p>
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createTimeLog.error, t)}</p>
                 )}
                 {deleteTimeLog.isError && (
-                  <p className="mt-2 text-sm text-red-600">{getLocalizedErrorMessage(deleteTimeLog.error, t)}</p>
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(deleteTimeLog.error, t)}</p>
                 )}
               </div>
 
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
-                <div className="flex items-center justify-between gap-3 border-b border-gray-200">
+              <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex items-center justify-between gap-3 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex gap-6">
                     <button type="button" onClick={() => setActiveTab('comments')} className={tabClass('comments')}>
                       {t('tasks.detail.tabs.comments')}
@@ -456,7 +456,7 @@ export function TaskViewPage() {
                       value={commentsSort}
                       onChange={(event) => setCommentsSort(event.target.value)}
                       aria-label={t('tasks.comments.sortLabel')}
-                      className="mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:border-purple-500 focus:outline-none"
+                      className="mb-2 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 focus:border-purple-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                     >
                       <option value="newest">{t('tasks.comments.sortNewest')}</option>
                       <option value="oldest">{t('tasks.comments.sortOldest')}</option>
@@ -480,7 +480,7 @@ export function TaskViewPage() {
             </div>
 
             {/* ── Правая панель ── */}
-            <aside className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 lg:sticky lg:top-6">
+            <aside className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 lg:sticky lg:top-6 dark:border-gray-700 dark:bg-gray-800">
               <div
                 className={`rounded-full px-3 py-1.5 text-center text-sm font-semibold ${taskStatusBadgeClass(task.status)}`}
               >
@@ -496,9 +496,9 @@ export function TaskViewPage() {
                 </Link>
               )}
 
-              <dl className="space-y-3 border-t border-gray-100 pt-4 text-sm">
+              <dl className="space-y-3 border-t border-gray-100 pt-4 text-sm dark:border-gray-700">
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">{t('tasks.detail.tagLabel')}</dt>
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.tagLabel')}</dt>
                   <dd className="mt-1">
                     {task.tag ? (
                       <span
@@ -508,12 +508,12 @@ export function TaskViewPage() {
                         {task.tag.name}
                       </span>
                     ) : (
-                      <span className="text-gray-400">{t('tasks.noTag')}</span>
+                      <span className="text-gray-400 dark:text-gray-500">{t('tasks.noTag')}</span>
                     )}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">{t('tasks.detail.urgencyLabel')}</dt>
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.urgencyLabel')}</dt>
                   <dd className="mt-1">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskUrgencyBadgeClass(task.urgency)}`}
@@ -523,22 +523,22 @@ export function TaskViewPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">{t('tasks.detail.dueDateLabel')}</dt>
-                  <dd className="mt-1 text-gray-900">
-                    {task.dueDate ? formatDate(task.dueDate) : <span className="text-gray-400">—</span>}
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.dueDateLabel')}</dt>
+                  <dd className="mt-1 text-gray-900 dark:text-gray-100">
+                    {task.dueDate ? formatDate(task.dueDate) : <span className="text-gray-400 dark:text-gray-500">—</span>}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-medium text-gray-500">{t('tasks.detail.hoursSpentLabel')}</dt>
-                  <dd className="mt-1 text-gray-900">
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.hoursSpentLabel')}</dt>
+                  <dd className="mt-1 text-gray-900 dark:text-gray-100">
                     {Number(task.totalHoursSpent).toFixed(2)} {t('tasks.timeLogs.hoursShort')}
                   </dd>
                 </div>
               </dl>
 
-              <div className="border-t border-gray-100 pt-4">
-                <div className="text-xs font-medium text-gray-500">{t('tasks.detail.assigneeLabel')}</div>
-                <div className="mt-2 flex items-center gap-2 text-sm text-gray-900">
+              <div className="border-t border-gray-100 pt-4 dark:border-gray-700">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.assigneeLabel')}</div>
+                <div className="mt-2 flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
                   {task.assignee ? (
                     <>
                       <UserAvatar user={task.assignee} />
@@ -547,7 +547,7 @@ export function TaskViewPage() {
                       </span>
                     </>
                   ) : (
-                    <span className="text-gray-400">{t('tasks.unassigned')}</span>
+                    <span className="text-gray-400 dark:text-gray-500">{t('tasks.unassigned')}</span>
                   )}
                 </div>
               </div>

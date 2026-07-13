@@ -20,7 +20,7 @@ export function Pagination({ page, totalPages, onPageChange }) {
       >
         {t('pagination.previous')}
       </button>
-      <span className="text-sm text-gray-600">
+      <span className="text-sm text-gray-600 dark:text-gray-400">
         {t('pagination.pageInfo', { page: page + 1, total: totalPages })}
       </span>
       <button

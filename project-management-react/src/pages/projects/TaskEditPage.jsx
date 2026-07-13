@@ -122,15 +122,15 @@ export function TaskEditPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <Link to={viewPath} className="text-sm text-purple-600 hover:underline">
+      <Link to={viewPath} className="text-sm text-purple-600 hover:underline dark:text-purple-400">
         {t('tasks.detail.backToTask')}
       </Link>
 
-      {isLoading && <p className="mt-4 text-gray-500">{t('tasks.detail.loading')}</p>}
-      {isError && <p className="mt-4 text-sm text-red-600">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="mt-4 text-gray-500 dark:text-gray-400">{t('tasks.detail.loading')}</p>}
+      {isError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && task && (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
           <form onSubmit={handleSubmit(onSave)} className="space-y-4">
             <div>
               <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
@@ -197,7 +197,7 @@ export function TaskEditPage() {
             />
 
             {updateTask.isError && (
-              <p className="text-sm text-red-600">{getLocalizedErrorMessage(updateTask.error, t)}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateTask.error, t)}</p>
             )}
 
             <div className="flex items-center justify-between">
@@ -213,13 +213,13 @@ export function TaskEditPage() {
                 type="button"
                 onClick={onDelete}
                 disabled={deleteTask.isPending}
-                className="text-sm text-red-600 hover:underline disabled:opacity-60"
+                className="text-sm text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
               >
                 {deleteTask.isPending ? t('tasks.detail.deleting') : t('tasks.detail.delete')}
               </button>
             </div>
             {deleteTask.isError && (
-              <p className="text-sm text-red-600">{getLocalizedErrorMessage(deleteTask.error, t)}</p>
+              <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(deleteTask.error, t)}</p>
             )}
           </form>
         </div>

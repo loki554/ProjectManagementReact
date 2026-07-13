@@ -11,12 +11,12 @@ export function roleIsAtLeast(role, required) {
 export const TASK_STATUSES = ['NEW', 'IN_PROGRESS', 'PAUSED', 'FEEDBACK', 'DONE', 'REJECTED']
 
 const TASK_STATUS_BADGE_CLASSES = {
-  NEW: 'bg-gray-100 text-gray-700',
-  IN_PROGRESS: 'bg-blue-100 text-blue-700',
-  PAUSED: 'bg-amber-100 text-amber-700',
-  FEEDBACK: 'bg-purple-100 text-purple-700',
-  DONE: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
+  NEW: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+  IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+  PAUSED: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+  FEEDBACK: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+  DONE: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+  REJECTED: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
 }
 
 export function taskStatusBadgeClass(status) {
@@ -28,10 +28,10 @@ export function taskStatusBadgeClass(status) {
 export const TASK_URGENCIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
 
 const TASK_URGENCY_BADGE_CLASSES = {
-  LOW: 'bg-gray-100 text-gray-700',
-  MEDIUM: 'bg-blue-100 text-blue-700',
-  HIGH: 'bg-amber-100 text-amber-700',
-  URGENT: 'bg-red-100 text-red-700',
+  LOW: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+  MEDIUM: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+  HIGH: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+  URGENT: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
 }
 
 export function taskUrgencyBadgeClass(urgency) {
@@ -42,7 +42,7 @@ export function taskUrgencyBadgeClass(urgency) {
 // (Task.taskNumber), счётчик свой для каждого проекта. Стиль отличается от статус/urgency
 // бейджей нарочно (моноширинный, приглушённый), чтобы номер читался как идентификатор, а не
 // как ещё один статус.
-export const TASK_NUMBER_BADGE_CLASS = 'rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-500'
+export const TASK_NUMBER_BADGE_CLASS = 'rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-500 dark:bg-gray-700 dark:text-gray-400'
 
 // Клиентская подсказка для <input accept>, зеркало whitelist на бэкенде
 // (attachment/AttachmentService.java, ALLOWED_CONTENT_TYPES) — окончательную проверку

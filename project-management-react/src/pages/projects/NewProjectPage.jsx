@@ -101,11 +101,11 @@ export function NewProjectPage() {
       <AppHeader />
 
       <div className="mx-auto max-w-lg px-4 py-12">
-        <Link to="/projects" className="text-sm text-purple-600 hover:underline">
+        <Link to="/projects" className="text-sm text-purple-600 hover:underline dark:text-purple-400">
           {t('projects.backToList')}
         </Link>
 
-        <h1 className="mt-4 mb-6 text-2xl font-semibold text-gray-900">{t('projects.createTitle')}</h1>
+        <h1 className="mt-4 mb-6 text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('projects.createTitle')}</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Field label={t('projects.name')} error={errors.name?.message}>
@@ -116,7 +116,7 @@ export function NewProjectPage() {
           </Field>
 
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700">
               {pendingImagePreviewUrl && (
                 <img src={pendingImagePreviewUrl} alt="" className="h-full w-full object-cover" />
               )}
@@ -137,13 +137,13 @@ export function NewProjectPage() {
               >
                 {t('projects.previewImage')}
               </button>
-              <p className="mt-1 text-xs text-gray-500">{t('projects.previewImageHint')}</p>
-              {imageError && <p className="mt-1 text-xs text-red-600">{imageError}</p>}
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('projects.previewImageHint')}</p>
+              {imageError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{imageError}</p>}
             </div>
           </div>
 
           {createProject.isError && (
-            <p className="text-sm text-red-600">{getLocalizedErrorMessage(createProject.error, t)}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createProject.error, t)}</p>
           )}
 
           <div className="flex gap-3">

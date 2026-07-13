@@ -35,7 +35,7 @@ function App() {
           прилететь ещё во время useAuthBootstrap, до того как маршруты вообще смонтированы. */}
       <ToastContainer />
       {!bootstrapped ? (
-        <div className="flex min-h-svh items-center justify-center text-gray-500">
+        <div className="flex min-h-svh items-center justify-center text-gray-500 dark:text-gray-400">
           {t('app.loading')}
         </div>
       ) : (

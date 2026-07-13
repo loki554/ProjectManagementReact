@@ -31,7 +31,11 @@ export function AttachmentDropzone({ onFileSelected, disabled, pending, accept, 
       tabIndex={disabled ? -1 : 0}
       className={`rounded-md border-2 border-dashed p-4 text-center text-sm transition-colors ${
         disabled ? 'pointer-events-none opacity-60' : 'cursor-pointer hover:border-purple-400'
-      } ${isDragOver ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-300 text-gray-500'}`}
+      } ${
+        isDragOver
+          ? 'border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300'
+          : 'border-gray-300 text-gray-500 dark:border-gray-600 dark:text-gray-400'
+      }`}
     >
       <input
         ref={inputRef}

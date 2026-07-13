@@ -6,6 +6,7 @@ import { logout } from '../../api/authApi'
 import { SUPPORTED_LANGUAGES } from '../../i18n'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useAuthStore } from '../../stores/authStore'
+import { ThemeToggle } from '../ThemeToggle'
 
 export function AppHeader() {
   const { t, i18n } = useTranslation()
@@ -37,13 +38,13 @@ export function AppHeader() {
   })
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
-      <Link to="/projects" className="text-lg font-semibold text-gray-900">
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+      <Link to="/projects" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
         {t('app.name')}
       </Link>
 
       <div className="flex items-center gap-3">
-        <div className="flex gap-1 rounded-md border border-gray-200 p-1">
+        <div className="flex gap-1 rounded-md border border-gray-200 p-1 dark:border-gray-700">
           {SUPPORTED_LANGUAGES.map((lng) => (
             <button
               key={lng}
@@ -53,7 +54,7 @@ export function AppHeader() {
               className={`rounded px-2 py-1 text-xs font-medium uppercase ${
                 i18n.resolvedLanguage === lng
                   ? 'bg-purple-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {lng}
@@ -61,29 +62,33 @@ export function AppHeader() {
           ))}
         </div>
 
+        <div className="rounded-md border border-gray-200 p-1 dark:border-gray-700">
+          <ThemeToggle />
+        </div>
+
         <div className="relative" ref={menuRef}>
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
-            className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-50"
+            className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-200">
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-600">
               {avatarUrl && <img src={avatarUrl} alt="" className="h-full w-full object-cover" />}
             </div>
-            <span aria-hidden="true" className="text-gray-400">
+            <span aria-hidden="true" className="text-gray-400 dark:text-gray-500">
               ▾
             </span>
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-              <div className="truncate border-b border-gray-100 px-4 py-2 text-sm text-gray-500">
+            <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <div className="truncate border-b border-gray-100 px-4 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                 {user?.firstName + " " + user?.lastName}
               </div>
               <Link
                 to="/profile"
                 onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
               >
                 {t('header.profile')}
               </Link>
@@ -91,7 +96,7 @@ export function AppHeader() {
                 type="button"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
-                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-60 dark:text-gray-200 dark:hover:bg-gray-700"
               >
                 {logoutMutation.isPending ? t('header.loggingOut') : t('header.logout')}
               </button>
