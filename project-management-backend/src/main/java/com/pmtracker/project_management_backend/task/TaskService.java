@@ -11,6 +11,7 @@ import com.pmtracker.project_management_backend.common.exception.TagNotFoundExce
 import com.pmtracker.project_management_backend.common.exception.TagProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.TaskStatusConflictException;
+import com.pmtracker.project_management_backend.notification.NotificationService;
 import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
@@ -53,6 +54,7 @@ public class TaskService {
     private final TagRepository tagRepository;
     private final TimeLogRepository timeLogRepository;
     private final ActivityService activityService;
+    private final NotificationService notificationService;
 
     public TaskService(TaskRepository taskRepository,
                         ProjectAccessService projectAccessService,
@@ -60,7 +62,8 @@ public class TaskService {
                         ProjectRepository projectRepository,
                         TagRepository tagRepository,
                         TimeLogRepository timeLogRepository,
-                        ActivityService activityService) {
+                        ActivityService activityService,
+                        NotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
@@ -68,6 +71,7 @@ public class TaskService {
         this.tagRepository = tagRepository;
         this.timeLogRepository = timeLogRepository;
         this.activityService = activityService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -91,6 +95,7 @@ public class TaskService {
         taskRepository.save(task);
         activityService.record(project, currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
+        notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 
@@ -162,13 +167,16 @@ public class TaskService {
         if (oldStatus != task.getStatus()) {
             recordFieldChange(task, currentUser, "task_status_changed", oldStatus.name(), task.getStatus().name());
         }
-        if (!Objects.equals(oldAssignee, displayName(task.getAssignee()))) {
+        boolean assigneeChanged = !Objects.equals(oldAssignee, displayName(task.getAssignee()));
+        if (assigneeChanged) {
             recordFieldChange(task, currentUser, "task_assignee_changed", oldAssignee, displayName(task.getAssignee()));
+            notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
         }
         if (oldUrgency != task.getUrgency()) {
             recordFieldChange(task, currentUser, "task_urgency_changed", oldUrgency.name(), task.getUrgency().name());
         }
-        if (!Objects.equals(oldDueDate, task.getDueDate())) {
+        boolean dueDateChanged = !Objects.equals(oldDueDate, task.getDueDate());
+        if (dueDateChanged) {
             recordFieldChange(task, currentUser, "task_due_date_changed",
                     oldDueDate != null ? oldDueDate.toString() : null,
                     task.getDueDate() != null ? task.getDueDate().toString() : null);
@@ -176,6 +184,14 @@ public class TaskService {
         String newTag = task.getTag() != null ? task.getTag().getName() : null;
         if (!Objects.equals(oldTag, newTag)) {
             recordFieldChange(task, currentUser, "task_tag_changed", oldTag, newTag);
+        }
+
+        // Дедлайн сдвинулся, исполнитель сменился или задача больше не активна — прежние
+        // task_due_soon/task_overdue (если были) больше не отражают реальность; следующий
+        // тик NotificationScheduler создаст их заново, если условия всё ещё выполняются.
+        boolean statusBecameInactive = oldStatus != task.getStatus() && INACTIVE_STATUSES.contains(task.getStatus());
+        if (dueDateChanged || assigneeChanged || statusBecameInactive) {
+            notificationService.clearDueDateAlerts(task.getId());
         }
 
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
@@ -235,6 +251,9 @@ public class TaskService {
             // Перестановка внутри колонки (oldStatus == newStatus) — не событие для ленты,
             // фиксируем только реальную смену статуса.
             recordFieldChange(task, currentUser, "task_status_changed", oldStatus.name(), newStatus.name());
+            if (INACTIVE_STATUSES.contains(newStatus)) {
+                notificationService.clearDueDateAlerts(task.getId());
+            }
         }
 
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
@@ -292,6 +311,7 @@ public class TaskService {
         taskRepository.save(task);
         activityService.record(parent.getProject(), currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
+        notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 

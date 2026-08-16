@@ -9,6 +9,18 @@
     "logout": "Abmelden",
     "loggingOut": "Abmeldung läuft..."
   },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "loading": "Benachrichtigungen werden geladen...",
+    "empty": "Noch keine Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "types": {
+      "task_assigned": "hat Ihnen die Aufgabe \"{{title}}\" zugewiesen",
+      "task_comment": "hat die Aufgabe \"{{title}}\" kommentiert: „{{commentExcerpt}}“",
+      "task_due_soon": "Die Frist für Aufgabe \"{{title}}\" läuft bald ab",
+      "task_overdue": "Die Frist für Aufgabe \"{{title}}\" ist abgelaufen"
+    }
+  },
   "language": {
     "ru": "Русский",
     "en": "English",
@@ -366,6 +378,7 @@
     "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",
     "NOT_ATTACHMENT_OWNER": "Nur die hochladende Person oder ein Projekt-Administrator kann diesen Anhang löschen",
     "COMMENT_NOT_FOUND": "Kommentar nicht gefunden",
+    "NOTIFICATION_NOT_FOUND": "Benachrichtigung nicht gefunden",
     "NOT_COMMENT_OWNER": "Nur die verfassende Person oder ein Projekt-Administrator kann diesen Kommentar löschen",
     "TAG_NOT_FOUND": "Tag nicht gefunden",
     "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",

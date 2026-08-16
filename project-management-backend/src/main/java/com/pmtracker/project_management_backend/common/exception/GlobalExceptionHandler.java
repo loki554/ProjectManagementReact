@@ -190,6 +190,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("NOT_COMMENT_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(NotificationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotificationNotFound(NotificationNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("NOTIFICATION_NOT_FOUND", ex.getMessage()));
+    }
+
     @ExceptionHandler(TagNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTagNotFound(TagNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

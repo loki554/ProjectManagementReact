@@ -103,4 +103,22 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
               and t.status not in :excludedStatuses
             """)
     Page<Task> findActiveByAssignee(UUID userId, List<TaskStatus> excludedStatuses, Instant urgentCutoff, Pageable pageable);
+
+    /**
+     * Кандидаты для NotificationScheduler (task_due_soon/task_overdue): назначенные, активные
+     * (не DONE/REJECTED) задачи с дедлайном не позже cutoff — включает как приближающиеся,
+     * так и уже просроченные, разделение на "скоро"/"просрочена" по дедлайну относительно
+     * now остаётся на стороне вызывающего кода. join fetch project/assignee закрывает N+1:
+     * оба нужны для payload и получателя уведомления на каждой задаче.
+     */
+    @Query("""
+            select t from Task t
+            join fetch t.project
+            join fetch t.assignee
+            where t.assignee is not null
+              and t.status not in :excludedStatuses
+              and t.dueDate is not null
+              and t.dueDate <= :cutoff
+            """)
+    List<Task> findActiveWithDueDateBefore(List<TaskStatus> excludedStatuses, Instant cutoff);
 }

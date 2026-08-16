@@ -7,6 +7,7 @@ import { SUPPORTED_LANGUAGES } from '../../i18n'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useAuthStore } from '../../stores/authStore'
 import { ThemeToggle } from '../ThemeToggle'
+import { NotificationBell } from './NotificationBell'
 
 export function AppHeader() {
   const { t, i18n } = useTranslation()
@@ -65,6 +66,8 @@ export function AppHeader() {
         <div className="rounded-md border border-gray-200 p-1 dark:border-gray-700">
           <ThemeToggle />
         </div>
+
+        <NotificationBell />
 
         <div className="relative" ref={menuRef}>
           <button

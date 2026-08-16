@@ -7,6 +7,7 @@ import com.pmtracker.project_management_backend.comment.dto.CreateCommentRequest
 import com.pmtracker.project_management_backend.common.exception.CommentNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.NotCommentOwnerException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
+import com.pmtracker.project_management_backend.notification.NotificationService;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectRole;
@@ -28,15 +29,18 @@ public class TaskCommentService {
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
+    private final NotificationService notificationService;
 
     public TaskCommentService(TaskCommentRepository taskCommentRepository,
                                TaskRepository taskRepository,
                                ProjectAccessService projectAccessService,
-                               ActivityService activityService) {
+                               ActivityService activityService,
+                               NotificationService notificationService) {
         this.taskCommentRepository = taskCommentRepository;
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -53,6 +57,7 @@ public class TaskCommentService {
 
         activityService.record(task.getProject(), currentUser, "comment_added", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
+        notificationService.notifyTaskComment(task, currentUser, comment.getBody());
 
         return CommentResponse.from(comment);
     }
