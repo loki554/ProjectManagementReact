@@ -11,12 +11,16 @@ export function ProjectLayout() {
   const { projectSlug } = useParams()
   const { data: project } = useProjectBySlug(projectSlug)
 
+  // Высота фиксирована по вьюпорту, скроллится не body, а <main>. Это даёт страницам
+  // внутри проекта (список задач, канбан) полноценную область известной высоты: можно
+  // сделать залипающую шапку таблицы и колонки канбана со своим скроллом, а хедер и
+  // сайдбар при этом всегда остаются на экране.
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex h-svh flex-col overflow-hidden">
       <AppHeader />
-      <div className="flex flex-1">
+      <div className="flex min-h-0 flex-1">
         <ProjectSidebar project={project} />
-        <main className="min-w-0 flex-1">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>

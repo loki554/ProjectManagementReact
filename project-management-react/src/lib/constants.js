@@ -23,6 +23,21 @@ export function taskStatusBadgeClass(status) {
   return TASK_STATUS_BADGE_CLASSES[status] ?? TASK_STATUS_BADGE_CLASSES.NEW
 }
 
+// Заливка узкой полосы над колонкой канбана — тот же цвет, что у бейджа статуса,
+// но насыщенный: помогает различать колонки боковым зрением, не читая подписи.
+const TASK_STATUS_ACCENT_CLASSES = {
+  NEW: 'bg-gray-400 dark:bg-gray-500',
+  IN_PROGRESS: 'bg-blue-500',
+  PAUSED: 'bg-amber-500',
+  FEEDBACK: 'bg-purple-500',
+  DONE: 'bg-green-500',
+  REJECTED: 'bg-red-500',
+}
+
+export function taskStatusAccentClass(status) {
+  return TASK_STATUS_ACCENT_CLASSES[status] ?? TASK_STATUS_ACCENT_CLASSES.NEW
+}
+
 // Фиксированный набор уровней срочности — зеркало TaskUrgency на бэкенде
 // (task/TaskUrgency.java). Порядок — по возрастанию важности (для рендера select-опций).
 export const TASK_URGENCIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']

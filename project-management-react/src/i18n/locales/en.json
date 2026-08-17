@@ -114,7 +114,8 @@
     "allAssignees": "All assignees",
     "allTags": "All tags",
     "empty": "Nothing found",
-    "newTask": "New task"
+    "newTask": "New task",
+    "counter": "{{shown}} of {{total}}"
   },
   "wiki": {
     "title": "Wiki",
@@ -217,6 +218,7 @@
     "adding": "Adding...",
     "loading": "Loading tasks...",
     "columnEmpty": "No tasks",
+    "overdue": "Overdue",
     "unassigned": "Unassigned",
     "noTag": "No tag",
     "status": {

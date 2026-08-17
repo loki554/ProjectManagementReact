@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { CalendarClock, Clock3 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -18,9 +19,19 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useCreateTask, useTasks, useUpdateTaskStatus } from '../../api/tasksQueries'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
-import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
+import { UserAvatar } from '../../components/ui/UserAvatar'
+import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { TASK_NUMBER_BADGE_CLASS, TASK_STATUSES, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import {
+  TASK_NUMBER_BADGE_CLASS,
+  TASK_STATUSES,
+  roleIsAtLeast,
+  taskStatusAccentClass,
+  taskStatusBadgeClass,
+  taskUrgencyBadgeClass,
+} from '../../lib/constants'
+import { tagBadgeStyle } from '../../lib/tagColor'
+import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildCreateTaskSchema(t) {
@@ -59,7 +70,76 @@ function computeDropTarget(tasksByStatus, activeTask, over) {
   return { taskId: activeTask.id, status: destStatus, position: index, expectedStatus: activeTask.status }
 }
 
-function TaskCard({ task, disabled, onOpen }) {
+// Содержимое карточки вынесено отдельно, чтобы карточка в колонке и карточка под
+// курсором (DragOverlay) не разъезжались при правках вёрстки.
+function TaskCardBody({ task, t, locale }) {
+  const overdue = isTaskOverdue(task)
+  const hours = formatHours(task.totalHoursSpent)
+
+  return (
+    <>
+      <div className="flex items-start gap-2">
+        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+        {task.urgency !== 'MEDIUM' && (
+          <span
+            className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskUrgencyBadgeClass(task.urgency)}`}
+          >
+            {t(`urgency.${task.urgency}`)}
+          </span>
+        )}
+      </div>
+
+      <p
+        title={task.title}
+        className="mt-1.5 line-clamp-3 text-sm font-medium text-gray-900 dark:text-gray-100"
+      >
+        {task.title}
+      </p>
+
+      {(task.tag || task.dueDate) && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {task.tag && (
+            <span
+              className="max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium"
+              style={tagBadgeStyle(task.tag.color)}
+            >
+              {task.tag.name}
+            </span>
+          )}
+          {task.dueDate && (
+            <span
+              title={overdue ? t('tasks.overdue') : t('tasks.detail.dueDateLabel')}
+              className={`flex items-center gap-1 text-xs whitespace-nowrap ${
+                overdue ? 'font-medium text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <CalendarClock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {formatDueDate(task.dueDate, locale)}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="mt-2 flex items-center gap-2 border-t border-gray-100 pt-2 dark:border-gray-700">
+        <UserAvatar user={task.assignee} sizeClass="h-6 w-6" />
+        <span className="min-w-0 flex-1 truncate text-xs text-gray-600 dark:text-gray-400">
+          {task.assignee ? assigneeLabelOf(task) : t('tasks.unassigned')}
+        </span>
+        {hours && (
+          <span
+            title={t('tasks.detail.hoursSpentLabel')}
+            className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-gray-500 dark:text-gray-400"
+          >
+            <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+            {hours}
+          </span>
+        )}
+      </div>
+    </>
+  )
+}
+
+function TaskCard({ task, disabled, onOpen, t, locale }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: { type: 'task', status: task.status },
@@ -78,46 +158,52 @@ function TaskCard({ task, disabled, onOpen }) {
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      className="block w-full cursor-pointer rounded-md border border-gray-200 bg-white p-2 text-left text-sm hover:border-purple-300 hover:bg-purple-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-purple-700 dark:hover:bg-purple-950/30"
+      className="block w-full cursor-pointer rounded-md border border-gray-200 bg-white p-2.5 text-left hover:border-purple-300 hover:bg-purple-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-purple-700 dark:hover:bg-purple-950/30"
     >
-      <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
-        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
-        <span className="min-w-0 truncate">{task.title}</span>
-      </p>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{task.assigneeLabel}</p>
+      <TaskCardBody task={task} t={t} locale={locale} />
     </div>
   )
 }
 
-function TaskCardOverlay({ task }) {
+function TaskCardOverlay({ task, t, locale }) {
   return (
-    <div className="block w-full rounded-md border border-purple-300 bg-white p-2 text-left text-sm shadow-lg dark:border-purple-700 dark:bg-gray-800">
-      <p className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
-        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
-        <span className="min-w-0 truncate">{task.title}</span>
-      </p>
-      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{task.assigneeLabel}</p>
+    <div className="block w-full rounded-md border border-purple-300 bg-white p-2.5 text-left shadow-lg dark:border-purple-700 dark:bg-gray-800">
+      <TaskCardBody task={task} t={t} locale={locale} />
     </div>
   )
 }
 
-function KanbanColumn({ status, tasks, disabled, onOpenTask, t }) {
+function KanbanColumn({ status, tasks, disabled, onOpenTask, t, locale }) {
   const { setNodeRef } = useDroppable({ id: `column-${status}`, data: { type: 'column', status } })
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+    <div className="flex min-w-64 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40">
+      <div className={`h-1 shrink-0 ${taskStatusAccentClass(status)}`} aria-hidden="true" />
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-3 py-2 dark:border-gray-700">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${taskStatusBadgeClass(status)}`}>
           {t(`tasks.status.${status}`)}
         </span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">{tasks.length}</span>
+        <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600 tabular-nums dark:bg-gray-700 dark:text-gray-300">
+          {tasks.length}
+        </span>
       </div>
 
-      <div ref={setNodeRef} className="min-h-16 space-y-2 p-2">
+      {/* Скроллится каждая колонка отдельно: длинная колонка не растягивает доску,
+          и все шесть статусов всегда видны целиком. */}
+      <div ref={setNodeRef} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-          {tasks.length === 0 && <p className="px-1 py-2 text-xs text-gray-400 dark:text-gray-500">{t('tasks.columnEmpty')}</p>}
+          {tasks.length === 0 && (
+            <p className="px-1 py-2 text-xs text-gray-400 dark:text-gray-500">{t('tasks.columnEmpty')}</p>
+          )}
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} disabled={disabled} onOpen={() => onOpenTask(task.taskNumber)} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              disabled={disabled}
+              onOpen={() => onOpenTask(task.taskNumber)}
+              t={t}
+              locale={locale}
+            />
           ))}
         </SortableContext>
       </div>
@@ -157,15 +243,10 @@ export function ProjectTasksPage() {
   const tasksByStatus = useMemo(() => {
     const grouped = Object.fromEntries(TASK_STATUSES.map((status) => [status, []]))
     for (const task of tasks ?? []) {
-      grouped[task.status]?.push({
-        ...task,
-        assigneeLabel: task.assignee
-          ? `${task.assignee.lastName} ${task.assignee.firstName}`
-          : t('tasks.unassigned'),
-      })
+      grouped[task.status]?.push(task)
     }
     return grouped
-  }, [tasks, t])
+  }, [tasks])
 
   const activeTask = activeTaskId ? (tasks ?? []).find((task) => task.id === activeTaskId) : null
 
@@ -196,62 +277,66 @@ export function ProjectTasksPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-        {canManage && (
-          <form
-            onSubmit={handleSubmit(onCreate)}
-            className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
-          >
-            <div className="min-w-64 flex-1">
-              <Field label={t('tasks.newTaskLabel')} error={errors.title?.message}>
-                <input
-                  type="text"
-                  className={inputClass}
-                  placeholder={t('tasks.newTaskPlaceholder')}
-                  {...register('title')}
-                />
-              </Field>
-            </div>
-            <button type="submit" disabled={createTask.isPending} className={primaryButtonClass}>
-              {createTask.isPending ? t('tasks.adding') : t('tasks.add')}
-            </button>
-          </form>
-        )}
+    <div className="flex h-full flex-col gap-3 px-4 py-4">
+      {canManage && (
+        // Форма быстрого создания — одной строкой: доске нужна вся высота, а не карточка
+        // с заголовком и подписью поля на всю ширину.
+        <form onSubmit={handleSubmit(onCreate)} className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            className={`${inputClass} w-full max-w-md`}
+            placeholder={t('tasks.newTaskPlaceholder')}
+            aria-label={t('tasks.newTaskLabel')}
+            {...register('title')}
+          />
+          <button type="submit" disabled={createTask.isPending} className={primaryButtonClass}>
+            {createTask.isPending ? t('tasks.adding') : t('tasks.add')}
+          </button>
+          {errors.title?.message && (
+            <span className="text-sm text-red-600 dark:text-red-400">{errors.title.message}</span>
+          )}
+        </form>
+      )}
 
-        {createTask.isError && (
-          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createTask.error, t)}</p>
-        )}
-        {updateTaskStatus.isError && (
-          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateTaskStatus.error, t)}</p>
-        )}
+      {createTask.isError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(createTask.error, t)}</p>
+      )}
+      {updateTaskStatus.isError && (
+        <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateTaskStatus.error, t)}</p>
+      )}
 
-        {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
-        {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
+      {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
+      {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
-        {!isLoading && !isError && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              {TASK_STATUSES.map((status) => (
-                <KanbanColumn
-                  key={status}
-                  status={status}
-                  tasks={tasksByStatus[status]}
-                  disabled={!canManage}
-                  onOpenTask={(taskNumber) => navigate(`/projects/${projectSlug}/tasks/${taskNumber}`)}
-                  t={t}
-                />
-              ))}
-            </div>
+      {!isLoading && !isError && (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          {/* Колонки делят всю ширину поровну (flex-1) и не сжимаются уже min-w-64 —
+              на узком экране доска скроллится по горизонтали вместо переноса в сетку. */}
+          <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-1">
+            {TASK_STATUSES.map((status) => (
+              <KanbanColumn
+                key={status}
+                status={status}
+                tasks={tasksByStatus[status]}
+                disabled={!canManage}
+                onOpenTask={(taskNumber) => navigate(`/projects/${projectSlug}/tasks/${taskNumber}`)}
+                t={t}
+                locale={i18n.language}
+              />
+            ))}
+          </div>
 
-            <DragOverlay>{activeTask && <TaskCardOverlay task={activeTask} />}</DragOverlay>
-          </DndContext>
-        )}
+          <DragOverlay>
+            {activeTask && <TaskCardOverlay task={activeTask} t={t} locale={i18n.language} />}
+          </DragOverlay>
+        </DndContext>
+      )}
     </div>
   )
 }

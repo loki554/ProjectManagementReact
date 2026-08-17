@@ -114,7 +114,8 @@
     "allAssignees": "Alle Bearbeiter",
     "allTags": "Alle Tags",
     "empty": "Nichts gefunden",
-    "newTask": "Neue Aufgabe"
+    "newTask": "Neue Aufgabe",
+    "counter": "{{shown}} von {{total}}"
   },
   "wiki": {
     "title": "Wiki",
@@ -217,6 +218,7 @@
     "adding": "Wird hinzugefügt...",
     "loading": "Aufgaben werden geladen...",
     "columnEmpty": "Keine Aufgaben",
+    "overdue": "Überfällig",
     "unassigned": "Nicht zugewiesen",
     "noTag": "Kein Tag",
     "status": {

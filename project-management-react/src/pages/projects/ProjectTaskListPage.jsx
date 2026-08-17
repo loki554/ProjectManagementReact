@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useTasks } from '../../api/tasksQueries'
+import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
   TASK_NUMBER_BADGE_CLASS,
@@ -15,6 +16,7 @@ import {
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { tagBadgeStyle } from '../../lib/tagColor'
+import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import { useAuthStore } from '../../stores/authStore'
 
 const UNASSIGNED = '__unassigned__'
@@ -38,22 +40,29 @@ const COMPARATORS = {
   hours: (a, b) => Number(a.totalHoursSpent) - Number(b.totalHoursSpent),
 }
 
-function assigneeLabelOf(task) {
-  return task.assignee ? `${task.assignee.lastName} ${task.assignee.firstName}` : ''
-}
+const cellClass = 'px-3 py-2 align-middle'
 
-function SortableHeader({ colKey, sort, onSort, children, className = '' }) {
+function SortableHeader({ colKey, sort, onSort, children, align = 'left' }) {
   const active = sort.key === colKey
   return (
-    <th className={`px-3 py-2 ${className}`}>
+    // Фон и нижняя граница — на самой ячейке, а не на <thead>/<tr>: у залипающей
+    // шапки таблицы браузеры не всегда отрисовывают фон и border строки.
+    <th
+      scope="col"
+      className="border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900"
+    >
       <button
         type="button"
         onClick={() => onSort(colKey)}
-        className={`flex items-center gap-1 text-left text-xs font-semibold uppercase tracking-wide ${
-          active ? 'text-purple-700 dark:text-purple-400' : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+        className={`flex w-full items-center gap-1 text-xs font-semibold tracking-wide uppercase ${
+          align === 'right' ? 'justify-end' : 'text-left'
+        } ${
+          active
+            ? 'text-purple-700 dark:text-purple-400'
+            : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
         }`}
       >
-        {children}
+        <span className="truncate">{children}</span>
         <span aria-hidden="true" className={active ? '' : 'invisible'}>
           {sort.dir === 1 ? '▲' : '▼'}
         </span>
@@ -104,19 +113,19 @@ export function ProjectTaskListPage() {
   }, [tasks, search, statusFilter, assigneeFilter, tagFilter, sort])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-4 flex flex-wrap items-end gap-3">
+    <div className="flex h-full flex-col gap-3 px-4 py-4">
+      <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t('taskList.searchPlaceholder')}
-          className={`${inputClass} max-w-64`}
+          className={`${inputClass} w-64`}
         />
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
-          className={`${inputClass} max-w-56`}
+          className={`${inputClass} w-44`}
         >
           <option value="">{t('taskList.allStatuses')}</option>
           {TASK_STATUSES.map((status) => (
@@ -128,7 +137,7 @@ export function ProjectTaskListPage() {
         <select
           value={assigneeFilter}
           onChange={(event) => setAssigneeFilter(event.target.value)}
-          className={`${inputClass} max-w-56`}
+          className={`${inputClass} w-52`}
         >
           <option value="">{t('taskList.allAssignees')}</option>
           <option value={UNASSIGNED}>{t('tasks.unassigned')}</option>
@@ -141,7 +150,7 @@ export function ProjectTaskListPage() {
         <select
           value={tagFilter}
           onChange={(event) => setTagFilter(event.target.value)}
-          className={`${inputClass} max-w-56`}
+          className={`${inputClass} w-44`}
         >
           <option value="">{t('taskList.allTags')}</option>
           {tags?.map((tag) => (
@@ -150,11 +159,11 @@ export function ProjectTaskListPage() {
             </option>
           ))}
         </select>
+        <span className="ml-auto text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+          {t('taskList.counter', { shown: visibleTasks.length, total: tasks?.length ?? 0 })}
+        </span>
         {canManage && (
-          <Link
-            to={`/projects/${projectSlug}/tasks/new`}
-            className={`${primaryButtonClass} ml-auto whitespace-nowrap`}
-          >
+          <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} whitespace-nowrap`}>
             + {t('taskList.newTask')}
           </Link>
         )}
@@ -164,11 +173,26 @@ export function ProjectTaskListPage() {
       {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
       {!isLoading && !isError && (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-          <table className="w-full min-w-200 text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/40">
+        // Скроллится сама таблица, а не страница: шапка с сортировкой залипает сверху
+        // и остаётся видимой на любом количестве задач.
+        <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+          {/* table-fixed + colgroup: все колонки, кроме названия, имеют предсказуемую
+              ширину, а остаток отдаётся названию — на широком экране оно почти никогда
+              не обрезается. */}
+          <table className="w-full min-w-260 table-fixed text-sm">
+            <colgroup>
+              <col className="w-14" />
+              <col />
+              <col className="w-32" />
+              <col className="w-52" />
+              <col className="w-28" />
+              <col className="w-40" />
+              <col className="w-32" />
+              <col className="w-20" />
+            </colgroup>
+            <thead className="sticky top-0 z-10">
               <tr>
-                <SortableHeader colKey="number" sort={sort} onSort={toggleSort} className="w-16">
+                <SortableHeader colKey="number" sort={sort} onSort={toggleSort}>
                   №
                 </SortableHeader>
                 <SortableHeader colKey="title" sort={sort} onSort={toggleSort}>
@@ -189,12 +213,12 @@ export function ProjectTaskListPage() {
                 <SortableHeader colKey="tag" sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.tagLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="hours" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey="hours" sort={sort} onSort={toggleSort} align="right">
                   {t('tasks.timeLogs.hoursLabel')}
                 </SortableHeader>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
               {visibleTasks.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-3 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
@@ -202,60 +226,90 @@ export function ProjectTaskListPage() {
                   </td>
                 </tr>
               )}
-              {visibleTasks.map((task) => (
-                <tr
-                  key={task.id}
-                  onClick={() => navigate(`/projects/${projectSlug}/tasks/${task.taskNumber}`)}
-                  className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/30"
-                >
-                  <td className="px-3 py-2">
-                    <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
-                  </td>
-                  <td className="max-w-90 truncate px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
-                    {task.title}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskStatusBadgeClass(task.status)}`}
-                    >
-                      {t(`tasks.status.${task.status}`)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
-                    {task.assignee ? assigneeLabelOf(task) : (
-                      <span className="text-gray-400 dark:text-gray-500">{t('tasks.unassigned')}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskUrgencyBadgeClass(task.urgency)}`}
-                    >
-                      {t(`urgency.${task.urgency}`)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                    {task.dueDate
-                      ? new Date(task.dueDate).toLocaleString(i18n.language, {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        })
-                      : ''}
-                  </td>
-                  <td className="px-3 py-2">
-                    {task.tag && (
+              {visibleTasks.map((task) => {
+                const overdue = isTaskOverdue(task)
+                const hours = formatHours(task.totalHoursSpent)
+                return (
+                  <tr
+                    key={task.id}
+                    onClick={() => navigate(`/projects/${projectSlug}/tasks/${task.taskNumber}`)}
+                    // Чередование фона строк — на широкой таблице глаз не теряет строку
+                    // между колонкой «Название» и колонкой «Часы».
+                    className="cursor-pointer even:bg-gray-50/70 hover:bg-purple-50 dark:even:bg-gray-900/30 dark:hover:bg-purple-950/30"
+                  >
+                    <td className={cellClass}>
+                      <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+                    </td>
+                    <td className={cellClass}>
                       <span
-                        className="rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
-                        style={tagBadgeStyle(task.tag.color)}
+                        title={task.title}
+                        className="line-clamp-2 font-medium text-gray-900 dark:text-gray-100"
                       >
-                        {task.tag.name}
+                        {task.title}
                       </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-400">
-                    {Number(task.totalHoursSpent).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className={cellClass}>
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskStatusBadgeClass(task.status)}`}
+                      >
+                        {t(`tasks.status.${task.status}`)}
+                      </span>
+                    </td>
+                    <td className={cellClass}>
+                      {task.assignee ? (
+                        <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                          <UserAvatar user={task.assignee} sizeClass="h-6 w-6" />
+                          <span className="truncate">{assigneeLabelOf(task)}</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500">{t('tasks.unassigned')}</span>
+                      )}
+                    </td>
+                    <td className={cellClass}>
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskUrgencyBadgeClass(task.urgency)}`}
+                      >
+                        {t(`urgency.${task.urgency}`)}
+                      </span>
+                    </td>
+                    <td className={cellClass}>
+                      {task.dueDate ? (
+                        <span
+                          title={overdue ? t('tasks.overdue') : undefined}
+                          className={`whitespace-nowrap ${
+                            overdue
+                              ? 'font-medium text-red-600 dark:text-red-400'
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}
+                        >
+                          {formatDueDate(task.dueDate, i18n.language)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
+                      )}
+                    </td>
+                    <td className={cellClass}>
+                      {task.tag ? (
+                        <span
+                          className="inline-block max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={tagBadgeStyle(task.tag.color)}
+                        >
+                          {task.tag.name}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
+                      )}
+                    </td>
+                    <td className={`${cellClass} text-right tabular-nums`}>
+                      {hours ? (
+                        <span className="text-gray-700 dark:text-gray-300">{hours}</span>
+                      ) : (
+                        <span className="text-gray-300 dark:text-gray-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

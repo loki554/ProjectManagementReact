@@ -114,7 +114,8 @@
     "allAssignees": "Все исполнители",
     "allTags": "Все тэги",
     "empty": "Ничего не найдено",
-    "newTask": "Новая задача"
+    "newTask": "Новая задача",
+    "counter": "{{shown}} из {{total}}"
   },
   "wiki": {
     "title": "Вики",
@@ -217,6 +218,7 @@
     "adding": "Добавляем...",
     "loading": "Загрузка задач...",
     "columnEmpty": "Нет задач",
+    "overdue": "Срок истёк",
     "unassigned": "Не назначен",
     "noTag": "Без тэга",
     "status": {
