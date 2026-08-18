@@ -1,6 +1,7 @@
 package com.pmtracker.project_management_backend.task.dto;
 
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.category.dto.CategorySummary;
 import com.pmtracker.project_management_backend.tag.dto.TagSummary;
 import com.pmtracker.project_management_backend.task.Task;
 import com.pmtracker.project_management_backend.task.TaskStatus;
@@ -27,7 +28,7 @@ public record TaskResponse(
         TaskUrgency urgency,
         Instant dueDate,
         TagSummary tag,
-        String category,
+        CategorySummary category,
         BigDecimal totalHoursSpent,
         Instant createdAt,
         Instant updatedAt
@@ -48,7 +49,7 @@ public record TaskResponse(
                 task.getUrgency(),
                 task.getDueDate(),
                 task.getTag() != null ? TagSummary.from(task.getTag()) : null,
-                task.getCategory(),
+                task.getCategory() != null ? CategorySummary.from(task.getCategory()) : null,
                 totalHoursSpent,
                 task.getCreatedAt(),
                 task.getUpdatedAt()

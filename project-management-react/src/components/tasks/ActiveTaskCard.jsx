@@ -57,7 +57,7 @@ export function ActiveTaskCard({ task }) {
                 title={t('tasks.detail.categoryLabel')}
                 className="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
               >
-                {task.category}
+                {task.category.name}
               </span>
             )}
             <span className="text-gray-500 dark:text-gray-400">

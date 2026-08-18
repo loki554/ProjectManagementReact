@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { useCategories } from '../../api/categoriesQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useDeleteTask, useTaskByNumber, useTaskCategories, useUpdateTask } from '../../api/tasksQueries'
+import { useDeleteTask, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { Combobox } from '../../components/ui/Combobox'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
@@ -50,7 +51,10 @@ export function TaskEditPage() {
   const taskId = task?.id
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
-  const { data: categories } = useTaskCategories(projectId)
+  const { data: categories } = useCategories(projectId)
+  // Combobox оперирует именами: в задаче категория задаётся свободным вводом, и бэкенд
+  // сам сопоставляет имя со справочником (создавая недостающую запись).
+  const categoryNames = useMemo(() => (categories ?? []).map((category) => category.name), [categories])
   const isLoading = projectLoading || taskLoading || !members
 
   const updateTask = useUpdateTask(taskId)
@@ -80,7 +84,7 @@ export function TaskEditPage() {
           urgency: task.urgency,
           dueDate: toDatetimeLocalValue(task.dueDate),
           tagId: task.tag?.id ?? '',
-          category: task.category ?? '',
+          category: task.category?.name ?? '',
         }
       : undefined,
   })
@@ -202,7 +206,7 @@ export function TaskEditPage() {
                   <Combobox
                     value={field.value}
                     onChange={field.onChange}
-                    options={categories}
+                    options={categoryNames}
                     placeholder={t('tasks.detail.categoryPlaceholder')}
                     maxLength={100}
                     emptyText={t('tasks.detail.categoryEmpty')}

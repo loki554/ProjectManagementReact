@@ -37,19 +37,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     List<Task> findByParentTaskIdOrderByPositionAsc(UUID parentTaskId);
 
-    /**
-     * Уже использованные в проекте категории (свободный текст, см. Task.category) — фронтенд
-     * подсказывает их при ручном вводе, чтобы одна и та же категория не расползалась по
-     * вариантам написания. Пустые значения в БД не хранятся (TaskService.normalizeCategory),
-     * поэтому достаточно отсечь null.
-     */
-    @Query("""
-            select distinct t.category from Task t
-            where t.project.id = :projectId
-              and t.category is not null
-            order by t.category asc
-            """)
-    List<String> findDistinctCategories(UUID projectId);
 
     @Query("select coalesce(max(t.position), -1) from Task t where t.project.id = :projectId and t.status = :status")
     int findMaxPositionForStatus(UUID projectId, TaskStatus status);

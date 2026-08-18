@@ -1,6 +1,7 @@
 package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.category.Category;
 import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.tag.Tag;
 import jakarta.persistence.Column;
@@ -70,10 +71,11 @@ public class Task {
     @JoinColumn(name = "tag_id")
     private Tag tag;
 
-    // Свободный текст, задаётся пользователем вручную и необязателен (см. V17) —
-    // в отличие от tag это не FK на справочник.
-    @Column(length = 100)
-    private String category;
+    // Справочник категорий проекта (V18). Как и tag — необязательная ссылка, но заводится
+    // в том числе свободным вводом в форме задачи (CategoryService.resolveOrCreate).
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -193,11 +195,11 @@ public class Task {
         this.tag = tag;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Category category) {
         this.category = category;
     }
 

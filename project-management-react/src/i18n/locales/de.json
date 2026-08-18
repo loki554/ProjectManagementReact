@@ -99,6 +99,7 @@
     "members": "Mitglieder",
     "wiki": "Wiki",
     "tags": "Tags",
+    "categories": "Kategorien",
     "collapse": "Einklappen",
     "expand": "Ausklappen"
   },
@@ -211,6 +212,24 @@
     "validation": {
       "invalidColor": "Geben Sie eine gültige Farbe ein"
     }
+  },
+  "categories": {
+    "navLabel": "Kategorien",
+    "hint": "Aufgabenkategorien dieses Projekts. Mitglieder können eine neue Kategorie auch direkt im Aufgabenformular anlegen, indem sie ihren Namen eingeben.",
+    "name": "Name",
+    "create": "Kategorie erstellen",
+    "creating": "Wird erstellt...",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleteConfirm": "Diese Kategorie löschen?",
+    "deleteConfirmWithTasks_one": "Diese Kategorie löschen? Sie wird von {{count}} Aufgabe entfernt.",
+    "deleteConfirmWithTasks_other": "Diese Kategorie löschen? Sie wird von {{count}} Aufgaben entfernt.",
+    "taskCount_one": "{{count}} Aufgabe",
+    "taskCount_other": "{{count}} Aufgaben",
+    "empty": "Noch keine Kategorien",
+    "loading": "Kategorien werden geladen..."
   },
   "tasks": {
     "title": "Aufgaben von „{{project}}“",
@@ -395,6 +414,8 @@
     "NOT_COMMENT_OWNER": "Nur die verfassende Person oder ein Projekt-Administrator kann diesen Kommentar löschen",
     "TAG_NOT_FOUND": "Tag nicht gefunden",
     "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",
+    "CATEGORY_NOT_FOUND": "Kategorie nicht gefunden",
+    "DUPLICATE_CATEGORY_NAME": "Eine Kategorie mit diesem Namen existiert bereits in diesem Projekt",
     "TAG_PROJECT_MISMATCH": "Dieser Tag gehört zu einem anderen Projekt",
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"

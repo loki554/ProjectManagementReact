@@ -517,7 +517,7 @@ export function TaskViewPage() {
                     {t('tasks.detail.categoryLabel')}
                   </dt>
                   <dd className="mt-1 text-gray-900 dark:text-gray-100">
-                    {task.category || (
+                    {task.category?.name || (
                       <span className="text-gray-400 dark:text-gray-500">{t('tasks.noCategory')}</span>
                     )}
                   </dd>

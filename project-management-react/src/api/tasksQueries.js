@@ -23,16 +23,6 @@ export function useTaskByNumber(projectId, taskNumber) {
   })
 }
 
-// Ключ намеренно лежит под tasksKey(projectId): любая инвалидация списка задач проекта
-// (создание/изменение/удаление) заодно обновляет и набор подсказок категорий.
-export function useTaskCategories(projectId) {
-  return useQuery({
-    queryKey: [...tasksKey(projectId), 'categories'],
-    queryFn: () => tasksApi.fetchTaskCategories(projectId),
-    enabled: Boolean(projectId),
-  })
-}
-
 // projectId фиксируется на хуке, как в useInviteMember — предполагается использование
 // со страницы, скоупированной на один проект (список задач/канбан).
 export function useCreateTask(projectId) {

@@ -99,6 +99,7 @@
     "members": "Members",
     "wiki": "Wiki",
     "tags": "Tags",
+    "categories": "Categories",
     "collapse": "Collapse",
     "expand": "Expand"
   },
@@ -211,6 +212,24 @@
     "validation": {
       "invalidColor": "Enter a valid color"
     }
+  },
+  "categories": {
+    "navLabel": "Categories",
+    "hint": "Task categories of this project. Members can also add a new category straight from the task form by typing its name.",
+    "name": "Name",
+    "create": "Create category",
+    "creating": "Creating...",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this category?",
+    "deleteConfirmWithTasks_one": "Delete this category? It will be removed from {{count}} task.",
+    "deleteConfirmWithTasks_other": "Delete this category? It will be removed from {{count}} tasks.",
+    "taskCount_one": "{{count}} task",
+    "taskCount_other": "{{count}} tasks",
+    "empty": "No categories yet",
+    "loading": "Loading categories..."
   },
   "tasks": {
     "title": "Tasks in \"{{project}}\"",
@@ -395,6 +414,8 @@
     "NOT_COMMENT_OWNER": "Only the author or a project admin can delete this comment",
     "TAG_NOT_FOUND": "Tag not found",
     "DUPLICATE_TAG_NAME": "A tag with this name already exists in this project",
+    "CATEGORY_NOT_FOUND": "Category not found",
+    "DUPLICATE_CATEGORY_NAME": "A category with this name already exists in this project",
     "TAG_PROJECT_MISMATCH": "This tag belongs to a different project",
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again"

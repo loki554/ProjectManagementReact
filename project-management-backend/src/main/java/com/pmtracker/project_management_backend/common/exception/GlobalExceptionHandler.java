@@ -208,6 +208,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("DUPLICATE_TAG_NAME", ex.getMessage()));
     }
 
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryNotFound(CategoryNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("CATEGORY_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateCategoryNameException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateCategoryName(DuplicateCategoryNameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_CATEGORY_NAME", ex.getMessage()));
+    }
+
     @ExceptionHandler(TagProjectMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTagProjectMismatch(TagProjectMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

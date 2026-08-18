@@ -2,6 +2,8 @@ package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.category.Category;
+import com.pmtracker.project_management_backend.category.CategoryService;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
@@ -52,6 +54,7 @@ public class TaskService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectRepository projectRepository;
     private final TagRepository tagRepository;
+    private final CategoryService categoryService;
     private final TimeLogRepository timeLogRepository;
     private final ActivityService activityService;
     private final NotificationService notificationService;
@@ -61,6 +64,7 @@ public class TaskService {
                         ProjectMemberRepository projectMemberRepository,
                         ProjectRepository projectRepository,
                         TagRepository tagRepository,
+                        CategoryService categoryService,
                         TimeLogRepository timeLogRepository,
                         ActivityService activityService,
                         NotificationService notificationService) {
@@ -69,6 +73,7 @@ public class TaskService {
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
         this.tagRepository = tagRepository;
+        this.categoryService = categoryService;
         this.timeLogRepository = timeLogRepository;
         this.activityService = activityService;
         this.notificationService = notificationService;
@@ -84,8 +89,8 @@ public class TaskService {
         task.setProject(project);
         task.setParentTask(null);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId(), request.category());
+        applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -118,14 +123,6 @@ public class TaskService {
         return tasks.stream()
                 .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
                 .toList();
-    }
-
-    /** Уже использованные в проекте категории — для автодополнения при ручном вводе. */
-    @Transactional(readOnly = true)
-    public List<String> listCategories(User currentUser, UUID projectId) {
-        projectAccessService.findProjectOrThrow(projectId);
-        projectAccessService.requireMembership(projectId, currentUser);
-        return taskRepository.findDistinctCategories(projectId);
     }
 
     @Transactional(readOnly = true)
@@ -162,10 +159,10 @@ public class TaskService {
         TaskUrgency oldUrgency = task.getUrgency();
         Instant oldDueDate = task.getDueDate();
         String oldTag = task.getTag() != null ? task.getTag().getName() : null;
-        String oldCategory = task.getCategory();
+        String oldCategory = categoryName(task);
 
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId(), request.category());
+        applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
         task.setStatus(request.status());
         task.setUrgency(request.urgency());
         taskRepository.save(task);
@@ -194,8 +191,9 @@ public class TaskService {
         if (!Objects.equals(oldTag, newTag)) {
             recordFieldChange(task, currentUser, "task_tag_changed", oldTag, newTag);
         }
-        if (!Objects.equals(oldCategory, task.getCategory())) {
-            recordFieldChange(task, currentUser, "task_category_changed", oldCategory, task.getCategory());
+        String newCategory = categoryName(task);
+        if (!Objects.equals(oldCategory, newCategory)) {
+            recordFieldChange(task, currentUser, "task_category_changed", oldCategory, newCategory);
         }
 
         // Дедлайн сдвинулся, исполнитель сменился или задача больше не активна — прежние
@@ -218,6 +216,11 @@ public class TaskService {
         payload.put("old", oldValue);
         payload.put("new", newValue);
         activityService.record(task.getProject(), actor, type, task, payload);
+    }
+
+    private static String categoryName(Task task) {
+        Category category = task.getCategory();
+        return category != null ? category.getName() : null;
     }
 
     private static String displayName(User user) {
@@ -312,8 +315,8 @@ public class TaskService {
         task.setProject(parent.getProject());
         task.setParentTask(parent);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
-        applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId(), request.category());
+        applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -348,25 +351,17 @@ public class TaskService {
         return PageResponse.from(new PageImpl<>(items, pageable, result.getTotalElements()));
     }
 
-    private void applyCommonFields(Task task, UUID projectId, String title, String description, UUID assigneeId,
-                                    Instant dueDate, UUID tagId, String category) {
+    private void applyCommonFields(Task task, Project project, User currentUser, String title, String description,
+                                    UUID assigneeId, Instant dueDate, UUID tagId, String category) {
+        UUID projectId = project.getId();
         task.setTitle(title);
         task.setDescription(description);
         task.setAssignee(resolveAssignee(projectId, assigneeId));
         task.setDueDate(dueDate);
         task.setTag(resolveTag(projectId, tagId));
-        task.setCategory(normalizeCategory(category));
-    }
-
-    // Категория — свободный текст: пустую строку с фронтенда трактуем как "не задана",
-    // чтобы в БД не появлялись значения-двойники "" и null, а автодополнение (см.
-    // listCategories) не предлагало пустых вариантов.
-    private static String normalizeCategory(String category) {
-        if (category == null) {
-            return null;
-        }
-        String trimmed = category.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        // Категория приходит именем, а не id: в форме задачи это по-прежнему свободный ввод,
+        // и незнакомое имя заводит новую запись справочника (см. CategoryService.resolveOrCreate).
+        task.setCategory(categoryService.resolveOrCreate(project, currentUser, category));
     }
 
     private Task findTaskOrThrow(UUID taskId) {

@@ -103,7 +103,7 @@ function TaskCardBody({ task, t, locale }) {
               title={t('tasks.detail.categoryLabel')}
               className="max-w-full truncate rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
             >
-              {task.category}
+              {task.category.name}
             </span>
           )}
           {task.tag && (

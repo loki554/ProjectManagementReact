@@ -12,11 +12,6 @@ export function fetchTaskByNumber(projectId, taskNumber) {
   return apiClient.get(`/projects/${projectId}/tasks/by-number/${taskNumber}`).then((res) => res.data)
 }
 
-// Уже использованные в проекте категории — подсказки для свободного ввода поля "Категория".
-export function fetchTaskCategories(projectId) {
-  return apiClient.get(`/projects/${projectId}/tasks/categories`).then((res) => res.data)
-}
-
 export function createTask(projectId, payload) {
   return apiClient.post(`/projects/${projectId}/tasks`, payload).then((res) => res.data)
 }

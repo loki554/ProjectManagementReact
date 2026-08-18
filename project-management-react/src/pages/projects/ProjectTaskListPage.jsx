@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { useCategories } from '../../api/categoriesQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useTaskCategories, useTasks } from '../../api/tasksQueries'
+import { useTasks } from '../../api/tasksQueries'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
@@ -20,8 +21,8 @@ import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../.
 import { useAuthStore } from '../../stores/authStore'
 
 const UNASSIGNED = '__unassigned__'
-// Категория — свободный текст, поэтому "без категории" в фильтре нужен свой сентинел,
-// который заведомо не совпадёт с реальным значением (ср. UNASSIGNED).
+// "Без категории" в фильтре — свой сентинел, который заведомо не совпадёт с реальным
+// id категории (ср. UNASSIGNED).
 const NO_CATEGORY = '__no_category__'
 
 // Компараторы по ключу колонки. Для статуса/срочности порядок — как в канбане/селектах
@@ -46,7 +47,7 @@ const COMPARATORS = {
     if (!a.category && !b.category) return 0
     if (!a.category) return 1
     if (!b.category) return -1
-    return a.category.localeCompare(b.category)
+    return a.category.name.localeCompare(b.category.name)
   },
   hours: (a, b) => Number(a.totalHoursSpent) - Number(b.totalHoursSpent),
 }
@@ -93,7 +94,7 @@ export function ProjectTaskListPage() {
   const { data: tasks, isLoading, isError, error } = useTasks(projectId)
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
-  const { data: categories } = useTaskCategories(projectId)
+  const { data: categories } = useCategories(projectId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
@@ -122,7 +123,7 @@ export function ProjectTaskListPage() {
       if (tagFilter && task.tag?.id !== tagFilter) return false
       if (categoryFilter === NO_CATEGORY) {
         if (task.category) return false
-      } else if (categoryFilter && task.category !== categoryFilter) {
+      } else if (categoryFilter && task.category?.id !== categoryFilter) {
         return false
       }
       return true
@@ -185,8 +186,8 @@ export function ProjectTaskListPage() {
           <option value="">{t('taskList.allCategories')}</option>
           <option value={NO_CATEGORY}>{t('tasks.noCategory')}</option>
           {categories?.map((category) => (
-            <option key={category} value={category}>
-              {category}
+            <option key={category.id} value={category.id}>
+              {category.name}
             </option>
           ))}
         </select>
@@ -337,7 +338,7 @@ export function ProjectTaskListPage() {
                     <td className={cellClass}>
                       {task.category ? (
                         <span className="block max-w-[12rem] truncate text-gray-600 dark:text-gray-400">
-                          {task.category}
+                          {task.category.name}
                         </span>
                       ) : (
                         <span className="text-gray-300 dark:text-gray-600">—</span>

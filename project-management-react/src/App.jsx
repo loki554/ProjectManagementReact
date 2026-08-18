@@ -14,6 +14,7 @@ import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
+import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
 import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
@@ -107,6 +108,7 @@ function AppRoutes() {
           <Route path="wiki" element={<ProjectWikiPage />} />
           <Route path="settings/members" element={<ProjectMembersPage />} />
           <Route path="settings/tags" element={<ProjectTagsPage />} />
+          <Route path="settings/categories" element={<ProjectCategoriesPage />} />
           <Route path="settings/edit" element={<ProjectEditPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/projects" replace />} />
