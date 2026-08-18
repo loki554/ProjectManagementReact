@@ -16,6 +16,7 @@ public record UpdateTaskRequest(
         UUID assigneeId,
         @NotNull TaskUrgency urgency,
         Instant dueDate,
-        UUID tagId
+        UUID tagId,
+        @Size(max = 100) String category
 ) {
 }

@@ -20,6 +20,7 @@ public record MyActiveTaskResponse(
         TaskUrgency urgency,
         Instant dueDate,
         TagSummary tag,
+        String category,
         BigDecimal totalHoursSpent
 ) {
     public static MyActiveTaskResponse from(Task task, BigDecimal totalHoursSpent) {
@@ -34,6 +35,7 @@ public record MyActiveTaskResponse(
                 task.getUrgency(),
                 task.getDueDate(),
                 task.getTag() != null ? TagSummary.from(task.getTag()) : null,
+                task.getCategory(),
                 totalHoursSpent
         );
     }

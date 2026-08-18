@@ -27,6 +27,7 @@ public record TaskResponse(
         TaskUrgency urgency,
         Instant dueDate,
         TagSummary tag,
+        String category,
         BigDecimal totalHoursSpent,
         Instant createdAt,
         Instant updatedAt
@@ -47,6 +48,7 @@ public record TaskResponse(
                 task.getUrgency(),
                 task.getDueDate(),
                 task.getTag() != null ? TagSummary.from(task.getTag()) : null,
+                task.getCategory(),
                 totalHoursSpent,
                 task.getCreatedAt(),
                 task.getUpdatedAt()

@@ -15,6 +15,7 @@ public record CreateTaskRequest(
         TaskStatus status,
         TaskUrgency urgency,
         Instant dueDate,
-        UUID tagId
+        UUID tagId,
+        @Size(max = 100) String category
 ) {
 }

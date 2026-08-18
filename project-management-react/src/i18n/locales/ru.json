@@ -113,6 +113,7 @@
     "allStatuses": "Все статусы",
     "allAssignees": "Все исполнители",
     "allTags": "Все тэги",
+    "allCategories": "Все категории",
     "empty": "Ничего не найдено",
     "newTask": "Новая задача",
     "counter": "{{shown}} из {{total}}"
@@ -146,6 +147,7 @@
     "task_urgency_changed": "изменил(а) срочность задачи «{{title}}»: {{old}} → {{new}}",
     "task_due_date_changed": "изменил(а) срок задачи «{{title}}»: {{old}} → {{new}}",
     "task_tag_changed": "изменил(а) тэг задачи «{{title}}»: {{old}} → {{new}}",
+    "task_category_changed": "изменил(а) категорию задачи «{{title}}»: {{old}} → {{new}}",
     "member_added": "добавил(а) участника {{userName}} с ролью «{{role}}»",
     "member_removed": "исключил(а) участника {{userName}}",
     "member_role_changed": "изменил(а) роль участника {{userName}}: {{oldRole}} → {{newRole}}",
@@ -221,6 +223,7 @@
     "overdue": "Срок истёк",
     "unassigned": "Не назначен",
     "noTag": "Без тэга",
+    "noCategory": "Без категории",
     "status": {
       "NEW": "Новая",
       "IN_PROGRESS": "В работе",
@@ -240,6 +243,8 @@
       "dueDateLabel": "Срок выполнения",
       "dueDateUntil": "До",
       "tagLabel": "Тэг",
+      "categoryLabel": "Категория",
+      "categoryPlaceholder": "Например: Главная страница",
       "descriptionLabel": "Описание",
       "noDescription": "Без описания",
       "createdBy": "Создал(а)",

@@ -50,6 +50,14 @@ public class ProjectTaskController {
         return ResponseEntity.ok(taskService.list(currentUser, projectId, status, assigneeId, parentId));
     }
 
+    @GetMapping("/categories")
+    @Operation(summary = "Категории задач проекта",
+            description = "Уже использованные в проекте значения поля category — для автодополнения при ручном вводе")
+    public ResponseEntity<List<String>> listCategories(@AuthenticationPrincipal User currentUser,
+                                                         @PathVariable UUID projectId) {
+        return ResponseEntity.ok(taskService.listCategories(currentUser, projectId));
+    }
+
     @GetMapping("/by-number/{taskNumber}")
     @Operation(summary = "Детали задачи по её порядковому номеру в проекте",
             description = "Используется фронтендом для читаемых URL (/projects/{slug}/tasks/{taskNumber})")

@@ -113,6 +113,7 @@
     "allStatuses": "All statuses",
     "allAssignees": "All assignees",
     "allTags": "All tags",
+    "allCategories": "All categories",
     "empty": "Nothing found",
     "newTask": "New task",
     "counter": "{{shown}} of {{total}}"
@@ -146,6 +147,7 @@
     "task_urgency_changed": "changed the urgency of \"{{title}}\": {{old}} → {{new}}",
     "task_due_date_changed": "changed the due date of \"{{title}}\": {{old}} → {{new}}",
     "task_tag_changed": "changed the tag of \"{{title}}\": {{old}} → {{new}}",
+    "task_category_changed": "changed the category of \"{{title}}\": {{old}} → {{new}}",
     "member_added": "added member {{userName}} as {{role}}",
     "member_removed": "removed member {{userName}}",
     "member_role_changed": "changed the role of {{userName}}: {{oldRole}} → {{newRole}}",
@@ -221,6 +223,7 @@
     "overdue": "Overdue",
     "unassigned": "Unassigned",
     "noTag": "No tag",
+    "noCategory": "No category",
     "status": {
       "NEW": "New",
       "IN_PROGRESS": "In progress",
@@ -240,6 +243,8 @@
       "dueDateLabel": "Due date",
       "dueDateUntil": "Until",
       "tagLabel": "Tag",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "e.g. Home page",
       "descriptionLabel": "Description",
       "noDescription": "No description",
       "createdBy": "Created by",

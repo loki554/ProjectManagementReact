@@ -20,6 +20,7 @@ function buildMessageParams(item, t, formatDate) {
       return { ...p, old: t(`urgency.${p.old}`), new: t(`urgency.${p.new}`) }
     case 'task_assignee_changed':
     case 'task_tag_changed':
+    case 'task_category_changed':
       return { ...p, old: p.old ?? none, new: p.new ?? none }
     case 'task_due_date_changed':
       return {

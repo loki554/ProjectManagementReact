@@ -52,6 +52,14 @@ export function ActiveTaskCard({ task }) {
                 {task.tag.name}
               </span>
             )}
+            {task.category && (
+              <span
+                title={t('tasks.detail.categoryLabel')}
+                className="rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                {task.category}
+              </span>
+            )}
             <span className="text-gray-500 dark:text-gray-400">
               {Number(task.totalHoursSpent).toFixed(2)} {t('tasks.timeLogs.hoursShort')}
             </span>

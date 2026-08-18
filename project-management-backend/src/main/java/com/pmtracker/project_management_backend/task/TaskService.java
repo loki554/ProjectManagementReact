@@ -85,7 +85,7 @@ public class TaskService {
         task.setParentTask(null);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId());
+                request.dueDate(), request.tagId(), request.category());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -118,6 +118,14 @@ public class TaskService {
         return tasks.stream()
                 .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
                 .toList();
+    }
+
+    /** Уже использованные в проекте категории — для автодополнения при ручном вводе. */
+    @Transactional(readOnly = true)
+    public List<String> listCategories(User currentUser, UUID projectId) {
+        projectAccessService.findProjectOrThrow(projectId);
+        projectAccessService.requireMembership(projectId, currentUser);
+        return taskRepository.findDistinctCategories(projectId);
     }
 
     @Transactional(readOnly = true)
@@ -154,9 +162,10 @@ public class TaskService {
         TaskUrgency oldUrgency = task.getUrgency();
         Instant oldDueDate = task.getDueDate();
         String oldTag = task.getTag() != null ? task.getTag().getName() : null;
+        String oldCategory = task.getCategory();
 
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId());
+                request.dueDate(), request.tagId(), request.category());
         task.setStatus(request.status());
         task.setUrgency(request.urgency());
         taskRepository.save(task);
@@ -184,6 +193,9 @@ public class TaskService {
         String newTag = task.getTag() != null ? task.getTag().getName() : null;
         if (!Objects.equals(oldTag, newTag)) {
             recordFieldChange(task, currentUser, "task_tag_changed", oldTag, newTag);
+        }
+        if (!Objects.equals(oldCategory, task.getCategory())) {
+            recordFieldChange(task, currentUser, "task_category_changed", oldCategory, task.getCategory());
         }
 
         // Дедлайн сдвинулся, исполнитель сменился или задача больше не активна — прежние
@@ -301,7 +313,7 @@ public class TaskService {
         task.setParentTask(parent);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, projectId, request.title(), request.description(), request.assigneeId(),
-                request.dueDate(), request.tagId());
+                request.dueDate(), request.tagId(), request.category());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -337,12 +349,24 @@ public class TaskService {
     }
 
     private void applyCommonFields(Task task, UUID projectId, String title, String description, UUID assigneeId,
-                                    Instant dueDate, UUID tagId) {
+                                    Instant dueDate, UUID tagId, String category) {
         task.setTitle(title);
         task.setDescription(description);
         task.setAssignee(resolveAssignee(projectId, assigneeId));
         task.setDueDate(dueDate);
         task.setTag(resolveTag(projectId, tagId));
+        task.setCategory(normalizeCategory(category));
+    }
+
+    // Категория — свободный текст: пустую строку с фронтенда трактуем как "не задана",
+    // чтобы в БД не появлялись значения-двойники "" и null, а автодополнение (см.
+    // listCategories) не предлагало пустых вариантов.
+    private static String normalizeCategory(String category) {
+        if (category == null) {
+            return null;
+        }
+        String trimmed = category.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private Task findTaskOrThrow(UUID taskId) {

@@ -6,7 +6,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { z } from 'zod'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useCreateSubtask, useCreateTask, useTaskByNumber } from '../../api/tasksQueries'
+import { useCreateSubtask, useCreateTask, useTaskByNumber, useTaskCategories } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
 import {
@@ -30,6 +30,7 @@ function buildTaskSchema(t) {
     urgency: z.enum(TASK_URGENCIES),
     dueDate: z.string().optional(),
     tagId: z.string().optional(),
+    category: z.string().max(100).optional(),
   })
 }
 
@@ -48,6 +49,7 @@ export function TaskCreatePage() {
   const projectId = project?.id
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
+  const { data: categories } = useTaskCategories(projectId)
   const {
     data: parentTask,
     isLoading: parentLoading,
@@ -82,6 +84,7 @@ export function TaskCreatePage() {
       urgency: 'MEDIUM',
       dueDate: '',
       tagId: '',
+      category: '',
     },
   })
 
@@ -95,6 +98,7 @@ export function TaskCreatePage() {
         urgency: values.urgency,
         dueDate: fromDatetimeLocalValue(values.dueDate),
         tagId: values.tagId || null,
+        category: values.category?.trim() || null,
       },
       { onSuccess: (created) => navigate(`/projects/${projectSlug}/tasks/${created.taskNumber}`) },
     )
@@ -184,6 +188,23 @@ export function TaskCreatePage() {
                 </select>
               </Field>
             </div>
+
+            {/* Свободный текст с подсказками уже использованных в проекте категорий —
+                справочника категорий (в отличие от тэгов) нет, значение вводится вручную. */}
+            <Field label={t('tasks.detail.categoryLabel')} error={errors.category?.message}>
+              <input
+                type="text"
+                className={inputClass}
+                list="task-category-options"
+                placeholder={t('tasks.detail.categoryPlaceholder')}
+                {...register('category')}
+              />
+              <datalist id="task-category-options">
+                {categories?.map((category) => (
+                  <option key={category} value={category} />
+                ))}
+              </datalist>
+            </Field>
 
             <Controller
               name="description"

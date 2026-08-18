@@ -513,6 +513,16 @@ export function TaskViewPage() {
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    {t('tasks.detail.categoryLabel')}
+                  </dt>
+                  <dd className="mt-1 text-gray-900 dark:text-gray-100">
+                    {task.category || (
+                      <span className="text-gray-400 dark:text-gray-500">{t('tasks.noCategory')}</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.urgencyLabel')}</dt>
                   <dd className="mt-1">
                     <span

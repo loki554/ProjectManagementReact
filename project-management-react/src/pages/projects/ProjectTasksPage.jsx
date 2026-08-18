@@ -96,8 +96,16 @@ function TaskCardBody({ task, t, locale }) {
         {task.title}
       </p>
 
-      {(task.tag || task.dueDate) && (
+      {(task.tag || task.category || task.dueDate) && (
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {task.category && (
+            <span
+              title={t('tasks.detail.categoryLabel')}
+              className="max-w-full truncate rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            >
+              {task.category}
+            </span>
+          )}
           {task.tag && (
             <span
               className="max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium"

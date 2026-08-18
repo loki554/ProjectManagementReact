@@ -113,6 +113,7 @@
     "allStatuses": "Alle Status",
     "allAssignees": "Alle Bearbeiter",
     "allTags": "Alle Tags",
+    "allCategories": "Alle Kategorien",
     "empty": "Nichts gefunden",
     "newTask": "Neue Aufgabe",
     "counter": "{{shown}} von {{total}}"
@@ -146,6 +147,7 @@
     "task_urgency_changed": "hat die Dringlichkeit von „{{title}}“ geändert: {{old}} → {{new}}",
     "task_due_date_changed": "hat die Frist von „{{title}}“ geändert: {{old}} → {{new}}",
     "task_tag_changed": "hat das Tag von „{{title}}“ geändert: {{old}} → {{new}}",
+    "task_category_changed": "hat die Kategorie von „{{title}}“ geändert: {{old}} → {{new}}",
     "member_added": "hat {{userName}} als {{role}} hinzugefügt",
     "member_removed": "hat {{userName}} entfernt",
     "member_role_changed": "hat die Rolle von {{userName}} geändert: {{oldRole}} → {{newRole}}",
@@ -221,6 +223,7 @@
     "overdue": "Überfällig",
     "unassigned": "Nicht zugewiesen",
     "noTag": "Kein Tag",
+    "noCategory": "Keine Kategorie",
     "status": {
       "NEW": "Neu",
       "IN_PROGRESS": "In Bearbeitung",
@@ -240,6 +243,8 @@
       "dueDateLabel": "Fälligkeitsdatum",
       "dueDateUntil": "Zu",
       "tagLabel": "Tag",
+      "categoryLabel": "Kategorie",
+      "categoryPlaceholder": "z. B. Startseite",
       "descriptionLabel": "Beschreibung",
       "noDescription": "Keine Beschreibung",
       "createdBy": "Erstellt von",

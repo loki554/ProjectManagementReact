@@ -70,6 +70,11 @@ public class Task {
     @JoinColumn(name = "tag_id")
     private Tag tag;
 
+    // Свободный текст, задаётся пользователем вручную и необязателен (см. V17) —
+    // в отличие от tag это не FK на справочник.
+    @Column(length = 100)
+    private String category;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -186,6 +191,14 @@ public class Task {
 
     public void setTag(Tag tag) {
         this.tag = tag;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public Instant getCreatedAt() {
