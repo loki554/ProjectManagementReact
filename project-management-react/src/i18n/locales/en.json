@@ -245,6 +245,8 @@
       "tagLabel": "Tag",
       "categoryLabel": "Category",
       "categoryPlaceholder": "e.g. Home page",
+      "categoryEmpty": "No categories in this project yet",
+      "categoryNoMatches": "No matches — a new category will be created",
       "descriptionLabel": "Description",
       "noDescription": "No description",
       "createdBy": "Created by",
@@ -336,6 +338,10 @@
       "dueSoonHours_other": "{{count}} hours left!",
       "overdue": "Task is overdue"
     }
+  },
+  "combobox": {
+    "clear": "Clear",
+    "toggle": "Show options"
   },
   "pagination": {
     "previous": "Previous",

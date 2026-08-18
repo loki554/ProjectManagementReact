@@ -8,6 +8,7 @@ import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useCreateSubtask, useCreateTask, useTaskByNumber, useTaskCategories } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
+import { Combobox } from '../../components/ui/Combobox'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
 import {
   TASK_NUMBER_BADGE_CLASS,
@@ -190,21 +191,25 @@ export function TaskCreatePage() {
             </div>
 
             {/* Свободный текст с подсказками уже использованных в проекте категорий —
-                справочника категорий (в отличие от тэгов) нет, значение вводится вручную. */}
-            <Field label={t('tasks.detail.categoryLabel')} error={errors.category?.message}>
-              <input
-                type="text"
-                className={inputClass}
-                list="task-category-options"
-                placeholder={t('tasks.detail.categoryPlaceholder')}
-                {...register('category')}
-              />
-              <datalist id="task-category-options">
-                {categories?.map((category) => (
-                  <option key={category} value={category} />
-                ))}
-              </datalist>
-            </Field>
+                справочника категорий (в отличие от тэгов) нет, значение вводится вручную.
+                Controller, а не register: Combobox — контролируемый компонент. */}
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <Field label={t('tasks.detail.categoryLabel')} error={errors.category?.message}>
+                  <Combobox
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={categories}
+                    placeholder={t('tasks.detail.categoryPlaceholder')}
+                    maxLength={100}
+                    emptyText={t('tasks.detail.categoryEmpty')}
+                    noMatchesText={t('tasks.detail.categoryNoMatches')}
+                  />
+                </Field>
+              )}
+            />
 
             <Controller
               name="description"

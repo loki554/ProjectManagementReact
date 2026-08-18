@@ -245,6 +245,8 @@
       "tagLabel": "Tag",
       "categoryLabel": "Kategorie",
       "categoryPlaceholder": "z. B. Startseite",
+      "categoryEmpty": "Noch keine Kategorien in diesem Projekt",
+      "categoryNoMatches": "Keine Treffer — eine neue Kategorie wird erstellt",
       "descriptionLabel": "Beschreibung",
       "noDescription": "Keine Beschreibung",
       "createdBy": "Erstellt von",
@@ -336,6 +338,10 @@
       "dueSoonHours_other": "Noch {{count}} Stunden!",
       "overdue": "Aufgabe überfällig"
     }
+  },
+  "combobox": {
+    "clear": "Leeren",
+    "toggle": "Optionen anzeigen"
   },
   "pagination": {
     "previous": "Zurück",

@@ -245,6 +245,8 @@
       "tagLabel": "Тэг",
       "categoryLabel": "Категория",
       "categoryPlaceholder": "Например: Главная страница",
+      "categoryEmpty": "В проекте пока нет категорий",
+      "categoryNoMatches": "Совпадений нет — будет создана новая категория",
       "descriptionLabel": "Описание",
       "noDescription": "Без описания",
       "createdBy": "Создал(а)",
@@ -340,6 +342,10 @@
       "dueSoonHours_other": "Осталось {{count}} часов!",
       "overdue": "Задача просрочена"
     }
+  },
+  "combobox": {
+    "clear": "Очистить",
+    "toggle": "Показать варианты"
   },
   "pagination": {
     "previous": "Назад",
