@@ -417,6 +417,9 @@
     "CATEGORY_NOT_FOUND": "Category not found",
     "DUPLICATE_CATEGORY_NAME": "A category with this name already exists in this project",
     "TAG_PROJECT_MISMATCH": "This tag belongs to a different project",
+    "TOO_MANY_REQUESTS": "Too many attempts. Please try again later.",
+    "TOO_MANY_REQUESTS_RETRY_one": "Too many attempts. Please try again in {{count}} minute.",
+    "TOO_MANY_REQUESTS_RETRY_other": "Too many attempts. Please try again in {{count}} minutes.",
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again"
   }

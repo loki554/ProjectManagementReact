@@ -1,6 +1,8 @@
 package com.pmtracker.project_management_backend.config;
 
+import com.pmtracker.project_management_backend.ratelimit.AuthRateLimitFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,15 +23,32 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
     @Value("${app.frontend.base-url}")
     private String frontendBaseUrl;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                           AuthRateLimitFilter authRateLimitFilter,
                            RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.authRateLimitFilter = authRateLimitFilter;
         this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+    }
+
+    /**
+     * Boot регистрирует КАЖДЫЙ бин типа Filter ещё и в общей цепочке сервлет-контейнера,
+     * поэтому фильтр, добавленный в security-цепочку через addFilterBefore, без этого
+     * отрабатывал бы дважды за запрос — для лимитера это означало бы двойной расход
+     * токенов и фактически вдвое меньший лимит. Отключаем авторегистрацию и оставляем
+     * ровно одно вхождение — внутри security-цепочки (где на ответе уже есть CORS-заголовки).
+     */
+    @Bean
+    public FilterRegistrationBean<AuthRateLimitFilter> authRateLimitFilterRegistration(AuthRateLimitFilter filter) {
+        FilterRegistrationBean<AuthRateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -50,6 +69,10 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(frontendBaseUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Браузер по умолчанию не даёт JS читать никакие заголовки ответа, кроме нескольких
+        // «безопасных», — без этой строки фронтенд не увидит Retry-After у ответа 429
+        // (см. AuthRateLimitFilter) и не сможет сказать пользователю, когда пробовать снова.
+        config.setExposedHeaders(List.of("Retry-After"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -91,7 +114,13 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // Лимитер стоит перед JwtAuthenticationFilter: смысл в том, чтобы отсеять
+                // шквал запросов раньше, чем они дойдут до БД и BCrypt (см. AuthRateLimitFilter).
+                // Порядок этих двух вызовов важен: addFilterBefore умеет позиционировать
+                // фильтр относительно другого кастомного только после того, как тот сам
+                // зарегистрирован в цепочке, иначе конфигурация падает на старте.
+                .addFilterBefore(authRateLimitFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 }

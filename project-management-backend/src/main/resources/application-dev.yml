@@ -21,6 +21,15 @@ app:
     base-path: ./storage
   frontend:
     base-url: http://localhost:5173
+  # Лимиты auth-эндпоинтов (RateLimitProperties): значения по умолчанию заданы в коде,
+  # чтобы защита работала в любом профиле, здесь — только точки переопределения.
+  # По умолчанию: login 5/15m на (IP, email) и 20/15m на IP, register 20/1h на IP,
+  # resend-verification 3/1h на email и 10/1h на IP, refresh 60/15m на IP.
+  # Если лимит мешает локальной отладке — app.rate-limit.enabled: false (только в dev!)
+  # или, точечно, например app.rate-limit.login.capacity: 100
+  rate-limit:
+    enabled: true
+
   jwt:
     secret: ${JWT_SECRET:dev-only-insecure-secret-please-override-in-prod-min-32-bytes!}
     access-token-ttl-minutes: 15

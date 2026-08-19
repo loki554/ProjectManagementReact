@@ -75,6 +75,15 @@
 			<version>0.12.6</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- bucket4j: token bucket для rate limiting auth-эндпоинтов (см. ratelimit/).
+		     Артефакт _jdk17 — это основная линейка библиотеки начиная с 8.x
+		     (сборка под Java 17+), core-модуль работает in-memory, без зависимостей;
+		     при переходе на несколько инстансов рядом добавляется bucket4j_jdk17-redis. -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j_jdk17-core</artifactId>
+			<version>8.14.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
