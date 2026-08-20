@@ -16,7 +16,22 @@ spring:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
 
+# Swagger UI живёт только в dev (в application.properties springdoc выключен по умолчанию).
+# Здесь же ослабленный CSP: строгий default-src 'none' из application.properties не дал бы
+# самой странице Swagger загрузить свои скрипты и стили. Внешние источники не разрешены и
+# тут — только 'self' и inline, без которого swagger-ui не работает.
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
 app:
+  security:
+    content-security-policy: >-
+      default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';
+      script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self';
+      frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   storage:
     base-path: ./storage
   frontend:

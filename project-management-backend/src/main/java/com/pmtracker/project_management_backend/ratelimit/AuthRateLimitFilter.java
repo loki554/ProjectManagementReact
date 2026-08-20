@@ -34,11 +34,12 @@ import java.util.concurrent.TimeUnit;
  * после CorsFilter — важно, чтобы на ответе 429 были CORS-заголовки, иначе браузер покажет
  * фронтенду сетевую ошибку вместо внятного «слишком много попыток».
  *
- * Клиент определяется по request.getRemoteAddr(). За обратным прокси это будет адрес самого
- * прокси, то есть все пользователи склеятся в один ключ — при разворачивании за nginx/ingress
- * нужно включить server.forward-headers-strategy=framework, тогда ForwardedHeaderFilter
- * подставит сюда реальный адрес из X-Forwarded-For. Разбирать этот заголовок здесь
- * самостоятельно нельзя: клиент присылает его сам, и лимит обходился бы подделкой.
+ * Клиент определяется по request.getRemoteAddr(). За обратным прокси это был бы адрес самого
+ * прокси, то есть все пользователи склеились бы в один ключ; чтобы ForwardedHeaderFilter
+ * подставил сюда реальный адрес из X-Forwarded-For, в prod-профиле включён
+ * server.forward-headers-strategy=framework (см. application-prod.yml — там же условие, при
+ * котором это безопасно). Разбирать заголовок здесь самостоятельно нельзя: клиент присылает
+ * его сам, и лимит обходился бы подделкой.
  */
 @Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
