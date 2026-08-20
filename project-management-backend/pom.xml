@@ -28,6 +28,11 @@
 	</scm>
 	<properties>
 		<java.version>25</java.version>
+		<!-- Профиль для локального запуска (spring-boot:run). В application.properties его
+		     больше нет и быть не должно: тот файл едет в jar, и зашитый в нём профиль стал бы
+		     профилем прода тоже. Здесь это безопасно: pom в jar не попадает, а goal spring-boot:run
+		     нужен только для разработки. Переопределяется как обычно: -Dspring-boot.run.profiles=... -->
+		<spring-boot.run.profiles>dev</spring-boot.run.profiles>
 	</properties>
 	<dependencies>
 		<dependency>

@@ -1,0 +1,74 @@
+# Прод-профиль. Включается только снаружи: SPRING_PROFILES_ACTIVE=prod (см. application.properties).
+#
+# Главное правило файла: НИ ОДНОГО дефолта у секретов и адресов окружения. Placeholder без
+# fallback (${VAR}) роняет контекст на старте с "Could not resolve placeholder", и это
+# осознанный выбор: приложение, молча поднявшееся с dev-датасорсом или публично известным
+# JWT-секретом, опаснее не поднявшегося вовсе.
+#
+# Обязательные переменные окружения:
+#   DB_URL              jdbc:postgresql://<host>:5432/<db>
+#   DB_USERNAME         пользователь БД
+#   DB_PASSWORD         пароль БД
+#   MAIL_HOST           SMTP-релей
+#   MAIL_PORT           порт SMTP (обычно 587 для STARTTLS)
+#   MAIL_USERNAME       логин SMTP
+#   MAIL_PASSWORD       пароль SMTP
+#   JWT_SECRET          случайные >= 32 байта; проверяется в JwtService (см. 1.2)
+#   FRONTEND_BASE_URL   https://<домен фронта>; идёт и в CORS (SecurityConfig), и в ссылки писем
+#   STORAGE_BASE_PATH   каталог для вложений и аватарок; должен переживать перезапуск контейнера
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      # Пул намеренно небольшой: узкое место — не приложение, а сама Postgres (её
+      # max_connections делится на все инстансы). Таймауты заданы явно, чтобы запрос,
+      # упёршийся в исчерпанный пул или зависшую сеть, падал быстро и с внятной ошибкой,
+      # а не держал поток Tomcat до бесконечности.
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
+      validation-timeout: 5000
+      idle-timeout: 300000
+      max-lifetime: 900000
+  jpa:
+    hibernate:
+      # Схемой владеет Flyway; ddl-auto здесь только сверяет её с маппингом и падает при
+      # расхождении. Ничего, кроме validate, в проде допустимым не является.
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      # required, а не только enable: без этого при отсутствии STARTTLS у сервера письмо
+      # (со ссылкой подтверждения внутри) молча уйдёт открытым текстом.
+      mail.smtp.starttls.required: true
+      # Иначе недоступный SMTP вешает поток, отправляющий письмо верификации, на минуты.
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
+app:
+  storage:
+    base-path: ${STORAGE_BASE_PATH}
+  frontend:
+    base-url: ${FRONTEND_BASE_URL}
+  rate-limit:
+    # Дефолты лимитов живут в RateLimitProperties; здесь важно только то, что выключить
+    # их в проде нельзя (в dev это допустимо для отладки).
+    enabled: true
+  jwt:
+    secret: ${JWT_SECRET}
+    # Значения продублированы из dev не «на всякий случай»: JwtProperties — примитивные int,
+    # и без них TTL стали бы нулевыми молча, то есть каждый выданный токен был бы уже истёкшим.
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 14
