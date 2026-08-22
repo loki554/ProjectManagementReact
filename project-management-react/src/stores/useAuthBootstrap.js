@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { refreshAccessToken } from '../api/client'
+import { refreshSession } from '../api/client'
 import i18n from '../i18n'
 import { useAuthStore } from './authStore'
 import { useToastStore } from './toastStore'
@@ -12,7 +12,7 @@ export function useAuthBootstrap() {
   const [ready, setReady] = useState(false)
   // React.StrictMode в dev дважды подряд монтирует эффект без ожидания между вызовами —
   // без этого guard'а обе синхронные инвокации читают ещё не обновлённое состояние стора
-  // и обе уходят в refreshAccessToken/clearSession, из-за чего пользователь при истёкшей
+  // и обе уходят в refreshSession/clearSession, из-за чего пользователь при истёкшей
   // сессии видел два одинаковых тоста вместо одного (найдено в браузерном смоук-тесте, см.
   // Phase 8). Ref переживает cycle mount→unmount→mount из StrictMode (это один и тот же
   // fiber), поэтому вторая инвокация видит startedRef.current уже true и ничего не делает.
@@ -24,15 +24,17 @@ export function useAuthBootstrap() {
     }
     startedRef.current = true
 
-    const { accessToken, refreshToken, setSession, clearSession } = useAuthStore.getState()
+    const { accessToken, refreshToken, clearSession } = useAuthStore.getState()
 
     if (accessToken || !refreshToken) {
       setReady(true)
       return
     }
 
-    refreshAccessToken(refreshToken)
-      .then((data) => setSession(data))
+    // Токен в обмен уходит не отсюда, а из стора внутри refreshSession — если параллельно
+    // грузится вторая вкладка, актуальным к этому моменту может оказаться уже другой.
+    // Новую пару refreshSession кладёт в стор сам.
+    refreshSession()
       .catch(() => {
         clearSession()
         // refreshToken был (см. guard выше), значит пользователь считал себя залогиненным —

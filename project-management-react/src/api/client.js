@@ -31,14 +31,61 @@ const AUTH_ENDPOINTS_WITHOUT_RETRY = [
   '/auth/resend-verification',
 ]
 
+const REFRESH_LOCK_NAME = 'pmtracker-auth-refresh'
+
 let refreshPromise = null
 
-// Экспортируется отдельно, чтобы bootstrap-логика при загрузке приложения
-// (см. useAuthBootstrap) могла явно освежить сессию, не дожидаясь первого 401.
-export async function refreshAccessToken(refreshToken) {
+/**
+ * Обменивает refresh-токен на новую пару и сразу кладёт её в стор.
+ *
+ * Экспортируется, чтобы bootstrap-логика при загрузке приложения (см. useAuthBootstrap)
+ * могла явно освежить сессию, не дожидаясь первого 401.
+ *
+ * Обновление обязано быть эксклюзивным, иначе две параллельные попытки предъявят бэкенду
+ * один и тот же токен, второй ответят 401 — и с версии 1.6 (detection повторного
+ * использования) она погасит вообще все сессии пользователя, посчитав это кражей.
+ * Эксклюзивность двухуровневая: refreshPromise схлопывает параллельные вызовы внутри
+ * вкладки, Web Locks — между вкладками одного браузера.
+ */
+export async function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = requestRefreshExclusively().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
+function requestRefreshExclusively() {
+  // navigator.locks нет в небезопасном контексте (http на IP в локальной сети) и в старых
+  // браузерах. Тогда остаётся только внутривкладочная защита — это ровно то поведение,
+  // которое было до появления замка, деградация мягкая.
+  if (!navigator.locks) {
+    return requestRefresh()
+  }
+  return navigator.locks.request(REFRESH_LOCK_NAME, requestRefresh)
+}
+
+async function requestRefresh() {
+  // Пока мы стояли за замком, соседняя вкладка могла уже сходить за новой парой и записать
+  // её в localStorage. Перечитываем стор, чтобы не предъявить бэкенду ротированный токен:
+  // для него две живые копии одного токена неотличимы от кражи.
+  await Promise.resolve(useAuthStore.persist.rehydrate())
+
+  const { refreshToken } = useAuthStore.getState()
+  if (!refreshToken) {
+    // Сессию завершили в соседней вкладке, пока мы ждали замок. Обновлять нечего —
+    // вызывающий код обработает это как обычную неудачу обновления.
+    throw new Error('Refresh token is no longer available')
+  }
+
   // Отдельный axios-вызов, а не apiClient — иначе он тоже пройдёт через этот же
   // interceptor и может зациклиться.
   const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+
+  // setSession строго внутри замка: он же пишет новый токен в localStorage, и соседняя
+  // вкладка должна увидеть запись до того, как получит замок и прочитает стор.
+  useAuthStore.getState().setSession(response.data)
   return response.data
 }
 
@@ -56,7 +103,7 @@ apiClient.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    const { accessToken, refreshToken, setSession, clearSession } = useAuthStore.getState()
+    const { accessToken, refreshToken, clearSession } = useAuthStore.getState()
     if (!refreshToken) {
       // accessToken ещё есть — значит для приложения (и пользователя) это первый сигнал,
       // что сессия невалидна, стоит объяснить, почему он вот-вот окажется на /login.
@@ -72,15 +119,9 @@ apiClient.interceptors.response.use(
     originalRequest._retry = true
 
     try {
-      // Если несколько запросов словили 401 одновременно, обновляем токен один раз
-      // на всех, а не по разу на каждый запрос.
-      if (!refreshPromise) {
-        refreshPromise = refreshAccessToken(refreshToken).finally(() => {
-          refreshPromise = null
-        })
-      }
-      const data = await refreshPromise
-      setSession(data)
+      // Токен для обмена берётся не отсюда, а из стора внутри refreshSession — к моменту,
+      // когда мы получим замок, актуальным может быть уже другой.
+      const data = await refreshSession()
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`
       return apiClient(originalRequest)
     } catch (refreshError) {

@@ -11,6 +11,8 @@ import com.pmtracker.project_management_backend.common.exception.InvalidOrExpire
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
 import com.pmtracker.project_management_backend.mail.MailService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,8 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private static final int VERIFICATION_TOKEN_TTL_HOURS = 24;
 
@@ -118,10 +122,36 @@ public class AuthService {
         return issueTokenPair(user);
     }
 
-    @Transactional
+    /**
+     * Меняет refresh-токен на новую пару токенов и попутно ловит повторное использование
+     * уже отозванного токена.
+     *
+     * noRollbackFor: в ветке reuse мы гасим все токены пользователя и тут же бросаем
+     * InvalidRefreshTokenException — без этого флага Spring откатил бы транзакцию вместе
+     * с отзывом, и защита не сработала бы вовсе. Остальные ветки с этим исключением в БД
+     * ничего не пишут, так что для них разницы между коммитом и откатом нет.
+     */
+    @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
     public AuthResponse refresh(String rawRefreshToken) {
         RefreshToken existingToken = refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
+
+        // Токен отозван, и у него есть replacedBy — значит, им уже один раз успешно
+        // воспользовались, получили взамен новый, и вот приходят с ним второй раз. Двух
+        // живых владельцев одного токена быть не должно: либо утёк наш, либо это тот, кто
+        // его украл. Кто именно пришёл — по запросу не понять, поэтому гасим всю цепочку:
+        // злоумышленник теряет доступ, пользователь логинится заново.
+        //
+        // Токены, отозванные логаутом (replacedBy == null), сюда не попадают: новой цепочки
+        // из них не выросло, продолжать нечего, а гонка «логаут и параллельный refresh той же
+        // вкладки» вполне реальна — разлогинивать за неё на всех устройствах было бы грубо.
+        if (existingToken.isRevoked() && existingToken.getReplacedBy() != null) {
+            UUID userId = existingToken.getUser().getId();
+            int revokedCount = refreshTokenRepository.revokeAllByUserId(userId);
+            log.warn("Refresh token reuse detected: token {} of user {} had already been rotated, "
+                    + "revoked {} active token(s) of this user", existingToken.getId(), userId, revokedCount);
+            throw new InvalidRefreshTokenException();
+        }
 
         if (existingToken.isRevoked() || existingToken.getExpiresAt().isBefore(Instant.now())) {
             throw new InvalidRefreshTokenException();
