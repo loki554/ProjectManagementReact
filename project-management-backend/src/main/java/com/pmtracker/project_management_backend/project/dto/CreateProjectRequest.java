@@ -11,6 +11,8 @@ public record CreateProjectRequest(
         // в URL (ProjectService.slugify), кириллица и т.п. дали бы пустой или нечитаемый slug.
         @Pattern(regexp = "^[\\x20-\\x7E]+$", message = "Project name must contain only Latin letters, digits, and standard punctuation")
         String name,
-        String description
+        // description лежит в TEXT-колонке, то есть БД его не ограничивает совсем —
+        // предел задаём здесь, иначе в проект можно залить мегабайты текста одним запросом.
+        @Size(max = 20000) String description
 ) {
 }

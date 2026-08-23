@@ -164,13 +164,13 @@ export function ProfilePage() {
         className="space-y-4"
       >
         <Field label={t('profile.lastName')} error={errors.lastName?.message}>
-          <input type="text" className={inputClass} {...register('lastName')} />
+          <input type="text" className={inputClass} maxLength={100} {...register('lastName')} />
         </Field>
         <Field label={t('profile.firstName')} error={errors.firstName?.message}>
-          <input type="text" className={inputClass} {...register('firstName')} />
+          <input type="text" className={inputClass} maxLength={100} {...register('firstName')} />
         </Field>
         <Field label={t('profile.patronymic')} error={errors.patronymic?.message}>
-          <input type="text" className={inputClass} {...register('patronymic')} />
+          <input type="text" className={inputClass} maxLength={100} {...register('patronymic')} />
         </Field>
 
         {saveError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(saveError, t)}</p>}

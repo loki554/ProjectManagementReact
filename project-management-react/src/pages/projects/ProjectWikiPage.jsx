@@ -77,7 +77,7 @@ export function ProjectWikiPage() {
 
       {editing && (
         <div className="space-y-3">
-          <MarkdownEditor value={draft} onChange={setDraft} placeholder={t('wiki.placeholder')} />
+          <MarkdownEditor value={draft} onChange={setDraft} placeholder={t('wiki.placeholder')} maxLength={100000} />
           {updateWiki.isError && (
             <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateWiki.error, t)}</p>
           )}

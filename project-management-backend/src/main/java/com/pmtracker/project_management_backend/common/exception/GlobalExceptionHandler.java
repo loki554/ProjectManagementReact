@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.common.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -224,6 +225,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTagProjectMismatch(TagProjectMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse("TAG_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
+    // Страховка на случай, если ограничение есть в схеме БД, но не продублировано валидацией DTO
+    // (или продублировано, но с другой границей). Без этого обработчика любое нарушение
+    // constraint'а — слишком длинная строка, гонка на unique-индексе email/slug — уходило в
+    // handleUnexpected ниже и превращалось в 500, то есть выглядело как поломка сервера, хотя
+    // виноват запрос. 409, а не 400: до БД доезжают в основном конфликты уникальности, а сами
+    // границы длины теперь закрыты @Size на DTO (см. 1.7) и сюда доходить не должны.
+    // Логируем целиком (в сообщении драйвера — имя нарушенного constraint'а, по нему и
+    // видно, какой валидации не хватает), наружу отдаём общий текст: имена таблиц, колонок
+    // и индексов — это детали реализации.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        log.warn("Database constraint violated while processing request", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DATA_CONFLICT", "Request conflicts with existing data"));
     }
 
     // Единая точка форматирования для ВСЕХ исключений, которые сама MVC резолвит через

@@ -49,7 +49,7 @@ export function RegisterPage() {
     <AuthLayout title={t('auth.register.title')}>
       <form onSubmit={handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
         <Field label={t('auth.register.email')} error={errors.email?.message}>
-          <input type="email" className={inputClass} {...register('email')} />
+          <input type="email" className={inputClass} maxLength={255} {...register('email')} />
         </Field>
 
         <Field label={t('auth.register.password')} error={errors.password?.message}>
@@ -58,15 +58,15 @@ export function RegisterPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <Field label={t('auth.register.lastName')} error={errors.lastName?.message}>
-            <input type="text" className={inputClass} {...register('lastName')} />
+            <input type="text" className={inputClass} maxLength={100} {...register('lastName')} />
           </Field>
           <Field label={t('auth.register.firstName')} error={errors.firstName?.message}>
-            <input type="text" className={inputClass} {...register('firstName')} />
+            <input type="text" className={inputClass} maxLength={100} {...register('firstName')} />
           </Field>
         </div>
 
         <Field label={t('auth.register.patronymic')} error={errors.patronymic?.message}>
-          <input type="text" className={inputClass} {...register('patronymic')} />
+          <input type="text" className={inputClass} maxLength={100} {...register('patronymic')} />
         </Field>
 
         {mutation.isError && (

@@ -145,7 +145,7 @@ export function TaskEditPage() {
               <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
             </div>
             <Field label={t('tasks.detail.titleLabel')} error={errors.title?.message}>
-              <input type="text" className={inputClass} {...register('title')} />
+              <input type="text" className={inputClass} maxLength={255} {...register('title')} />
             </Field>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -221,7 +221,7 @@ export function TaskEditPage() {
               control={control}
               render={({ field }) => (
                 <Field label={t('tasks.detail.descriptionLabel')}>
-                  <MarkdownEditor value={field.value} onChange={field.onChange} />
+                  <MarkdownEditor value={field.value} onChange={field.onChange} maxLength={20000} />
                 </Field>
               )}
             />

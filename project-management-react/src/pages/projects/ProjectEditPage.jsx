@@ -137,10 +137,10 @@ export function ProjectEditPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field label={t('projects.name')} error={errors.name?.message}>
-          <input type="text" className={inputClass} {...register('name')} />
+          <input type="text" className={inputClass} maxLength={255} {...register('name')} />
         </Field>
         <Field label={t('projects.description')} error={errors.description?.message}>
-          <textarea rows={4} className={inputClass} {...register('description')} />
+          <textarea rows={4} className={inputClass} maxLength={20000} {...register('description')} />
         </Field>
 
         <div className="flex items-center gap-4">

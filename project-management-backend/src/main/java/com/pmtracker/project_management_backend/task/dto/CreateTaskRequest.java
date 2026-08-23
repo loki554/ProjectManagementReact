@@ -10,7 +10,9 @@ import java.util.UUID;
 
 public record CreateTaskRequest(
         @NotBlank @Size(max = 255) String title,
-        String description,
+        // description лежит в TEXT-колонке (V3__tasks.sql) и до сих пор не был ограничен
+        // ничем — предел задаём здесь, чтобы в задачу нельзя было залить мегабайты текста.
+        @Size(max = 20000) String description,
         UUID assigneeId,
         TaskStatus status,
         TaskUrgency urgency,

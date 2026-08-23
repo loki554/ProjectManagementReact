@@ -5,7 +5,8 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateProjectRequest(
         @NotBlank @Size(max = 255) String name,
-        String description,
+        // См. CreateProjectRequest: колонка TEXT, границу задаёт только валидация.
+        @Size(max = 20000) String description,
         boolean archived
 ) {
 }
