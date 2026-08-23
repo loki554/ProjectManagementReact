@@ -66,10 +66,8 @@ spring:
       # required, а не только enable: без этого при отсутствии STARTTLS у сервера письмо
       # (со ссылкой подтверждения внутри) молча уйдёт открытым текстом.
       mail.smtp.starttls.required: true
-      # Иначе недоступный SMTP вешает поток, отправляющий письмо верификации, на минуты.
-      mail.smtp.connectiontimeout: 5000
-      mail.smtp.timeout: 5000
-      mail.smtp.writetimeout: 5000
+      # Таймауты SMTP здесь не дублируются: они заданы для всех профилей сразу
+      # в application.properties (spring.mail.properties.mail.smtp.*timeout).
 
 app:
   storage:

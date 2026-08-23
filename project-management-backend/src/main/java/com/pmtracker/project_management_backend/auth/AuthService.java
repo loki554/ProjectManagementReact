@@ -10,9 +10,10 @@ import com.pmtracker.project_management_backend.common.exception.InvalidCredenti
 import com.pmtracker.project_management_backend.common.exception.InvalidOrExpiredTokenException;
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
-import com.pmtracker.project_management_backend.mail.MailService;
+import com.pmtracker.project_management_backend.mail.VerificationEmailRequestedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +39,7 @@ public class AuthService {
     private final EmailVerificationTokenRepository verificationTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -47,14 +48,14 @@ public class AuthService {
                         EmailVerificationTokenRepository verificationTokenRepository,
                         RefreshTokenRepository refreshTokenRepository,
                         PasswordEncoder passwordEncoder,
-                        MailService mailService,
+                        ApplicationEventPublisher eventPublisher,
                         JwtService jwtService,
                         JwtProperties jwtProperties) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
-        this.mailService = mailService;
+        this.eventPublisher = eventPublisher;
         this.jwtService = jwtService;
         this.jwtProperties = jwtProperties;
     }
@@ -221,7 +222,10 @@ public class AuthService {
         verificationToken.setExpiresAt(Instant.now().plus(VERIFICATION_TOKEN_TTL_HOURS, ChronoUnit.HOURS));
         verificationTokenRepository.save(verificationToken);
 
-        mailService.sendVerificationEmail(user.getEmail(), verificationToken.getToken());
+        // Не отправляем письмо здесь: мы внутри @Transactional, а SMTP — внешняя система, которая
+        // умеет тормозить и падать. Событие уедет в VerificationMailDispatcher уже после коммита
+        // и в отдельном потоке; там же ретраи.
+        eventPublisher.publishEvent(new VerificationEmailRequestedEvent(user.getEmail(), verificationToken.getToken()));
     }
 
     private UUID parseToken(String tokenValue) {
