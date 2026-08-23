@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +25,16 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update RefreshToken t set t.revoked = true where t.user.id = :userId and t.revoked = false")
     int revokeAllByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Удаляет давно истёкшие refresh-токены (см. TokenCleanupJob). В отличие от токенов
+     * подтверждения, здесь нужен грейс-период, и вот почему: детект повторного использования
+     * (см. AuthService.refresh) опознаёт кражу по тому, что предъявленный токен НАЙДЕН в базе
+     * и уже отозван с replacedBy. Удалить строку раньше времени — значит превратить кражу
+     * в обычный «токен не найден»: пользователь получит тот же 401, но цепочка живых токенов
+     * вора останется цела, то есть защита тихо перестанет работать.
+     */
+    @Modifying
+    @Query("delete from RefreshToken t where t.expiresAt < :cutoff")
+    int deleteExpiredBefore(@Param("cutoff") Instant cutoff);
 }
