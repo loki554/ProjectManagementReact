@@ -33,6 +33,14 @@ public class RateLimitProperties {
     /** Регистрации на IP: против забивания БД мусорными пользователями. */
     private Limit register = new Limit(20, Duration.ofHours(1));
 
+    /**
+     * Регистрации на один email. Появился вместе с унификацией ответа /register (см. 1.10):
+     * попытка зарегистрироваться на занятый адрес теперь отправляет письмо его владельцу,
+     * то есть форма регистрации стала таким же способом слать письма чужим людям, как и
+     * /resend-verification, и лимит ей нужен по той же причине.
+     */
+    private Limit registerPerEmail = new Limit(5, Duration.ofHours(1));
+
     /** Письма с подтверждением на один email: каждый вызов — письмо на чужой адрес. */
     private Limit resendVerification = new Limit(3, Duration.ofHours(1));
 
@@ -96,6 +104,14 @@ public class RateLimitProperties {
 
     public void setRegister(Limit register) {
         this.register = register;
+    }
+
+    public Limit getRegisterPerEmail() {
+        return registerPerEmail;
+    }
+
+    public void setRegisterPerEmail(Limit registerPerEmail) {
+        this.registerPerEmail = registerPerEmail;
     }
 
     public Limit getResendVerification() {

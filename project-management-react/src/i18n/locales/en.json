@@ -56,7 +56,7 @@
       "hasAccount": "Already have an account?",
       "login": "Sign in",
       "successTitle": "Check your email",
-      "successMessage": "We've sent a confirmation link to your email. Follow it to activate your account.",
+      "successMessage": "We have sent an email to the address you entered. Open it and follow the instructions inside.",
       "backToLogin": "Back to sign in"
     },
     "verifyEmail": {
@@ -416,7 +416,6 @@
     }
   },
   "errors": {
-    "EMAIL_ALREADY_EXISTS": "An account with this email already exists",
     "INVALID_CREDENTIALS": "Invalid email or password",
     "EMAIL_NOT_VERIFIED": "Email is not confirmed. Check your inbox or resend the confirmation email.",
     "INVALID_TOKEN": "The confirmation link is invalid or has expired",

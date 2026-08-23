@@ -59,6 +59,12 @@ public class MailDispatcher {
         sendWithRetries("password reset", () -> mailService.sendPasswordResetEmail(event.email(), event.token()));
     }
 
+    @Async(AsyncConfig.MAIL_EXECUTOR)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onAccountAlreadyExistsEmailRequested(AccountAlreadyExistsEmailRequestedEvent event) {
+        sendWithRetries("account already exists", () -> mailService.sendAccountAlreadyExistsEmail(event.email()));
+    }
+
     /**
      * @param kind короткое название письма для логов — ни адреса, ни токена в лог не попадает:
      *             первое засоряло бы логи почтой пользователей, второе равносильно выдаче

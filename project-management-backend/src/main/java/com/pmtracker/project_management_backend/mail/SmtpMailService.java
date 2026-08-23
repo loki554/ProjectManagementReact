@@ -63,4 +63,30 @@ public class SmtpMailService implements MailService {
 
         mailSender.send(message);
     }
+
+    /**
+     * Уходит вместо письма с подтверждением, когда регистрируются на уже занятый адрес.
+     * Про сам аккаунт (кем, когда заведён, подтверждён ли) не говорит ничего: письмо может
+     * прочитать не только владелец — адрес мог быть введён по ошибке или намеренно чужой.
+     */
+    @Override
+    public void sendAccountAlreadyExistsEmail(String toEmail) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Попытка регистрации — Task Tracker");
+        message.setText("""
+                Здравствуйте!
+
+                Кто-то попытался зарегистрироваться в Task Tracker с этим адресом, но аккаунт с ним
+                уже существует. Нового аккаунта не создано, и ничего в существующем не изменилось.
+
+                Если это были вы — просто войдите: %s/login
+                Забыли пароль — здесь можно задать новый: %s/forgot-password
+
+                Если вы ничего не делали, ничего делать и не нужно: без пароля и без доступа к этому
+                ящику войти в аккаунт невозможно.
+                """.formatted(frontendBaseUrl, frontendBaseUrl));
+
+        mailSender.send(message);
+    }
 }

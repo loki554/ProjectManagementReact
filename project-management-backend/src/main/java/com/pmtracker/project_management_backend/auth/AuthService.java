@@ -4,12 +4,12 @@ import com.pmtracker.project_management_backend.auth.dto.AuthResponse;
 import com.pmtracker.project_management_backend.auth.dto.LoginRequest;
 import com.pmtracker.project_management_backend.auth.dto.RegisterRequest;
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
-import com.pmtracker.project_management_backend.common.exception.EmailAlreadyExistsException;
 import com.pmtracker.project_management_backend.common.exception.EmailNotVerifiedException;
 import com.pmtracker.project_management_backend.common.exception.InvalidCredentialsException;
 import com.pmtracker.project_management_backend.common.exception.InvalidOrExpiredTokenException;
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
+import com.pmtracker.project_management_backend.mail.AccountAlreadyExistsEmailRequestedEvent;
 import com.pmtracker.project_management_backend.mail.PasswordResetEmailRequestedEvent;
 import com.pmtracker.project_management_backend.mail.VerificationEmailRequestedEvent;
 import org.slf4j.Logger;
@@ -77,15 +77,29 @@ public class AuthService {
         this.jwtProperties = jwtProperties;
     }
 
+    /**
+     * Регистрация. Ответ контроллера одинаков и для свободного, и для занятого адреса — раньше
+     * занятый давал 409 EMAIL_ALREADY_EXISTS, и это был бесплатный способ перебором выяснять,
+     * зарегистрирован ли конкретный человек (при том, что соседний /resend-verification такую
+     * проверку аккуратно не давал). Тому, кто действительно владеет ящиком, знать о существующем
+     * аккаунте по-прежнему нужно — но узнаёт он это из письма, а не из HTTP-ответа.
+     */
     @Transactional
     public void register(RegisterRequest request) {
+        // Пароль хешируется в обеих ветках, и это не бессмысленная работа: BCrypt — единственная
+        // заметно долгая операция в этом методе (сотни миллисекунд), и пропуск её на занятом
+        // адресе превратил бы время ответа в тот же самый индикатор существования аккаунта,
+        // который мы только что убрали из тела ответа.
+        String passwordHash = passwordEncoder.encode(request.password());
+
         if (userRepository.existsByEmail(request.email())) {
-            throw new EmailAlreadyExistsException(request.email());
+            eventPublisher.publishEvent(new AccountAlreadyExistsEmailRequestedEvent(request.email()));
+            return;
         }
 
         User user = new User();
         user.setEmail(request.email());
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setPasswordHash(passwordHash);
         user.setLastName(request.lastName());
         user.setFirstName(request.firstName());
         user.setPatronymic(request.patronymic());

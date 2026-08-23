@@ -56,7 +56,7 @@
       "hasAccount": "Sie haben bereits ein Konto?",
       "login": "Anmelden",
       "successTitle": "Bestätigen Sie Ihre E-Mail",
-      "successMessage": "Wir haben Ihnen einen Bestätigungslink per E-Mail gesendet. Folgen Sie ihm, um Ihr Konto zu aktivieren.",
+      "successMessage": "Wir haben eine E-Mail an die angegebene Adresse gesendet. Öffnen Sie sie und folgen Sie den Anweisungen darin.",
       "backToLogin": "Zurück zur Anmeldung"
     },
     "verifyEmail": {
@@ -416,7 +416,6 @@
     }
   },
   "errors": {
-    "EMAIL_ALREADY_EXISTS": "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
     "INVALID_CREDENTIALS": "Ungültige E-Mail-Adresse oder ungültiges Passwort",
     "EMAIL_NOT_VERIFIED": "E-Mail wurde nicht bestätigt. Prüfen Sie Ihr Postfach oder fordern Sie die Bestätigung erneut an.",
     "INVALID_TOKEN": "Der Bestätigungslink ist ungültig oder abgelaufen",

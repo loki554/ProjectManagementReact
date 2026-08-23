@@ -29,12 +29,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse("EMAIL_ALREADY_EXISTS", ex.getMessage()));
-    }
-
     @ExceptionHandler(InvalidOrExpiredTokenException.class)
     public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidOrExpiredTokenException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

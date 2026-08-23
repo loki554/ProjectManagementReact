@@ -116,7 +116,13 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
                 checks.add(new Check("forgot:ip:" + ip, properties.getForgotPasswordPerIp()));
                 checks.add(new Check("forgot:email:" + email, properties.getForgotPassword()));
             }
-            case REGISTER_PATH -> checks.add(new Check("register:ip:" + ip, properties.getRegister()));
+            case REGISTER_PATH -> {
+                CachedBodyHttpServletRequest cached = cacheBody(request);
+                downstreamRequest = cached == null ? request : cached;
+                String email = cached == null ? UNKNOWN_EMAIL : extractEmail(cached.getCachedBody());
+                checks.add(new Check("register:ip:" + ip, properties.getRegister()));
+                checks.add(new Check("register:email:" + email, properties.getRegisterPerEmail()));
+            }
             case RESET_PASSWORD_PATH -> checks.add(new Check("reset:ip:" + ip, properties.getResetPasswordPerIp()));
             case REFRESH_PATH -> checks.add(new Check("refresh:ip:" + ip, properties.getRefresh()));
             default -> {

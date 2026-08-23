@@ -7,4 +7,6 @@ public interface MailService {
     void sendVerificationEmail(String toEmail, UUID token);
 
     void sendPasswordResetEmail(String toEmail, String token);
+
+    void sendAccountAlreadyExistsEmail(String toEmail);
 }
