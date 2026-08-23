@@ -1,14 +1,20 @@
 package com.pmtracker.project_management_backend.user;
 
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.auth.RefreshTokenRepository;
 import com.pmtracker.project_management_backend.auth.UserRepository;
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.common.exception.InvalidCurrentPasswordException;
 import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
 import com.pmtracker.project_management_backend.storage.FileStorageService;
 import com.pmtracker.project_management_backend.storage.StoredFile;
+import com.pmtracker.project_management_backend.user.dto.ChangePasswordRequest;
 import com.pmtracker.project_management_backend.user.dto.UpdateProfileRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +28,8 @@ import java.util.UUID;
 @Service
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
     private static final Set<String> ALLOWED_AVATAR_CONTENT_TYPES =
             Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
 
@@ -31,11 +39,41 @@ public class UserService {
     private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
 
-    public UserService(UserRepository userRepository, FileStorageService fileStorageService) {
+    public UserService(UserRepository userRepository,
+                       RefreshTokenRepository refreshTokenRepository,
+                       PasswordEncoder passwordEncoder,
+                       FileStorageService fileStorageService) {
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordEncoder = passwordEncoder;
         this.fileStorageService = fileStorageService;
+    }
+
+    /**
+     * Смена пароля изнутри аккаунта. Текущий пароль спрашиваем не для проформы: access-токен
+     * живёт 15 минут и вполне может быть у того, кто увёл чужой незалоченный ноутбук, — без этой
+     * проверки такой человек молча меняет пароль и запирает владельца снаружи.
+     *
+     * Все refresh-токены после смены гасим, включая токен той сессии, из которой пришёл запрос:
+     * смысл смены пароля в том, чтобы выкинуть чужие сессии, а вычислить «свою» здесь нечем —
+     * запрос авторизован access-токеном, refresh-токен в нём не участвует. Фронтенд на успешный
+     * ответ разлогинивается сам и просит войти заново (см. ProfilePage).
+     */
+    @Transactional
+    public void changePassword(User user, ChangePasswordRequest request) {
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new InvalidCurrentPasswordException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        int revokedCount = refreshTokenRepository.revokeAllByUserId(user.getId());
+        log.info("Password changed for user {}, revoked {} active refresh token(s)", user.getId(), revokedCount);
     }
 
     @Transactional

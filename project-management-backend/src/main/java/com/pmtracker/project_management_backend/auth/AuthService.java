@@ -10,6 +10,7 @@ import com.pmtracker.project_management_backend.common.exception.InvalidCredenti
 import com.pmtracker.project_management_backend.common.exception.InvalidOrExpiredTokenException;
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
+import com.pmtracker.project_management_backend.mail.PasswordResetEmailRequestedEvent;
 import com.pmtracker.project_management_backend.mail.VerificationEmailRequestedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +36,22 @@ public class AuthService {
 
     private static final int VERIFICATION_TOKEN_TTL_HOURS = 24;
 
+    /**
+     * Час против 24 у верификации: перехваченная ссылка сброса — это сразу чужой аккаунт,
+     * а ссылка подтверждения сама по себе не даёт войти. Час покрывает сценарий «запросил,
+     * отвлёкся, вернулся», но не оставляет рабочую ссылку в почтовом ящике на сутки.
+     */
+    private static final int PASSWORD_RESET_TOKEN_TTL_HOURS = 1;
+
+    /** 64 байта → 86 символов Base64URL; на эту длину рассчитан @Size в RefreshRequest. */
+    private static final int REFRESH_TOKEN_BYTES = 64;
+
+    /** 32 байта → 43 символа, 256 бит энтропии: перебрать ссылку сброса нереально. */
+    private static final int PASSWORD_RESET_TOKEN_BYTES = 32;
+
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository verificationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
@@ -46,6 +61,7 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository,
                         EmailVerificationTokenRepository verificationTokenRepository,
+                        PasswordResetTokenRepository passwordResetTokenRepository,
                         RefreshTokenRepository refreshTokenRepository,
                         PasswordEncoder passwordEncoder,
                         ApplicationEventPublisher eventPublisher,
@@ -53,6 +69,7 @@ public class AuthService {
                         JwtProperties jwtProperties) {
         this.userRepository = userRepository;
         this.verificationTokenRepository = verificationTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventPublisher = eventPublisher;
@@ -105,6 +122,63 @@ public class AuthService {
             verificationTokenRepository.deleteByUser(user);
             issueAndSendVerificationToken(user);
         });
+    }
+
+    /**
+     * Запрос ссылки на смену пароля. Никогда не сообщает вызывающему, существует ли аккаунт:
+     * ответ контроллера одинаков всегда (см. AuthController.forgotPassword), а здесь просто
+     * ничего не происходит для незнакомого адреса.
+     *
+     * Неподтверждённый email при этом не помеха: переход по ссылке из письма сам по себе
+     * доказывает владение ящиком, поэтому reset заодно подтверждает адрес (см. resetPassword).
+     */
+    @Transactional
+    public void forgotPassword(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            // Прошлые ссылки гасим: их могло накопиться сколько угодно (эндпоинт публичный),
+            // и каждая живая — это ещё одна рабочая дверь в аккаунт.
+            passwordResetTokenRepository.deleteByUser(user);
+
+            String rawToken = generateSecureToken(PASSWORD_RESET_TOKEN_BYTES);
+            PasswordResetToken token = new PasswordResetToken();
+            token.setUser(user);
+            token.setTokenHash(hashToken(rawToken));
+            token.setExpiresAt(Instant.now().plus(PASSWORD_RESET_TOKEN_TTL_HOURS, ChronoUnit.HOURS));
+            passwordResetTokenRepository.save(token);
+
+            eventPublisher.publishEvent(new PasswordResetEmailRequestedEvent(user.getEmail(), rawToken));
+        });
+    }
+
+    /**
+     * Смена пароля по ссылке из письма.
+     *
+     * Помимо собственно пароля делает ещё две вещи. Гасит все refresh-токены пользователя:
+     * сброс пароля — штатная реакция на «кажется, меня взломали», и он обязан выкидывать чужие
+     * сессии, иначе смена пароля защищает только от повторного входа, а уже открытая чужая
+     * сессия живёт своей жизнью. И подтверждает email, если тот ещё не подтверждён: переход по
+     * ссылке доказывает владение ящиком ровно так же, как ссылка верификации, а оставлять
+     * человека с новым паролем и всё ещё запертым входом было бы просто издевательством.
+     */
+    @Transactional
+    public void resetPassword(String rawToken, String newPassword) {
+        PasswordResetToken token = passwordResetTokenRepository.findByTokenHash(hashToken(rawToken))
+                .orElseThrow(InvalidOrExpiredTokenException::new);
+
+        if (token.getExpiresAt().isBefore(Instant.now())) {
+            throw new InvalidOrExpiredTokenException();
+        }
+
+        User user = token.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        // Токен одноразовый: удаляем все ссылки этого пользователя, а не только использованную.
+        passwordResetTokenRepository.deleteByUser(user);
+        int revokedCount = refreshTokenRepository.revokeAllByUserId(user.getId());
+        log.info("Password reset completed for user {}, revoked {} active refresh token(s)",
+                user.getId(), revokedCount);
     }
 
     @Transactional
@@ -189,9 +263,7 @@ public class AuthService {
      * в БД пишется только её SHA-256 хеш — так утечка базы не даёт готовых токенов для входа.
      */
     private GeneratedRefreshToken createRefreshToken(User user) {
-        byte[] randomBytes = new byte[64];
-        secureRandom.nextBytes(randomBytes);
-        String rawValue = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        String rawValue = generateSecureToken(REFRESH_TOKEN_BYTES);
 
         RefreshToken entity = new RefreshToken();
         entity.setUser(user);
@@ -203,6 +275,13 @@ public class AuthService {
     }
 
     private record GeneratedRefreshToken(RefreshToken entity, String rawValue) {
+    }
+
+    /** Случайное значение в Base64URL: numBytes байт из SecureRandom, без паддинга. */
+    private String generateSecureToken(int numBytes) {
+        byte[] randomBytes = new byte[numBytes];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 
     private String hashToken(String rawToken) {

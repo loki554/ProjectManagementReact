@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { updateProfile, uploadAvatar } from '../api/userApi'
+import { ChangePasswordForm } from '../components/profile/ChangePasswordForm'
 import { Field, inputClass, secondaryButtonClass, submitButtonClass } from '../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../lib/errorMessage'
 import { useAuthenticatedImage } from '../lib/useAuthenticatedImage'
@@ -182,6 +183,10 @@ export function ProfilePage() {
           {isSaving ? t('profile.saving') : t('profile.save')}
         </button>
       </form>
+
+      {/* Отдельной формой, а не полями выше: смена пароля разлогинивает, и путать её
+          с обычным "сохранить профиль" нельзя ни визуально, ни по кнопке. */}
+      <ChangePasswordForm />
     </div>
   )
 }

@@ -40,6 +40,24 @@ public class RateLimitProperties {
     private Limit resendVerificationPerIp = new Limit(10, Duration.ofHours(1));
 
     /**
+     * Запросы ссылки на сброс пароля по одному email. Лимит жёсткий и по тем же причинам, что
+     * у resendVerification: вызов публичный и отправляет письмо на чужой адрес, то есть без
+     * лимита это бесплатная рассылка спама чужими руками.
+     */
+    private Limit forgotPassword = new Limit(3, Duration.ofHours(1));
+
+    /** То же на IP — иначе лимит выше обходится перебором адресов (ср. loginPerIp). */
+    private Limit forgotPasswordPerIp = new Limit(10, Duration.ofHours(1));
+
+    /**
+     * Попытки применить ссылку сброса, ключ — IP. Токен угадать нереально (256 бит), но лимит
+     * стоит по той же причине, по которой ставят замок на дверь в подвале: перебор на публичном
+     * эндпоинте, меняющем пароль, не должен быть бесплатным. Щедрее forgotPassword: сюда
+     * человек попадает по своей же ссылке и вполне может ошибиться в новом пароле пару раз.
+     */
+    private Limit resetPasswordPerIp = new Limit(20, Duration.ofHours(1));
+
+    /**
      * Обновление токена на IP. Лимит намеренно щедрый: в норме это один запрос на сессию
      * раз в 15 минут (TTL access-токена), но за NAT/корпоративным прокси за одним адресом
      * могут сидеть десятки живых пользователей, а 429 здесь для фронтенда равносилен
@@ -94,6 +112,30 @@ public class RateLimitProperties {
 
     public void setResendVerificationPerIp(Limit resendVerificationPerIp) {
         this.resendVerificationPerIp = resendVerificationPerIp;
+    }
+
+    public Limit getForgotPassword() {
+        return forgotPassword;
+    }
+
+    public void setForgotPassword(Limit forgotPassword) {
+        this.forgotPassword = forgotPassword;
+    }
+
+    public Limit getForgotPasswordPerIp() {
+        return forgotPasswordPerIp;
+    }
+
+    public void setForgotPasswordPerIp(Limit forgotPasswordPerIp) {
+        this.forgotPasswordPerIp = forgotPasswordPerIp;
+    }
+
+    public Limit getResetPasswordPerIp() {
+        return resetPasswordPerIp;
+    }
+
+    public void setResetPasswordPerIp(Limit resetPasswordPerIp) {
+        this.resetPasswordPerIp = resetPasswordPerIp;
     }
 
     public Limit getRefresh() {

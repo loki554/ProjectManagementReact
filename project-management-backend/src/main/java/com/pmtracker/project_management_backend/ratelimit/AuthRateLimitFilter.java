@@ -50,9 +50,12 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     private static final String REGISTER_PATH = "/api/auth/register";
     private static final String RESEND_VERIFICATION_PATH = "/api/auth/resend-verification";
     private static final String REFRESH_PATH = "/api/auth/refresh";
+    private static final String FORGOT_PASSWORD_PATH = "/api/auth/forgot-password";
+    private static final String RESET_PASSWORD_PATH = "/api/auth/reset-password";
 
     private static final Set<String> LIMITED_PATHS =
-            Set.of(LOGIN_PATH, REGISTER_PATH, RESEND_VERIFICATION_PATH, REFRESH_PATH);
+            Set.of(LOGIN_PATH, REGISTER_PATH, RESEND_VERIFICATION_PATH, REFRESH_PATH,
+                    FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH);
 
     /** Тела этих запросов — маленькие JSON-объекты; всё, что больше, разбору не подлежит. */
     private static final int MAX_INSPECTED_BODY_BYTES = 8 * 1024;
@@ -106,7 +109,15 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
                 checks.add(new Check("resend:ip:" + ip, properties.getResendVerificationPerIp()));
                 checks.add(new Check("resend:email:" + email, properties.getResendVerification()));
             }
+            case FORGOT_PASSWORD_PATH -> {
+                CachedBodyHttpServletRequest cached = cacheBody(request);
+                downstreamRequest = cached == null ? request : cached;
+                String email = cached == null ? UNKNOWN_EMAIL : extractEmail(cached.getCachedBody());
+                checks.add(new Check("forgot:ip:" + ip, properties.getForgotPasswordPerIp()));
+                checks.add(new Check("forgot:email:" + email, properties.getForgotPassword()));
+            }
             case REGISTER_PATH -> checks.add(new Check("register:ip:" + ip, properties.getRegister()));
+            case RESET_PASSWORD_PATH -> checks.add(new Check("reset:ip:" + ip, properties.getResetPasswordPerIp()));
             case REFRESH_PATH -> checks.add(new Check("refresh:ip:" + ip, properties.getRefresh()));
             default -> {
                 // недостижимо: shouldNotFilter отсеял всё, кроме путей выше

@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.user;
 
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.user.dto.ChangePasswordRequest;
 import com.pmtracker.project_management_backend.user.dto.UpdateProfileRequest;
 import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
@@ -44,6 +45,16 @@ public class UserController {
     public ResponseEntity<UserSummary> updateMe(@AuthenticationPrincipal User currentUser,
                                                  @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userService.updateProfile(currentUser, request));
+    }
+
+    // 204, а не обновлённый профиль: менять в UserSummary нечего, а вот отдавать наружу
+    // что-либо связанное с паролем не хочется вовсе. Все refresh-токены после смены отозваны,
+    // поэтому клиенту остаётся только разлогиниться и войти заново.
+    @PostMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal User currentUser,
+                                               @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(currentUser, request);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

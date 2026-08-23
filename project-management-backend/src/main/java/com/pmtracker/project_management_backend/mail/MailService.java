@@ -5,4 +5,6 @@ import java.util.UUID;
 public interface MailService {
 
     void sendVerificationEmail(String toEmail, UUID token);
+
+    void sendPasswordResetEmail(String toEmail, String token);
 }

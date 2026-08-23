@@ -10,7 +10,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Отправка письма с подтверждением: после коммита транзакции и в отдельном потоке.
+ * Отправка исходящих писем: после коммита транзакции и в отдельном потоке.
  * <p>
  * Раньше {@code AuthService.register} звал {@code mailSender.send()} прямо внутри
  * {@code @Transactional}-метода, и это давало сразу две неприятности. Тормозящий SMTP держал
@@ -18,14 +18,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * это способ выесть пул целиком), а лежащий SMTP откатывал регистрацию целиком: пользователь
  * получал 500, хотя аккаунт был совершенно валиден и уже почти создан.
  * <p>
- * Теперь порядок обратный: транзакция коммитится, пользователь получает 201, и только потом
+ * Теперь порядок обратный: транзакция коммитится, пользователь получает ответ, и только потом
  * фоновый поток идёт в SMTP. Письмо стало вещью, которая может не дойти, — поэтому здесь есть
- * ретраи, а у пользователя остаётся {@code /auth/resend-verification}.
+ * ретраи, а у пользователя остаются {@code /auth/resend-verification} и повторный запрос сброса.
  */
 @Component
-public class VerificationMailDispatcher {
+public class MailDispatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(VerificationMailDispatcher.class);
+    private static final Logger log = LoggerFactory.getLogger(MailDispatcher.class);
 
     /** Попыток всего, включая первую. */
     private static final int MAX_ATTEMPTS = 3;
@@ -35,7 +35,7 @@ public class VerificationMailDispatcher {
 
     private final MailService mailService;
 
-    public VerificationMailDispatcher(MailService mailService) {
+    public MailDispatcher(MailService mailService) {
         this.mailService = mailService;
     }
 
@@ -50,22 +50,36 @@ public class VerificationMailDispatcher {
     @Async(AsyncConfig.MAIL_EXECUTOR)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onVerificationEmailRequested(VerificationEmailRequestedEvent event) {
+        sendWithRetries("verification", () -> mailService.sendVerificationEmail(event.email(), event.token()));
+    }
+
+    @Async(AsyncConfig.MAIL_EXECUTOR)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onPasswordResetEmailRequested(PasswordResetEmailRequestedEvent event) {
+        sendWithRetries("password reset", () -> mailService.sendPasswordResetEmail(event.email(), event.token()));
+    }
+
+    /**
+     * @param kind короткое название письма для логов — ни адреса, ни токена в лог не попадает:
+     *             первое засоряло бы логи почтой пользователей, второе равносильно выдаче
+     *             рабочей ссылки сброса всякому, кто дотянулся до логов.
+     */
+    private void sendWithRetries(String kind, Runnable send) {
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
-                mailService.sendVerificationEmail(event.email(), event.token());
+                send.run();
                 if (attempt > 1) {
-                    log.info("Verification email sent on attempt {}", attempt);
+                    log.info("Sent {} email on attempt {}", kind, attempt);
                 }
                 return;
             } catch (MailException e) {
-                // Адрес в лог не пишем: логи почтой пользователей не засоряем.
                 if (attempt == MAX_ATTEMPTS) {
-                    log.error("Failed to send verification email after {} attempts, giving up "
-                            + "(the user can request a new one via /auth/resend-verification)", attempt, e);
+                    log.error("Failed to send {} email after {} attempts, giving up "
+                            + "(the user can request a new one)", kind, attempt, e);
                     return;
                 }
-                log.warn("Failed to send verification email (attempt {} of {}), retrying in {} ms",
-                        attempt, MAX_ATTEMPTS, RETRY_DELAYS_MS[attempt - 1], e);
+                log.warn("Failed to send {} email (attempt {} of {}), retrying in {} ms",
+                        kind, attempt, MAX_ATTEMPTS, RETRY_DELAYS_MS[attempt - 1], e);
                 if (!sleep(RETRY_DELAYS_MS[attempt - 1])) {
                     return;
                 }

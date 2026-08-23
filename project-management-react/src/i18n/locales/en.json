@@ -41,7 +41,8 @@
       "register": "Sign up",
       "resendVerification": "Resend the email",
       "resendVerificationPending": "Sending...",
-      "resendVerificationSuccess": "Email sent again, please check your inbox."
+      "resendVerificationSuccess": "Email sent again, please check your inbox.",
+      "forgotPassword": "Forgot your password?"
     },
     "register": {
       "title": "Sign up",
@@ -68,7 +69,30 @@
     "validation": {
       "required": "This field is required",
       "invalidEmail": "Enter a valid email address",
-      "passwordMin": "Password must be at least 8 characters"
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordsDoNotMatch": "Passwords do not match"
+    },
+    "forgotPassword": {
+      "title": "Password recovery",
+      "hint": "Enter the email your account is registered with. We will send you a link to set a new password.",
+      "email": "Email",
+      "submit": "Send link",
+      "submitting": "Sending...",
+      "successTitle": "Check your email",
+      "successMessage": "If an account with this address exists, we have sent it a link to change the password. The link is valid for 1 hour.",
+      "backToLogin": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "newPassword": "New password",
+      "confirmPassword": "Repeat password",
+      "submit": "Change password",
+      "submitting": "Changing...",
+      "successTitle": "Password changed",
+      "successMessage": "Your password has been changed. All other sessions have been ended — sign in with the new password.",
+      "goToLogin": "Go to sign in",
+      "missingToken": "The link has no token. Please request a password change again.",
+      "requestNewLink": "Request a new link"
     }
   },
   "projects": {
@@ -379,7 +403,17 @@
     "save": "Save",
     "saving": "Saving...",
     "saved": "Changes saved",
-    "unsavedChangesConfirm": "You have unsaved changes. Leave this page?"
+    "unsavedChangesConfirm": "You have unsaved changes. Leave this page?",
+    "password": {
+      "title": "Change password",
+      "hint": "After the change all sessions, including the current one, will be ended — you will need to sign in again.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Repeat new password",
+      "submit": "Change password",
+      "submitting": "Changing...",
+      "changedSignInAgain": "Password changed. Sign in again with the new password."
+    }
   },
   "errors": {
     "EMAIL_ALREADY_EXISTS": "An account with this email already exists",
@@ -422,6 +456,7 @@
     "TOO_MANY_REQUESTS_RETRY_one": "Too many attempts. Please try again in {{count}} minute.",
     "TOO_MANY_REQUESTS_RETRY_other": "Too many attempts. Please try again in {{count}} minutes.",
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
-    "UNKNOWN": "Something went wrong, please try again"
+    "UNKNOWN": "Something went wrong, please try again",
+    "INVALID_CURRENT_PASSWORD": "The current password is incorrect"
   }
 }

@@ -47,6 +47,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("INVALID_CREDENTIALS", ex.getMessage()));
     }
 
+    // 400, а не 401: на 401 фронтенд идёт обновлять сессию и, не сумев, разлогинивает —
+    // то есть опечатка в текущем пароле выкидывала бы человека из аккаунта (см. client.js).
+    @ExceptionHandler(InvalidCurrentPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCurrentPassword(InvalidCurrentPasswordException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("INVALID_CURRENT_PASSWORD", ex.getMessage()));
+    }
+
     @ExceptionHandler(EmailNotVerifiedException.class)
     public ResponseEntity<ErrorResponse> handleEmailNotVerified(EmailNotVerifiedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

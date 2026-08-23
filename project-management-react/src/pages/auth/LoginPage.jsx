@@ -91,6 +91,12 @@ export function LoginPage() {
       </form>
 
       <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        <Link to="/forgot-password" className="text-purple-600 hover:underline dark:text-purple-400">
+          {t('auth.login.forgotPassword')}
+        </Link>
+      </p>
+
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         {t('auth.login.noAccount')}{' '}
         <Link to="/register" className="text-purple-600 hover:underline dark:text-purple-400">
           {t('auth.login.register')}

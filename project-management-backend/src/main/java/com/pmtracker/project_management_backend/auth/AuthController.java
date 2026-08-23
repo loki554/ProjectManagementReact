@@ -1,11 +1,13 @@
 package com.pmtracker.project_management_backend.auth;
 
 import com.pmtracker.project_management_backend.auth.dto.AuthResponse;
+import com.pmtracker.project_management_backend.auth.dto.ForgotPasswordRequest;
 import com.pmtracker.project_management_backend.auth.dto.LoginRequest;
 import com.pmtracker.project_management_backend.auth.dto.MessageResponse;
 import com.pmtracker.project_management_backend.auth.dto.RefreshRequest;
 import com.pmtracker.project_management_backend.auth.dto.RegisterRequest;
 import com.pmtracker.project_management_backend.auth.dto.ResendVerificationRequest;
+import com.pmtracker.project_management_backend.auth.dto.ResetPasswordRequest;
 import com.pmtracker.project_management_backend.auth.dto.VerifyEmailRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -43,6 +45,22 @@ public class AuthController {
         authService.resendVerification(request.email());
         return ResponseEntity.ok(new MessageResponse(
                 "If an account with this email exists and is not yet verified, the email has been resent."));
+    }
+
+    // Ответ намеренно одинаков и для существующего, и для незнакомого адреса — иначе этот
+    // эндпоинт становится удобной проверялкой «есть ли у вас аккаунт вот этого человека».
+    // Тот же приём, что у /resend-verification.
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.email());
+        return ResponseEntity.ok(new MessageResponse(
+                "If an account with this email exists, a password reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(new MessageResponse("Password has been changed. You can now sign in."));
     }
 
     @PostMapping("/login")

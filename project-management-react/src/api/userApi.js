@@ -15,3 +15,9 @@ export function uploadAvatar(file) {
   // с правильным boundary при виде FormData; вручную легко сломать парсинг на бэке.
   return apiClient.post('/users/me/avatar', formData).then((res) => res.data)
 }
+
+// 204 без тела: смена пароля гасит все refresh-токены, включая токен текущей сессии,
+// поэтому единственное осмысленное продолжение на клиенте — разлогиниться (см. ProfilePage).
+export function changePassword(currentPassword, newPassword) {
+  return apiClient.post('/users/me/password', { currentPassword, newPassword }).then((res) => res.data)
+}

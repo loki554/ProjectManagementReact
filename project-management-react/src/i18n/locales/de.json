@@ -41,7 +41,8 @@
       "register": "Registrieren",
       "resendVerification": "E-Mail erneut senden",
       "resendVerificationPending": "Wird gesendet...",
-      "resendVerificationSuccess": "E-Mail wurde erneut gesendet, bitte prüfen Sie Ihr Postfach."
+      "resendVerificationSuccess": "E-Mail wurde erneut gesendet, bitte prüfen Sie Ihr Postfach.",
+      "forgotPassword": "Passwort vergessen?"
     },
     "register": {
       "title": "Registrieren",
@@ -68,7 +69,30 @@
     "validation": {
       "required": "Dieses Feld ist erforderlich",
       "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein",
-      "passwordMin": "Das Passwort muss mindestens 8 Zeichen lang sein"
+      "passwordMin": "Das Passwort muss mindestens 8 Zeichen lang sein",
+      "passwordsDoNotMatch": "Passwörter stimmen nicht überein"
+    },
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "hint": "Geben Sie die E-Mail-Adresse Ihres Kontos an. Wir senden Ihnen einen Link zum Festlegen eines neuen Passworts.",
+      "email": "E-Mail",
+      "submit": "Link senden",
+      "submitting": "Wird gesendet...",
+      "successTitle": "Prüfen Sie Ihre E-Mails",
+      "successMessage": "Falls ein Konto mit dieser Adresse existiert, haben wir einen Link zum Ändern des Passworts gesendet. Der Link ist 1 Stunde gültig.",
+      "backToLogin": "Zurück zur Anmeldung"
+    },
+    "resetPassword": {
+      "title": "Neues Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort wiederholen",
+      "submit": "Passwort ändern",
+      "submitting": "Wird geändert...",
+      "successTitle": "Passwort geändert",
+      "successMessage": "Ihr Passwort wurde geändert. Alle anderen Sitzungen wurden beendet — melden Sie sich mit dem neuen Passwort an.",
+      "goToLogin": "Zur Anmeldung",
+      "missingToken": "Der Link enthält kein Token. Bitte fordern Sie die Passwortänderung erneut an.",
+      "requestNewLink": "Neuen Link anfordern"
     }
   },
   "projects": {
@@ -379,7 +403,17 @@
     "save": "Speichern",
     "saving": "Wird gespeichert...",
     "saved": "Änderungen gespeichert",
-    "unsavedChangesConfirm": "Sie haben ungespeicherte Änderungen. Seite verlassen?"
+    "unsavedChangesConfirm": "Sie haben ungespeicherte Änderungen. Seite verlassen?",
+    "password": {
+      "title": "Passwort ändern",
+      "hint": "Nach der Änderung werden alle Sitzungen einschließlich der aktuellen beendet — Sie müssen sich erneut anmelden.",
+      "current": "Aktuelles Passwort",
+      "new": "Neues Passwort",
+      "confirm": "Neues Passwort wiederholen",
+      "submit": "Passwort ändern",
+      "submitting": "Wird geändert...",
+      "changedSignInAgain": "Passwort geändert. Bitte melden Sie sich mit dem neuen Passwort an."
+    }
   },
   "errors": {
     "EMAIL_ALREADY_EXISTS": "Ein Konto mit dieser E-Mail-Adresse existiert bereits",
@@ -422,6 +456,7 @@
     "TOO_MANY_REQUESTS_RETRY_one": "Zu viele Versuche. Bitte versuchen Sie es in {{count}} Minute erneut.",
     "TOO_MANY_REQUESTS_RETRY_other": "Zu viele Versuche. Bitte versuchen Sie es in {{count}} Minuten erneut.",
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
-    "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut"
+    "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut",
+    "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch"
   }
 }
