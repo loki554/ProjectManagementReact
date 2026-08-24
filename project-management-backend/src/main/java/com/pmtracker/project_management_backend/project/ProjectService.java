@@ -11,6 +11,9 @@ import com.pmtracker.project_management_backend.project.dto.CreateProjectRequest
 import com.pmtracker.project_management_backend.project.dto.ProjectResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateProjectRequest;
 import com.pmtracker.project_management_backend.storage.FileStorageService;
+import com.pmtracker.project_management_backend.storage.FileTypeValidator;
+import com.pmtracker.project_management_backend.storage.ImageSanitizer;
+import com.pmtracker.project_management_backend.storage.SanitizedImage;
 import com.pmtracker.project_management_backend.storage.StoredFile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -38,21 +41,31 @@ public class ProjectService {
     // пользователя (UserService.MAX_AVATAR_SIZE_BYTES), сопоставимый по смыслу артефакт.
     private static final long MAX_PREVIEW_IMAGE_SIZE_BYTES = 5L * 1024 * 1024;
 
+    // Превью показывается карточкой, а не в полный экран, но крупнее аватарки — отсюда 1024
+    // против 512 у UserService. Всё, что больше, ужимается при перекодировании (ImageSanitizer).
+    private static final int MAX_PREVIEW_IMAGE_DIMENSION = 1024;
+
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectAccessService projectAccessService;
     private final FileStorageService fileStorageService;
+    private final FileTypeValidator fileTypeValidator;
+    private final ImageSanitizer imageSanitizer;
     private final ActivityService activityService;
 
     public ProjectService(ProjectRepository projectRepository,
                            ProjectMemberRepository projectMemberRepository,
                            ProjectAccessService projectAccessService,
                            FileStorageService fileStorageService,
+                           FileTypeValidator fileTypeValidator,
+                           ImageSanitizer imageSanitizer,
                            ActivityService activityService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.projectAccessService = projectAccessService;
         this.fileStorageService = fileStorageService;
+        this.fileTypeValidator = fileTypeValidator;
+        this.imageSanitizer = imageSanitizer;
         this.activityService = activityService;
     }
 
@@ -175,12 +188,17 @@ public class ProjectService {
         if (!ALLOWED_PREVIEW_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
             throw new InvalidFileException("Allowed image formats: PNG, JPEG, WEBP, GIF");
         }
+        fileTypeValidator.requireContentMatchesDeclaredType(file);
+
+        // Как и у аватарки (UserService.uploadAvatar) — на диск ложатся перекодированные пиксели,
+        // а не присланные байты, см. 1.12 IMPROVEMENTS.md.
+        SanitizedImage image = imageSanitizer.sanitize(file, MAX_PREVIEW_IMAGE_DIMENSION);
 
         String previousPreviewImagePath = project.getPreviewImagePath();
 
         StoredFile stored;
         try {
-            stored = fileStorageService.store(file, "projects/" + projectId);
+            stored = fileStorageService.store(image.content(), image.extension(), "projects/" + projectId);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to save preview image file", e);
         }

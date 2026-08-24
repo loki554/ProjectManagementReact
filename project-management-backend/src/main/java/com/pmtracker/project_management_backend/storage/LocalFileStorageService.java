@@ -40,8 +40,20 @@ public class LocalFileStorageService implements FileStorageService {
             Files.copy(in, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        String relativePath = basePath.relativize(targetFile).toString().replace('\\', '/');
-        return new StoredFile(relativePath, Files.size(targetFile));
+        return new StoredFile(toRelativePath(targetFile), Files.size(targetFile));
+    }
+
+    @Override
+    public StoredFile store(byte[] content, String extension, String subdirectory) throws IOException {
+        Path targetDir = resolveWithinBase(subdirectory);
+        Files.createDirectories(targetDir);
+
+        // extension приходит из кода (ImageSanitizer), а не от клиента, но прогоняем через ту же
+        // проверку: единственный способ гарантировать, что в имени не окажется ничего лишнего.
+        Path targetFile = targetDir.resolve(UUID.randomUUID() + sanitizeExtension(extension));
+        Files.write(targetFile, content);
+
+        return new StoredFile(toRelativePath(targetFile), Files.size(targetFile));
     }
 
     @Override
@@ -71,6 +83,10 @@ public class LocalFileStorageService implements FileStorageService {
         return resolved;
     }
 
+    private String toRelativePath(Path targetFile) {
+        return basePath.relativize(targetFile).toString().replace('\\', '/');
+    }
+
     private String extractSafeExtension(String originalFilename) {
         if (originalFilename == null) {
             return "";
@@ -79,7 +95,11 @@ public class LocalFileStorageService implements FileStorageService {
         if (dotIndex < 0) {
             return "";
         }
-        String extension = originalFilename.substring(dotIndex).toLowerCase();
-        return extension.matches("\\.[a-z0-9]{1,5}") ? extension : "";
+        return sanitizeExtension(originalFilename.substring(dotIndex));
+    }
+
+    private String sanitizeExtension(String extension) {
+        String normalized = extension.toLowerCase();
+        return normalized.matches("\\.[a-z0-9]{1,5}") ? normalized : "";
     }
 }

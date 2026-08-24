@@ -12,6 +12,7 @@ import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectRole;
 import com.pmtracker.project_management_backend.storage.FileStorageService;
+import com.pmtracker.project_management_backend.storage.FileTypeValidator;
 import com.pmtracker.project_management_backend.storage.StoredFile;
 import com.pmtracker.project_management_backend.task.Task;
 import com.pmtracker.project_management_backend.task.TaskRepository;
@@ -51,17 +52,20 @@ public class AttachmentService {
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final FileStorageService fileStorageService;
+    private final FileTypeValidator fileTypeValidator;
     private final ActivityService activityService;
 
     public AttachmentService(AttachmentRepository attachmentRepository,
                               TaskRepository taskRepository,
                               ProjectAccessService projectAccessService,
                               FileStorageService fileStorageService,
+                              FileTypeValidator fileTypeValidator,
                               ActivityService activityService) {
         this.attachmentRepository = attachmentRepository;
         this.taskRepository = taskRepository;
         this.projectAccessService = projectAccessService;
         this.fileStorageService = fileStorageService;
+        this.fileTypeValidator = fileTypeValidator;
         this.activityService = activityService;
     }
 
@@ -80,6 +84,10 @@ public class AttachmentService {
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
             throw new InvalidFileException("Unsupported file type: " + file.getContentType());
         }
+        // Заявленный тип совпал с whitelist — теперь проверяем, что и содержимое ему отвечает:
+        // сам по себе Content-Type пишет клиент, и HTML со скриптом под видом image/png проходил
+        // проверку выше без единой помехи (см. 1.12 IMPROVEMENTS.md).
+        fileTypeValidator.requireContentMatchesDeclaredType(file);
 
         StoredFile stored;
         try {

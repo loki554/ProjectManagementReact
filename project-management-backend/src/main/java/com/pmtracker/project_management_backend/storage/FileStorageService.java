@@ -20,6 +20,15 @@ public interface FileStorageService {
     StoredFile store(MultipartFile file, String subdirectory) throws IOException;
 
     /**
+     * Сохранение уже готовых байт — для случаев, когда на диск ложится не то, что прислал клиент:
+     * картинки проходят через {@link ImageSanitizer} и приезжают сюда перекодированными.
+     *
+     * @param extension    расширение с точкой (".png"), задаётся вызывающим кодом, а не клиентом
+     * @param subdirectory логическая папка внутри хранилища, например "avatars/{userId}"
+     */
+    StoredFile store(byte[] content, String extension, String subdirectory) throws IOException;
+
+    /**
      * @param relativePath путь, ранее полученный из {@link StoredFile#relativePath()}
      */
     Resource load(String relativePath);

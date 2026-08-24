@@ -4,6 +4,7 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.project.dto.CreateProjectRequest;
 import com.pmtracker.project_management_backend.project.dto.ProjectResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateProjectRequest;
+import com.pmtracker.project_management_backend.storage.StoredImageMediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,9 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
@@ -97,16 +95,7 @@ public class ProjectController {
     @Operation(summary = "Скачать превью-картинку проекта", description = "Доступно любому участнику проекта, включая VIEWER")
     public ResponseEntity<Resource> getPreviewImage(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         Resource resource = projectService.getPreviewImageResource(currentUser, id);
-        MediaType contentType = resolveContentType(resource);
+        MediaType contentType = StoredImageMediaType.of(resource);
         return ResponseEntity.ok().contentType(contentType).body(resource);
-    }
-
-    private MediaType resolveContentType(Resource resource) {
-        try {
-            String probed = Files.probeContentType(resource.getFile().toPath());
-            return probed != null ? MediaType.parseMediaType(probed) : MediaType.APPLICATION_OCTET_STREAM;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

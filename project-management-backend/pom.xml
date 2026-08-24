@@ -89,6 +89,22 @@
 			<artifactId>bucket4j_jdk17-core</artifactId>
 			<version>8.14.0</version>
 		</dependency>
+		<!-- Apache Tika: определение реального типа файла по magic bytes (см. 1.12 IMPROVEMENTS.md).
+		     Только tika-core — детекторы по сигнатурам и tika-mimetypes.xml лежат в нём, парсеры
+		     (tika-parsers-*, десятки мегабайт транзитивных зависимостей) нам не нужны: содержимое
+		     файлов мы не разбираем, только опознаём контейнер. -->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>3.2.3</version>
+		</dependency>
+		<!-- ImageIO-плагин с ридером WEBP: стандартный JDK его не умеет, а перекодирование
+		     аватарок (1.12) должно работать для всех форматов, которые мы принимаем. -->
+		<dependency>
+			<groupId>com.twelvemonkeys.imageio</groupId>
+			<artifactId>imageio-webp</artifactId>
+			<version>3.12.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -180,6 +196,24 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<jvmArguments>-DDB_PASSWORD=${DB_PASSWORD}</jvmArguments>
+				</configuration>
+			</plugin>
+			<!-- То же самое для тестов, и по той же причине: surefire форкает отдельную JVM,
+			     а свойство из .env живёт только в JVM самого Maven. Без этого блока любой
+			     ./mvnw test падал на "password authentication failed for user pmtracker" —
+			     то есть выглядел как сломанное приложение, хотя тестам просто не доехал пароль.
+
+			     В отличие от spring-boot:run, здесь НЕ нужно вызывать initialize вручную:
+			     фаза test идёт по обычному жизненному циклу, initialize в нём уже был, и
+			     properties-maven-plugin успевает подставить ${DB_PASSWORD} до старта surefire.
+			     Достаточно ./mvnw test. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<DB_PASSWORD>${DB_PASSWORD}</DB_PASSWORD>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 		</plugins>

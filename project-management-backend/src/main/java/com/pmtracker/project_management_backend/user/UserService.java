@@ -8,6 +8,9 @@ import com.pmtracker.project_management_backend.common.exception.InvalidCurrentP
 import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
 import com.pmtracker.project_management_backend.storage.FileStorageService;
+import com.pmtracker.project_management_backend.storage.FileTypeValidator;
+import com.pmtracker.project_management_backend.storage.ImageSanitizer;
+import com.pmtracker.project_management_backend.storage.SanitizedImage;
 import com.pmtracker.project_management_backend.storage.StoredFile;
 import com.pmtracker.project_management_backend.user.dto.ChangePasswordRequest;
 import com.pmtracker.project_management_backend.user.dto.UpdateProfileRequest;
@@ -38,19 +41,30 @@ public class UserService {
     // до того же лимита, хотя ей для картинки профиля хватает 5MB.
     private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
 
+    // Аватарка показывается размером в несколько десятков пикселей; 512 — запас под retina и
+    // будущие крупные карточки. Всё, что больше, ужимается при перекодировании (ImageSanitizer):
+    // хранить на диске 4000x3000 ради кружка в шапке незачем.
+    private static final int MAX_AVATAR_DIMENSION = 512;
+
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
+    private final FileTypeValidator fileTypeValidator;
+    private final ImageSanitizer imageSanitizer;
 
     public UserService(UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository,
                        PasswordEncoder passwordEncoder,
-                       FileStorageService fileStorageService) {
+                       FileStorageService fileStorageService,
+                       FileTypeValidator fileTypeValidator,
+                       ImageSanitizer imageSanitizer) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.fileStorageService = fileStorageService;
+        this.fileTypeValidator = fileTypeValidator;
+        this.imageSanitizer = imageSanitizer;
     }
 
     /**
@@ -96,12 +110,18 @@ public class UserService {
         if (!ALLOWED_AVATAR_CONTENT_TYPES.contains(file.getContentType())) {
             throw new InvalidFileException("Allowed image formats: PNG, JPEG, WEBP, GIF");
         }
+        fileTypeValidator.requireContentMatchesDeclaredType(file);
+
+        // На диск ложится не то, что прислал клиент, а результат перекодирования: исходные байты
+        // (вместе с возможным полиглотным хвостом и EXIF-геолокацией) до хранилища не доезжают
+        // вообще. См. 1.12 IMPROVEMENTS.md.
+        SanitizedImage image = imageSanitizer.sanitize(file, MAX_AVATAR_DIMENSION);
 
         String previousAvatarPath = user.getAvatarPath();
 
         StoredFile stored;
         try {
-            stored = fileStorageService.store(file, "avatars/" + user.getId());
+            stored = fileStorageService.store(image.content(), image.extension(), "avatars/" + user.getId());
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to save avatar file", e);
         }
