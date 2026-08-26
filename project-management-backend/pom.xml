@@ -152,6 +152,48 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Testcontainers: интеграционные тесты идут в настоящую Postgres той же версии, что
+		     и dev/прод (postgres:16), а не в H2. Разница не косметическая: схемой владеет
+		     Flyway, миграции написаны под Postgres (gen_random_uuid, TIMESTAMPTZ, partial
+		     indexes), и на H2 их пришлось бы либо переписывать, либо подменять ddl-auto —
+		     то есть тестировать не ту схему, которая поедет в прод. Заодно каждый прогон
+		     тестов прогоняет миграции с нуля, так что это ещё и тест самих миграций.
+		     Версии приходят из testcontainers-bom, который импортирует spring-boot-dependencies. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- GreenMail: SMTP-сервер в процессе теста. Именно сервер, а не мок MailService:
+		     письмо со ссылкой подтверждения — часть контракта регистрации, и проверять
+		     хочется то, что реально ушло в SMTP (адрес, тема, работающая ссылка с токеном),
+		     а не то, что позвали метод. MailHog из docker-compose для этого не годится:
+		     он общий на всю машину, письма в нём копятся между прогонами, и тест начинает
+		     зависеть от того, чистил ли кто-то ящик руками.
+		     junit:junit исключён: GreenMail тащит JUnit 4 в compile-scope ради пары
+		     хелперов, а в проекте JUnit 5 — две версии на classpath только путают. -->
+		<dependency>
+			<groupId>com.icegreen</groupId>
+			<artifactId>greenmail</artifactId>
+			<version>2.1.13</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -198,24 +240,13 @@
 					<jvmArguments>-DDB_PASSWORD=${DB_PASSWORD}</jvmArguments>
 				</configuration>
 			</plugin>
-			<!-- То же самое для тестов, и по той же причине: surefire форкает отдельную JVM,
-			     а свойство из .env живёт только в JVM самого Maven. Без этого блока любой
-			     ./mvnw test падал на "password authentication failed for user pmtracker" —
-			     то есть выглядел как сломанное приложение, хотя тестам просто не доехал пароль.
-
-			     В отличие от spring-boot:run, здесь НЕ нужно вызывать initialize вручную:
-			     фаза test идёт по обычному жизненному циклу, initialize в нём уже был, и
-			     properties-maven-plugin успевает подставить ${DB_PASSWORD} до старта surefire.
-			     Достаточно ./mvnw test. -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<systemPropertyVariables>
-						<DB_PASSWORD>${DB_PASSWORD}</DB_PASSWORD>
-					</systemPropertyVariables>
-				</configuration>
-			</plugin>
+			<!-- Тестам DB_PASSWORD из .env больше не нужен, и прокидывать его в surefire
+			     тоже: интеграционные тесты идут в собственную Postgres из Testcontainers
+			     (профиль test, см. src/test/resources/application-test.yml), а к локальной
+			     базе из docker-compose не обращается никто. Раньше здесь стоял блок с
+			     systemPropertyVariables, без которого ./mvnw test падал на
+			     "password authentication failed for user pmtracker" — теперь для тестов
+			     достаточно запущенного Docker. -->
 		</plugins>
 	</build>
 

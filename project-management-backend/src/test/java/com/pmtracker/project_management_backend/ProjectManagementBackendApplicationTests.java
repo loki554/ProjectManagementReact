@@ -1,16 +1,13 @@
 package com.pmtracker.project_management_backend;
 
+import com.pmtracker.project_management_backend.support.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
-// Профиль нужен явно: в application.properties spring.profiles.active больше нет (иначе он
-// уехал бы в jar и стал бы профилем прода), а Maven-свойство spring-boot.run.profiles
-// действует только на spring-boot:run. Без этой аннотации контекст в тестах поднимался бы
-// вообще без датасорса, почты и JWT-секрета и падал бы на старте.
-@ActiveProfiles("dev")
-@SpringBootTest
-class ProjectManagementBackendApplicationTests {
+// Профиль, датасорс и SMTP приходят из IntegrationTest: контекст поднимается на профиле test
+// поверх Postgres в Testcontainers. Раньше здесь стоял @ActiveProfiles("dev"), и тест требовал
+// поднятого docker-compose и .env с DB_PASSWORD — то есть ./mvnw test на чистой машине падал
+// с "password authentication failed" и выглядел как сломанное приложение.
+class ProjectManagementBackendApplicationTests extends IntegrationTest {
 
 	@Test
 	void contextLoads() {

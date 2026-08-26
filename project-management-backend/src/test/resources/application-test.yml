@@ -1,0 +1,45 @@
+# Профиль интеграционных тестов. Отдельный, а не dev: тесты не должны зависеть от того,
+# поднят ли на машине docker-compose и лежит ли рядом .env с DB_PASSWORD, — раньше
+# ./mvnw test падал на "password authentication failed", то есть выглядел как сломанное
+# приложение, хотя тестам просто не доехал пароль от локальной базы.
+#
+# Двух свойств здесь намеренно нет:
+#   spring.datasource.*  — подставляет @ServiceConnection над PostgreSQLContainer,
+#   spring.mail.host/port — @DynamicPropertySource с портом GreenMail.
+# Оба адреса известны только в рантайме, и прописать их в файл нечем (см. IntegrationTest).
+
+spring:
+  jpa:
+    hibernate:
+      # Схемой владеет Flyway — ровно как в dev и проде. Ради тестов это не только
+      # правильно, но и полезно: каждый прогон накатывает миграции на пустую базу,
+      # то есть заодно проверяет их (см. комментарий к testcontainers в pom.xml).
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  mail:
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+app:
+  storage:
+    # Никакой тест сюда пока не пишет, но LocalFileStorageService требует свойство на старте.
+    base-path: ${java.io.tmpdir}/pmtracker-integration-test-storage
+  frontend:
+    # Уезжает в ссылки писем (SmtpMailService) и в CORS (SecurityConfig). Тесты разбирают
+    # ссылку из письма, поэтому значение должно быть предсказуемым, а не пустым.
+    base-url: http://localhost:5173
+  rate-limit:
+    # Выключен сознательно. Тесты бьют по /login и /register десятки раз с одного адреса
+    # и с одним и тем же email, то есть при включённом лимитере ловили бы 429 в зависимости
+    # от порядка выполнения — самая неприятная разновидность плавающего теста. Сам лимитер
+    # проверяется отдельно (это про частоту запросов, а не про auth-флоу).
+    enabled: false
+  jwt:
+    # Свой секрет, не dev-дефолт: JwtService специально роняет контекст, если вне профиля dev
+    # используется секрет из репозитория (см. его validateSecret).
+    secret: integration-test-only-secret-do-not-use-anywhere-else-32b+
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 14
