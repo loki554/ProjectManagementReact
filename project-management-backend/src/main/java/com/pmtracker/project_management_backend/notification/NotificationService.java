@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -58,8 +58,13 @@ public class NotificationService {
 
         // Постановщик и исполнитель уведомляются оба, но: не сам автор комментария,
         // и не дважды одному человеку, если он и постановщик, и исполнитель одновременно.
+        //
+        // Arrays.asList, а не List.of: исполнителя у задачи может не быть, а List.of падает
+        // NPE на null-элементе — то есть любой комментарий к неназначенной задаче (а это
+        // состояние по умолчанию для только что созданной) возвращал 500 вместо 201. Проверка
+        // recipient == null ниже как раз и написана в расчёте на отсутствующего исполнителя.
         Set<UUID> notifiedUserIds = new HashSet<>();
-        for (User recipient : List.of(task.getCreatedBy(), task.getAssignee())) {
+        for (User recipient : Arrays.asList(task.getCreatedBy(), task.getAssignee())) {
             if (recipient == null || recipient.getId().equals(actor.getId()) || !notifiedUserIds.add(recipient.getId())) {
                 continue;
             }
