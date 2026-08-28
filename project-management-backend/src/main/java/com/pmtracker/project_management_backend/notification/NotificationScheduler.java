@@ -27,8 +27,13 @@ public class NotificationScheduler {
     private static final Logger log = LoggerFactory.getLogger(NotificationScheduler.class);
     private static final List<TaskStatus> INACTIVE_STATUSES = List.of(TaskStatus.DONE, TaskStatus.REJECTED);
     private static final Duration DUE_SOON_WINDOW = Duration.ofDays(3);
-    private static final long FIXED_RATE_MS = 15 * 60 * 1000;
-    private static final long INITIAL_DELAY_MS = 60 * 1000;
+    // Период и стартовая задержка сканирования вынесены в свойства с прежними значениями
+    // по умолчанию (15 минут / 1 минута) — в конфигурации их никто не переопределяет, кроме
+    // профиля test. Тестам нужен не другой период, а предсказуемость: они дёргают
+    // checkDueDates() руками и проверяют, что именно он создал, а фоновый тик посреди
+    // прогона добавлял бы уведомления, которых тест не просил (см. application-test.yml).
+    private static final String FIXED_RATE_MS = "${app.notifications.due-scan.interval-ms:900000}";
+    private static final String INITIAL_DELAY_MS = "${app.notifications.due-scan.initial-delay-ms:60000}";
 
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
@@ -38,7 +43,7 @@ public class NotificationScheduler {
         this.notificationService = notificationService;
     }
 
-    @Scheduled(fixedRate = FIXED_RATE_MS, initialDelay = INITIAL_DELAY_MS)
+    @Scheduled(fixedRateString = FIXED_RATE_MS, initialDelayString = INITIAL_DELAY_MS)
     @Transactional
     public void checkDueDates() {
         Instant now = Instant.now();

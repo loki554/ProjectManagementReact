@@ -24,6 +24,14 @@ spring:
       mail.smtp.starttls.enable: false
 
 app:
+  notifications:
+    due-scan:
+      # Сканирование дедлайнов в тестах запускается вручную (NotificationScheduler.checkDueDates),
+      # а не по расписанию: тесты проверяют, что создал конкретный прогон, и фоновый тик посреди
+      # прогона ломал бы ровно эти проверки — он и создавал бы уведомления, которых тест не ждёт,
+      # и восстанавливал бы удалённые (см. clearDueDateAlerts). Сутки — это «не наступит никогда»
+      # в масштабе тест-рана; полностью выключить @Scheduled точечно нечем.
+      initial-delay-ms: 86400000
   storage:
     # Никакой тест сюда пока не пишет, но LocalFileStorageService требует свойство на старте.
     base-path: ${java.io.tmpdir}/pmtracker-integration-test-storage

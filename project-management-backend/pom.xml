@@ -240,6 +240,97 @@
 					<jvmArguments>-DDB_PASSWORD=${DB_PASSWORD}</jvmArguments>
 				</configuration>
 			</plugin>
+			<!-- JaCoCo: порог покрытия сервисного слоя (см. 2.7 IMPROVEMENTS.md). Смысл не в
+			     цифре как таковой, а в храповике: тесты 2.1-2.6 подняли сервисы до ~85% по
+			     строкам, и порог не даёт этому тихо съехать вниз, когда в сервис доедет новая
+			     ветка без теста. Проверяются именно сервисы (**/*Service.class), а не весь
+			     модуль: сущности, DTO и контроллеры — это геттеры и делегирование, их процент
+			     говорит о размере кодовой базы, а не о её проверенности, и разбавил бы
+			     единственное число, на которое стоит смотреть.
+
+			     Версия зафиксирована: родительский POM Spring Boot 4 JaCoCo не менеджит, и без
+			     <version> Maven берёт последнюю из central — сборка перестаёт быть
+			     воспроизводимой (а заодно молча ломается в offline-режиме).
+
+			     Порог висит на verify, а не на test: ./mvnw test остаётся быстрым и без агента
+			     в argLine, а ворота стоят там, где их проходит CI (./mvnw verify). -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals><goal>prepare-agent</goal></goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals><goal>report</goal></goals>
+					</execution>
+					<execution>
+						<id>check-service-coverage</id>
+						<phase>verify</phase>
+						<goals><goal>check</goal></goals>
+						<configuration>
+							<!-- includes здесь фильтрует не правило, а сами анализируемые классы:
+							     BUNDLE-правило ниже считает по ним и только по ним. -->
+							<includes>
+								<include>**/*Service.class</include>
+							</includes>
+							<rules>
+								<!-- Суммарно по сервисам. На момент установки: 85.3% строк,
+								     62.9% ветвей — пороги ниже фактических значений с запасом,
+								     чтобы падение означало "покрытие ухудшилось", а не
+								     "кто-то добавил метод и не дотянул полпроцента".
+								     Ветви отдельной строкой: без них можно поднять процент
+								     строк, ни разу не зайдя ни в один if. -->
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.55</minimum>
+										</limit>
+									</limits>
+								</rule>
+								<!-- Пол для каждого сервиса по отдельности: суммарный процент
+								     держат крупные и хорошо покрытые классы (TaskService,
+								     AuthService), и на их фоне новый сервис с нулевым покрытием
+								     сдвинет итог на доли процента, то есть пройдёт незамеченным.
+
+								     Два исключения — единственные сервисы, до которых ни один
+								     тест сегодня не доходит, и оба по понятной причине:
+								     RateLimitService в профиле test выключен сознательно
+								     (см. application-test.yml), UserService — это редактирование
+								     профиля и загрузка аватарки, отдельный кусок, тестов на него
+								     ещё нет. Список исключений и есть список долгов: появится
+								     тест — строка отсюда уходит, а не наоборот. -->
+								<rule>
+									<element>CLASS</element>
+									<excludes>
+										<exclude>com.pmtracker.project_management_backend.ratelimit.RateLimitService</exclude>
+										<exclude>com.pmtracker.project_management_backend.user.UserService</exclude>
+									</excludes>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.50</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<!-- Тестам DB_PASSWORD из .env больше не нужен, и прокидывать его в surefire
 			     тоже: интеграционные тесты идут в собственную Postgres из Testcontainers
 			     (профиль test, см. src/test/resources/application-test.yml), а к локальной

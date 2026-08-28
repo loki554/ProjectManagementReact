@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# playwright (см. playwright.config.js)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
