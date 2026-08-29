@@ -13,8 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Service
 public class LocalFileStorageService implements FileStorageService {
@@ -72,6 +75,38 @@ public class LocalFileStorageService implements FileStorageService {
             Files.deleteIfExists(resolveWithinBase(relativePath));
         } catch (IOException e) {
             // best-effort: не удалённый старый файл — не повод ронять основной запрос
+        }
+    }
+
+    /**
+     * Обход всего дерева хранилища. Каталог может не существовать вовсе — на свежей машине
+     * до первой загрузки его никто не создаёт, и это не ошибка, а пустое хранилище.
+     */
+    @Override
+    public List<StoredObject> listAll() {
+        if (!Files.isDirectory(basePath)) {
+            return List.of();
+        }
+        try (Stream<Path> files = Files.walk(basePath)) {
+            return files.filter(Files::isRegularFile)
+                    .map(this::toStoredObject)
+                    .flatMap(Optional::stream)
+                    .toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to list the storage directory", e);
+        }
+    }
+
+    /**
+     * Файл, исчезнувший между обходом каталога и чтением его атрибутов, — это норма, а не
+     * сбой: рядом работает удаление вложений. Пропускаем такой файл вместо того, чтобы
+     * ронять всю сверку.
+     */
+    private Optional<StoredObject> toStoredObject(Path file) {
+        try {
+            return Optional.of(new StoredObject(toRelativePath(file), Files.getLastModifiedTime(file).toInstant()));
+        } catch (IOException e) {
+            return Optional.empty();
         }
     }
 

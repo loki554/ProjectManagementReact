@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,4 +39,12 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     @Modifying
     @Query("delete from Project p where p.id = :id")
     void deleteById(UUID id);
+
+    /**
+     * Пути превью-картинок проектов — для сверки с диском (3.6). Нативный запрос по той же
+     * причине, что и AttachmentRepository.findAllStoredPaths.
+     */
+    @Query(value = "select preview_image_path from projects where preview_image_path is not null",
+            nativeQuery = true)
+    List<String> findAllPreviewImagePaths();
 }

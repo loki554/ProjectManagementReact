@@ -4,6 +4,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Абстракция над файловым хранилищем. Сейчас единственная реализация — локальный диск
@@ -34,4 +35,16 @@ public interface FileStorageService {
     Resource load(String relativePath);
 
     void delete(String relativePath);
+
+    /**
+     * Всё содержимое хранилища — для сверки с базой (3.6, OrphanedFileCleanupJob). Файл, на
+     * который не ссылается ни одна строка, иначе остаётся на диске навсегда: при удалении
+     * проекта (а до 3.5 — и задачи) строки attachments уходят по ON DELETE CASCADE, и до
+     * файлов каскад не достаёт.
+     *
+     * <p>Возвращается список, а не поток: единственный вызывающий код всё равно строит из
+     * него множество и сверяет с базой целиком. Для локального диска и объёмов, на которые
+     * рассчитан этот трекер, это несколько тысяч строк раз в сутки.
+     */
+    List<StoredObject> listAll();
 }
