@@ -97,7 +97,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> listForUser(User currentUser) {
-        return projectMemberRepository.findByUserIdOrderByProject_CreatedAtDesc(currentUser.getId()).stream()
+        return projectMemberRepository.findByUserIdWithProject(currentUser.getId()).stream()
                 .map(membership -> ProjectResponse.from(membership.getProject(), membership.getRole()))
                 .toList();
     }

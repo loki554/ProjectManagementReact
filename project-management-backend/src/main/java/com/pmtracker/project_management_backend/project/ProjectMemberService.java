@@ -40,7 +40,7 @@ public class ProjectMemberService {
         projectAccessService.findProjectOrThrow(projectId);
         projectAccessService.requireMembership(projectId, currentUser);
 
-        return projectMemberRepository.findByProjectIdOrderByJoinedAtAsc(projectId).stream()
+        return projectMemberRepository.findByProjectIdWithUser(projectId).stream()
                 .map(MemberResponse::from)
                 .toList();
     }
