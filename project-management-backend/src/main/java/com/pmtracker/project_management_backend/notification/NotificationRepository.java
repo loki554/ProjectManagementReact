@@ -30,4 +30,19 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Modifying
     @Query("delete from Notification n where n.task.id = :taskId and n.type in ('task_due_soon', 'task_overdue')")
     void deleteDueDateAlerts(UUID taskId);
+
+    /**
+     * Чистка давно прочитанных уведомлений (3.9, NotificationCleanupJob).
+     *
+     * <p>Порог считается от readAt, а не от createdAt: уведомление, созданное сто дней назад
+     * и прочитанное вчера, по createdAt удалилось бы прямо из-под глаз пользователя, тогда
+     * как интересует нас «прочитано давно», а не «создано давно».
+     *
+     * <p>Непрочитанные не трогаются вовсе, каким бы старым ни было уведомление: удалить
+     * непрочитанное — значит стереть то, чего человек ни разу не видел, и заодно
+     * бесшумно уменьшить счётчик на колокольчике.
+     */
+    @Modifying
+    @Query("delete from Notification n where n.readAt is not null and n.readAt < :cutoff")
+    int deleteReadBefore(Instant cutoff);
 }
