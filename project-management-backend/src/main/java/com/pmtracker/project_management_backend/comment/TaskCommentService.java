@@ -46,8 +46,8 @@ public class TaskCommentService {
     @Transactional
     public CommentResponse create(User currentUser, UUID taskId, CreateCommentRequest request) {
         Task task = findTaskOrThrow(taskId);
-        ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         TaskComment comment = new TaskComment();
         comment.setTask(task);
@@ -79,11 +79,11 @@ public class TaskCommentService {
     public void delete(User currentUser, UUID commentId) {
         TaskComment comment = taskCommentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);
         UUID projectId = comment.getTask().getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         boolean isAuthor = comment.getAuthor().getId().equals(currentUser.getId());
-        boolean isModerator = membership.getRole().isAtLeast(ProjectRole.ADMIN);
+        boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);
         if (!isAuthor && !isModerator) {
             throw new NotCommentOwnerException();
         }

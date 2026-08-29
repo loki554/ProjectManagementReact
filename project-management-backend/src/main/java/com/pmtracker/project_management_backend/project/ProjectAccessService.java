@@ -17,11 +17,11 @@ import java.util.UUID;
 public class ProjectAccessService {
 
     private final ProjectRepository projectRepository;
-    private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectMembershipCache membershipCache;
 
-    public ProjectAccessService(ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository) {
+    public ProjectAccessService(ProjectRepository projectRepository, ProjectMembershipCache membershipCache) {
         this.projectRepository = projectRepository;
-        this.projectMemberRepository = projectMemberRepository;
+        this.membershipCache = membershipCache;
     }
 
     public Project findProjectOrThrow(UUID projectId) {
@@ -29,13 +29,20 @@ public class ProjectAccessService {
                 .orElseThrow(ProjectNotFoundException::new);
     }
 
-    public ProjectMember requireMembership(UUID projectId, User user) {
-        return projectMemberRepository.findByProjectIdAndUserId(projectId, user.getId())
+    /**
+     * Роль пользователя в проекте, либо 403, если он не участник.
+     *
+     * <p>Возвращается роль, а не строка участника: вызывающему коду от неё больше ничего и
+     * не нужно, а отдавать наружу сущность из проверки доступа — значит однажды получить
+     * место, которое эту сущность меняет, и кэш (3.10), раздающий её всем сразу.
+     */
+    public ProjectRole requireMembership(UUID projectId, User user) {
+        return membershipCache.findRole(projectId, user.getId())
                 .orElseThrow(NotProjectMemberException::new);
     }
 
-    public void requireRole(ProjectMember membership, ProjectRole required) {
-        if (!membership.getRole().isAtLeast(required)) {
+    public void requireRole(ProjectRole role, ProjectRole required) {
+        if (!role.isAtLeast(required)) {
             throw new InsufficientProjectRoleException();
         }
     }

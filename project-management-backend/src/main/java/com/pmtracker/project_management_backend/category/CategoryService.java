@@ -32,8 +32,8 @@ public class CategoryService {
     @Transactional
     public CategoryResponse create(User currentUser, UUID projectId, CreateCategoryRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         String name = normalizeName(request.name());
         if (categoryRepository.existsByProjectIdAndName(projectId, name)) {
@@ -62,8 +62,8 @@ public class CategoryService {
     public CategoryResponse update(User currentUser, UUID categoryId, UpdateCategoryRequest request) {
         Category category = findCategoryOrThrow(categoryId);
         UUID projectId = category.getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         String name = normalizeName(request.name());
         if (!category.getName().equals(name) && categoryRepository.existsByProjectIdAndName(projectId, name)) {
@@ -81,8 +81,8 @@ public class CategoryService {
     @Transactional
     public void delete(User currentUser, UUID categoryId) {
         Category category = findCategoryOrThrow(categoryId);
-        ProjectMember membership = projectAccessService.requireMembership(category.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(category.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         // У задач, использовавших категорию, category становится null — как при удалении тэга
         // (ON DELETE SET NULL в V18), сами задачи не трогаем.

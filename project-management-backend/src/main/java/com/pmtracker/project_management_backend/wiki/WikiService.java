@@ -45,8 +45,8 @@ public class WikiService {
     @Transactional
     public WikiResponse update(User currentUser, UUID projectId, UpdateWikiRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         Optional<ProjectWiki> existing = projectWikiRepository.findByProjectId(projectId);
 

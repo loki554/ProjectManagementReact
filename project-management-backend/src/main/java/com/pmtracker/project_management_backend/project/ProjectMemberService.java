@@ -21,15 +21,18 @@ import java.util.UUID;
 public class ProjectMemberService {
 
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectMembershipCache membershipCache;
     private final UserRepository userRepository;
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
 
     public ProjectMemberService(ProjectMemberRepository projectMemberRepository,
+                                 ProjectMembershipCache membershipCache,
                                  UserRepository userRepository,
                                  ProjectAccessService projectAccessService,
                                  ActivityService activityService) {
         this.projectMemberRepository = projectMemberRepository;
+        this.membershipCache = membershipCache;
         this.userRepository = userRepository;
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
@@ -48,8 +51,8 @@ public class ProjectMemberService {
     @Transactional
     public MemberResponse invite(User currentUser, UUID projectId, InviteMemberRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember myMembership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myMembership, ProjectRole.ADMIN);
+        ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
 
         User invitee = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UserNotFoundForInviteException(request.email()));
@@ -63,6 +66,9 @@ public class ProjectMemberService {
         member.setUser(invitee);
         member.setRole(request.role());
         projectMemberRepository.save(member);
+        // Кэш проверки доступа (3.10) сбрасывается на каждое изменение состава участников,
+        // и строго после коммита — иначе параллельный запрос вернёт в него старую роль.
+        membershipCache.invalidate(projectId, invitee.getId());
 
         activityService.record(project, currentUser, "member_added", null,
                 Map.of("userName", displayName(invitee), "role", request.role().name()));
@@ -73,8 +79,8 @@ public class ProjectMemberService {
     @Transactional
     public MemberResponse updateRole(User currentUser, UUID projectId, UUID targetUserId, UpdateMemberRoleRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember myMembership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myMembership, ProjectRole.ADMIN);
+        ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
 
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 
@@ -85,6 +91,7 @@ public class ProjectMemberService {
         ProjectRole oldRole = target.getRole();
         target.setRole(request.role());
         projectMemberRepository.save(target);
+        membershipCache.invalidate(projectId, targetUserId);
 
         // Повторный сабмит той же роли — не событие.
         if (oldRole != request.role()) {
@@ -98,8 +105,8 @@ public class ProjectMemberService {
     @Transactional
     public void remove(User currentUser, UUID projectId, UUID targetUserId) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember myMembership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myMembership, ProjectRole.ADMIN);
+        ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
 
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 
@@ -108,6 +115,7 @@ public class ProjectMemberService {
         }
 
         projectMemberRepository.delete(target);
+        membershipCache.invalidate(projectId, targetUserId);
         activityService.record(project, currentUser, "member_removed", null,
                 Map.of("userName", displayName(target.getUser())));
     }

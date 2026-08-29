@@ -110,6 +110,16 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.6</version>
 		</dependency>
+		<!-- Caffeine: кэш проверки членства в проекте (3.10 IMPROVEMENTS.md). Голая
+		     библиотека, без spring-boot-starter-cache: @Cacheable удобен, пока не нужен
+		     контроль момента инвалидации, а здесь он нужен — сбрасывать запись надо строго
+		     после коммита, иначе параллельное чтение успеет вернуть в кэш старую роль
+		     (см. ProjectMembershipCache). Версия задана явно: Boot 4 Caffeine не менеджит. -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+			<version>3.2.0</version>
+		</dependency>
 		<!-- AWS SDK v2, только модуль S3: объектное хранилище как альтернатива локальному
 		     диску (3.7 IMPROVEMENTS.md). Берётся не starter от AWS, а голый клиент — Spring
 		     Cloud AWS тянет за собой автоконфигурацию половины сервисов AWS ради одного

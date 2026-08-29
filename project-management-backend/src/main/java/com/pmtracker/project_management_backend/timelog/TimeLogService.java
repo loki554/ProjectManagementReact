@@ -40,8 +40,8 @@ public class TimeLogService {
     @Transactional
     public TimeLogResponse create(User currentUser, UUID taskId, CreateTimeLogRequest request) {
         Task task = findTaskOrThrow(taskId);
-        ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         TimeLog timeLog = new TimeLog();
         timeLog.setTask(task);
@@ -72,11 +72,11 @@ public class TimeLogService {
     public void delete(User currentUser, UUID timeLogId) {
         TimeLog timeLog = timeLogRepository.findById(timeLogId).orElseThrow(TimeLogNotFoundException::new);
         UUID projectId = timeLog.getTask().getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         boolean isAuthor = timeLog.getUser().getId().equals(currentUser.getId());
-        boolean isModerator = membership.getRole().isAtLeast(ProjectRole.ADMIN);
+        boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);
         if (!isAuthor && !isModerator) {
             throw new NotTimeLogOwnerException();
         }

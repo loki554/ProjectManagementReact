@@ -74,8 +74,8 @@ public class AttachmentService {
     @Transactional
     public AttachmentResponse upload(User currentUser, UUID taskId, MultipartFile file) {
         Task task = findTaskOrThrow(taskId);
-        ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         if (file.isEmpty()) {
             throw new InvalidFileException("No file selected");
@@ -153,11 +153,11 @@ public class AttachmentService {
     public void delete(User currentUser, UUID attachmentId) {
         Attachment attachment = findAttachmentOrThrow(attachmentId);
         UUID projectId = attachment.getTask().getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         boolean isUploader = attachment.getUploadedBy().getId().equals(currentUser.getId());
-        boolean isModerator = membership.getRole().isAtLeast(ProjectRole.ADMIN);
+        boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);
         if (!isUploader && !isModerator) {
             throw new NotAttachmentOwnerException();
         }

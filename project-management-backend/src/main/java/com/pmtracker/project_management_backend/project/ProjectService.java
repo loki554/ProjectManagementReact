@@ -48,6 +48,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectMembershipCache membershipCache;
     private final ProjectAccessService projectAccessService;
     private final FileStorageService fileStorageService;
     private final FileTypeValidator fileTypeValidator;
@@ -56,6 +57,7 @@ public class ProjectService {
 
     public ProjectService(ProjectRepository projectRepository,
                            ProjectMemberRepository projectMemberRepository,
+                           ProjectMembershipCache membershipCache,
                            ProjectAccessService projectAccessService,
                            FileStorageService fileStorageService,
                            FileTypeValidator fileTypeValidator,
@@ -63,6 +65,7 @@ public class ProjectService {
                            ActivityService activityService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.membershipCache = membershipCache;
         this.projectAccessService = projectAccessService;
         this.fileStorageService = fileStorageService;
         this.fileTypeValidator = fileTypeValidator;
@@ -92,6 +95,9 @@ public class ProjectService {
         membership.setUser(currentUser);
         membership.setRole(ProjectRole.OWNER);
         projectMemberRepository.save(membership);
+        // Создатель до этого момента участником не был, и отрицательный ответ на него мог
+        // осесть в кэше (3.10) — например, если он только что заходил по этой ссылке.
+        membershipCache.invalidate(project.getId(), currentUser.getId());
 
         return ProjectResponse.from(project, ProjectRole.OWNER);
     }
@@ -106,8 +112,8 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getById(User currentUser, UUID projectId) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        return ProjectResponse.from(project, membership.getRole());
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        return ProjectResponse.from(project, role);
     }
 
     // idOrSlug: обычно человекочитаемый slug (см. §URL), но старые ссылки/закладки, выданные до
@@ -116,8 +122,8 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getBySlugOrId(User currentUser, String idOrSlug) {
         Project project = resolveBySlugOrId(idOrSlug);
-        ProjectMember membership = projectAccessService.requireMembership(project.getId(), currentUser);
-        return ProjectResponse.from(project, membership.getRole());
+        ProjectRole role = projectAccessService.requireMembership(project.getId(), currentUser);
+        return ProjectResponse.from(project, role);
     }
 
     private Project resolveBySlugOrId(String idOrSlug) {
@@ -131,8 +137,8 @@ public class ProjectService {
     @Transactional
     public ProjectResponse update(User currentUser, UUID projectId, UpdateProjectRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
         // Версия из формы (3.4) — до применения правок, чтобы конфликт не оставил
         // за собой запись в ленте активности.
         if (request.version() == null || request.version() != project.getVersion()) {
@@ -163,16 +169,17 @@ public class ProjectService {
                     Map.of("changedFields", changedFields));
         }
 
-        return ProjectResponse.from(project, membership.getRole());
+        return ProjectResponse.from(project, role);
     }
 
     @Transactional
     public void delete(User currentUser, UUID projectId) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
         String previewImagePath = project.getPreviewImagePath();
         projectRepository.deleteById(projectId);
+        membershipCache.invalidateProject(projectId);
         if (previewImagePath != null) {
             fileStorageService.delete(previewImagePath);
         }
@@ -183,8 +190,8 @@ public class ProjectService {
     @Transactional
     public ProjectResponse uploadPreviewImage(User currentUser, UUID projectId, MultipartFile file) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         if (file.isEmpty()) {
             throw new InvalidFileException("No file selected");
@@ -219,7 +226,7 @@ public class ProjectService {
             fileStorageService.delete(previousPreviewImagePath);
         }
 
-        return ProjectResponse.from(project, membership.getRole());
+        return ProjectResponse.from(project, role);
     }
 
     // Просмотр открыт всем ролям проекта, включая VIEWER — как и остальные детали проекта

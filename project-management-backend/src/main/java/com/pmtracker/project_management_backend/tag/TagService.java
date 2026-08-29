@@ -30,8 +30,8 @@ public class TagService {
     @Transactional
     public TagResponse create(User currentUser, UUID projectId, CreateTagRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         if (tagRepository.existsByProjectIdAndName(projectId, request.name())) {
             throw new DuplicateTagNameException();
@@ -60,8 +60,8 @@ public class TagService {
     public TagResponse update(User currentUser, UUID tagId, UpdateTagRequest request) {
         Tag tag = findTagOrThrow(tagId);
         UUID projectId = tag.getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         if (!tag.getName().equals(request.name()) && tagRepository.existsByProjectIdAndName(projectId, request.name())) {
             throw new DuplicateTagNameException();
@@ -76,8 +76,8 @@ public class TagService {
     @Transactional
     public void delete(User currentUser, UUID tagId) {
         Tag tag = findTagOrThrow(tagId);
-        ProjectMember membership = projectAccessService.requireMembership(tag.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        ProjectRole role = projectAccessService.requireMembership(tag.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.OWNER);
 
         tagRepository.delete(tag);
     }

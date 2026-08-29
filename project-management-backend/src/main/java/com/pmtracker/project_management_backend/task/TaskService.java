@@ -98,8 +98,8 @@ public class TaskService {
     @Transactional
     public TaskResponse create(User currentUser, UUID projectId, CreateTaskRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         Task task = new Task();
         task.setProject(project);
@@ -201,8 +201,8 @@ public class TaskService {
     public TaskResponse update(User currentUser, UUID taskId, UpdateTaskRequest request) {
         Task task = findTaskOrThrow(taskId);
         UUID projectId = task.getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
         requireCurrentVersion(request.version(), task.getVersion());
 
         // Снапшот "до" — после applyCommonFields по одному событию на каждое реально
@@ -286,8 +286,8 @@ public class TaskService {
     public TaskResponse updateStatus(User currentUser, UUID taskId, UpdateTaskStatusRequest request) {
         Task task = findTaskOrThrow(taskId);
         UUID projectId = task.getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         TaskStatus oldStatus = task.getStatus();
         if (oldStatus != request.expectedStatus()) {
@@ -343,8 +343,8 @@ public class TaskService {
     @Transactional
     public void delete(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
-        ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
         // task = null в событии: задача перестаёт быть видимой для JPA сразу после UPDATE,
         // и ссылка на неё из ленты активности вела бы в никуда — вернее, вела бы в 404 до
         // самого восстановления. Идентичность задачи — в снапшоте payload.
@@ -372,8 +372,8 @@ public class TaskService {
         TaskRepository.DeletedTask deleted = taskRepository.findDeleted(taskId)
                 .orElseThrow(TaskNotFoundException::new);
         Project project = projectAccessService.findProjectOrThrow(deleted.getProjectId());
-        ProjectMember membership = projectAccessService.requireMembership(project.getId(), currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(project.getId(), currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         // Подзадача под удалённым родителем восстановлению не подлежит: возвращать её
         // некуда, она повисла бы под невидимой задачей. Сначала родитель.
@@ -401,8 +401,8 @@ public class TaskService {
     public TaskResponse createSubtask(User currentUser, UUID parentTaskId, CreateTaskRequest request) {
         Task parent = findTaskOrThrow(parentTaskId);
         UUID projectId = parent.getProject().getId();
-        ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
 
         Task task = new Task();
         task.setProject(parent.getProject());
