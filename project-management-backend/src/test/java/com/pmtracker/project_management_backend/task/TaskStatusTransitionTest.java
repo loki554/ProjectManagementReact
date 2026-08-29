@@ -413,14 +413,20 @@ class TaskStatusTransitionTest extends IntegrationTest {
                 .formatted(to, position, expectedStatus);
     }
 
-    /** Сохранение формы редактирования: тело содержит задачу целиком, expectedStatus в нём нет. */
+    /**
+     * Сохранение формы редактирования: тело содержит задачу целиком, expectedStatus в нём нет.
+     * Версия (3.4) читается из БД прямо перед запросом, а не берётся из переданной сущности:
+     * тесты здесь не про оптимистичную блокировку, и переиспользованный объект после
+     * предыдущего сохранения давал бы 409 вместо проверяемого перехода.
+     */
     private ResultActions edit(Task task, TaskStatus status) throws Exception {
+        long version = taskRepository.findById(task.getId()).orElseThrow().getVersion();
         return mockMvc.perform(patch("/api/tasks/" + task.getId())
                 .header(AUTHORIZATION, memberAuth)
                 .contentType(APPLICATION_JSON)
                 .content("""
-                        {"title":"%s","status":"%s","urgency":"MEDIUM"}"""
-                        .formatted(task.getTitle(), status)));
+                        {"title":"%s","status":"%s","urgency":"MEDIUM","version":%d}"""
+                        .formatted(task.getTitle(), status, version)));
     }
 
     /** Колонка доски как «title@position» — та же оптика, что в 2.3. */

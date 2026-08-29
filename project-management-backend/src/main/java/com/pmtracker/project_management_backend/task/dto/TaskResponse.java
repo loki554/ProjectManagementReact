@@ -31,7 +31,10 @@ public record TaskResponse(
         CategorySummary category,
         BigDecimal totalHoursSpent,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        // Версия для оптимистичной блокировки (3.4): клиент возвращает её в PATCH и
+        // получает 409, если задачу успели изменить, пока форма была открыта.
+        long version
 ) {
     public static TaskResponse from(Task task, BigDecimal totalHoursSpent) {
         return new TaskResponse(
@@ -52,7 +55,8 @@ public record TaskResponse(
                 task.getCategory() != null ? CategorySummary.from(task.getCategory()) : null,
                 totalHoursSpent,
                 task.getCreatedAt(),
-                task.getUpdatedAt()
+                task.getUpdatedAt(),
+                task.getVersion()
         );
     }
 }

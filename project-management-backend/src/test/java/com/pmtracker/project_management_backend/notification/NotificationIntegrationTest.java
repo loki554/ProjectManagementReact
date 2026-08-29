@@ -584,13 +584,19 @@ class NotificationIntegrationTest extends IntegrationTest {
                 "SELECT read_at FROM notifications WHERE id = ?", Timestamp.class, notificationId);
     }
 
-    /** Сохранение формы редактирования задачи — тело содержит задачу целиком. */
+    /**
+     * Сохранение формы редактирования задачи — тело содержит задачу целиком. Версия (3.4)
+     * читается из БД прямо перед запросом: тесты здесь не про блокировки, а задача к этому
+     * моменту могла быть уже изменена самим сценарием.
+     */
     private ResultActions editTask(Task task, TaskStatus status, User newAssignee, Instant dueDate) throws Exception {
+        long version = taskRepository.findById(task.getId()).orElseThrow().getVersion();
         String body = """
-                {"title":"%s","status":"%s","urgency":"MEDIUM","assigneeId":%s,"dueDate":%s}"""
+                {"title":"%s","status":"%s","urgency":"MEDIUM","assigneeId":%s,"dueDate":%s,"version":%d}"""
                 .formatted(task.getTitle(), status,
                         newAssignee != null ? "\"" + newAssignee.getId() + "\"" : "null",
-                        dueDate != null ? "\"" + dueDate + "\"" : "null");
+                        dueDate != null ? "\"" + dueDate + "\"" : "null",
+                        version);
         return mockMvc.perform(patch("/api/tasks/" + task.getId())
                 .header(AUTHORIZATION, authorAuth)
                 .contentType(APPLICATION_JSON)

@@ -438,6 +438,7 @@
     "ASSIGNEE_NOT_PROJECT_MEMBER": "Der Zuständige muss Mitglied des Projekts sein",
     "INVALID_TARGET_POSITION": "Ungültige Position in der Spalte, bitte Seite neu laden",
     "TASK_STATUS_CONFLICT": "Jemand anderes hat den Status dieser Aufgabe bereits geändert. Das Board wurde aktualisiert — bitte erneut versuchen",
+    "CONCURRENT_MODIFICATION": "Jemand anderes hat dies während Ihrer Bearbeitung geändert. Laden Sie die Seite neu und wiederholen Sie Ihre Änderungen — sonst überschreiben Sie fremde Arbeit",
     "TIME_LOG_NOT_FOUND": "Zeiteintrag nicht gefunden",
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
     "ATTACHMENT_NOT_FOUND": "Anhang nicht gefunden",

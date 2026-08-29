@@ -96,6 +96,8 @@ export function ProjectEditPage() {
         name: values.name,
         description: values.description || null,
         archived: values.archived,
+        // См. TaskEditPage: версия на момент открытия формы, 409 вместо тихой перезаписи.
+        version: project.version,
       })
     } catch {
       // updateProject.isError уже отражает это инлайн-баннером ниже

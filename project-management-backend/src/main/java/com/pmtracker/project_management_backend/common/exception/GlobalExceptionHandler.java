@@ -3,6 +3,7 @@ package com.pmtracker.project_management_backend.common.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -155,6 +156,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTaskStatusConflict(TaskStatusConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("TASK_STATUS_CONFLICT", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConcurrentModificationConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentModification(ConcurrentModificationConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("CONCURRENT_MODIFICATION", ex.getMessage()));
+    }
+
+    /**
+     * Тот же конфликт, но пойманный на уровне БД: версия совпала на входе, а к моменту
+     * UPDATE строку успели изменить (два запроса пересеклись внутри транзакций). Отвечаем
+     * ровно тем же кодом — для пользователя это одно и то же событие, и разводить их в
+     * интерфейсе было бы вредно.
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+        log.debug("Optimistic locking failure", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("CONCURRENT_MODIFICATION",
+                        "The item was changed by someone else while you were editing it"));
     }
 
     @ExceptionHandler(TimeLogNotFoundException.class)

@@ -17,6 +17,7 @@ import com.pmtracker.project_management_backend.task.TaskRepository;
 import com.pmtracker.project_management_backend.task.TaskStatus;
 import com.pmtracker.project_management_backend.task.TaskUrgency;
 import com.pmtracker.project_management_backend.timelog.TimeLog;
+import com.pmtracker.project_management_backend.wiki.dto.WikiResponse;
 import com.pmtracker.project_management_backend.timelog.TimeLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -168,7 +169,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("PATCH  /projects/{id}",                    f -> patch("/api/projects/" + f.projectId)
                             .contentType(APPLICATION_JSON)
                             .content("""
-                                    {"name":"Renamed project","description":"d","archived":false}"""),
+                                    {"name":"Renamed project","description":"d","archived":false,"version":%d}"""
+                                    .formatted(f.projectVersion)),
                     ALLOWED, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE),
             endpoint("DELETE /projects/{id}",                    f -> delete("/api/projects/" + f.projectId),
                     ALLOWED, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE),
@@ -222,7 +224,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("PUT    /projects/{id}/wiki",               f -> put("/api/projects/" + f.projectId + "/wiki")
                             .contentType(APPLICATION_JSON)
                             .content("""
-                                    {"content":"# Wiki"}"""),
+                                    {"content":"# Wiki","version":%d}"""
+                                    .formatted(WikiResponse.NO_WIKI_VERSION)),
                     ALLOWED, ALLOWED, ALLOWED, INSUFFICIENT_ROLE),
             endpoint("POST   /projects/{id}/tasks",              f -> post("/api/projects/" + f.projectId + "/tasks")
                             .contentType(APPLICATION_JSON)
@@ -231,7 +234,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("PATCH  /tasks/{id}",                       f -> patch("/api/tasks/" + f.taskId)
                             .contentType(APPLICATION_JSON)
                             .content("""
-                                    {"title":"Renamed task","status":"NEW","urgency":"MEDIUM"}"""),
+                                    {"title":"Renamed task","status":"NEW","urgency":"MEDIUM","version":%d}"""
+                                    .formatted(f.taskVersion)),
                     ALLOWED, ALLOWED, ALLOWED, INSUFFICIENT_ROLE),
             endpoint("PATCH  /tasks/{id}/status",                f -> patch("/api/tasks/" + f.taskId + "/status")
                             .contentType(APPLICATION_JSON)
@@ -380,8 +384,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     // ------------------------------------------------------------------------- фикстура
 
     /** Всё, на что ссылаются запросы из таблицы. Пересоздаётся перед каждым запуском. */
-    private record Fixture(UUID projectId, String projectSlug,
-                           UUID taskId, int taskNumber,
+    private record Fixture(UUID projectId, String projectSlug, long projectVersion,
+                           UUID taskId, int taskNumber, long taskVersion,
                            UUID viewerUserId, String outsiderEmail,
                            UUID categoryId, UUID tagId,
                            UUID commentId, UUID timeLogId, UUID attachmentId,
@@ -453,7 +457,10 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         writeStorageFile(PREVIEW_IMAGE_PATH, PNG_BYTES);
         writeStorageFile(ATTACHMENT_PATH, "plain text".getBytes(StandardCharsets.UTF_8));
         project.setPreviewImagePath(PREVIEW_IMAGE_PATH);
-        projectRepository.save(project);
+        // Присваиваем результат: сохранение отсоединённой сущности идёт через merge и
+        // возвращает другой экземпляр, а версия (3.4) увеличивается именно у него — без
+        // этого фикстура запомнила бы версию 0 и PATCH проекта ловил бы 409 вместо прав.
+        project = projectRepository.save(project);
 
         // Номер резервируем тем же счётчиком, что и TaskService: иначе задача, созданная через
         // API в этом же тесте, получила бы тот же номер и упёрлась в uq_tasks_project_task_number.
@@ -489,8 +496,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         TimeLog ownTimeLog = timeLog(task, member);
         Attachment ownAttachment = attachment(task, member);
 
-        fixture = new Fixture(project.getId(), project.getSlug(),
-                task.getId(), taskNumber,
+        fixture = new Fixture(project.getId(), project.getSlug(), project.getVersion(),
+                task.getId(), taskNumber, task.getVersion(),
                 viewer.getId(), outsider.getEmail(),
                 category.getId(), tag.getId(),
                 foreignComment.getId(), foreignTimeLog.getId(), foreignAttachment.getId(),

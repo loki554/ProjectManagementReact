@@ -6,6 +6,7 @@ import com.pmtracker.project_management_backend.category.Category;
 import com.pmtracker.project_management_backend.category.CategoryService;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
+import com.pmtracker.project_management_backend.common.exception.ConcurrentModificationConflictException;
 import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
@@ -144,6 +145,16 @@ public class TaskService {
         return toResponses(taskRepository.findBoardTasks(projectId));
     }
 
+    /**
+     * Проверка версии до применения правок (3.4). Именно до: иначе в ленту активности
+     * успели бы уехать события об изменениях, которые в итоге откатятся.
+     */
+    private static void requireCurrentVersion(Long expected, long actual) {
+        if (expected == null || expected != actual) {
+            throw new ConcurrentModificationConflictException();
+        }
+    }
+
     private static int clampPageSize(int size) {
         if (size < 1) {
             return DEFAULT_TASK_PAGE_SIZE;
@@ -183,6 +194,7 @@ public class TaskService {
         UUID projectId = task.getProject().getId();
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+        requireCurrentVersion(request.version(), task.getVersion());
 
         // Снапшот "до" — после applyCommonFields по одному событию на каждое реально
         // изменившееся поле (описание сознательно не в ленте: диффы длинного текста шумят).
@@ -198,7 +210,8 @@ public class TaskService {
                 request.assigneeId(), request.dueDate(), request.tagId(), request.category());
         task.setStatus(request.status());
         task.setUrgency(request.urgency());
-        taskRepository.save(task);
+        // saveAndFlush — см. WikiService.update: ответ должен нести уже увеличенную версию.
+        taskRepository.saveAndFlush(task);
 
         if (!Objects.equals(oldTitle, task.getTitle())) {
             recordFieldChange(task, currentUser, "task_title_changed", oldTitle, task.getTitle());

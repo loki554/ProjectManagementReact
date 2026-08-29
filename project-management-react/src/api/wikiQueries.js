@@ -14,7 +14,7 @@ export function useProjectWiki(projectId) {
 export function useUpdateWiki(projectId) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (content) => wikiApi.updateProjectWiki(projectId, content),
+    mutationFn: ({ content, version }) => wikiApi.updateProjectWiki(projectId, { content, version }),
     // PUT возвращает свежий WikiResponse целиком — кладём его в кэш напрямую,
     // без лишнего рефетча.
     onSuccess: (data) => {

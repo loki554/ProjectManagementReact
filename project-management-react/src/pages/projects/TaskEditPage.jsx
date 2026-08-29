@@ -100,6 +100,10 @@ export function TaskEditPage() {
         dueDate: fromDatetimeLocalValue(values.dueDate),
         tagId: values.tagId || null,
         category: values.category?.trim() || null,
+        // Версия задачи на момент открытия формы (3.4): сервер ответит 409
+        // CONCURRENT_MODIFICATION, если её успели изменить, вместо того чтобы молча
+        // затереть чужую правку.
+        version: task.version,
       },
       { onSuccess: () => navigate(viewPath) },
     )

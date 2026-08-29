@@ -16,7 +16,9 @@ public record ProjectResponse(
         ProjectRole myRole,
         UUID createdBy,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        // См. TaskResponse.version — то же самое для настроек проекта.
+        long version
 ) {
     public static ProjectResponse from(Project project, ProjectRole myRole) {
         return new ProjectResponse(
@@ -29,7 +31,8 @@ public record ProjectResponse(
                 myRole,
                 project.getCreatedBy().getId(),
                 project.getCreatedAt(),
-                project.getUpdatedAt()
+                project.getUpdatedAt(),
+                project.getVersion()
         );
     }
 
@@ -41,7 +44,7 @@ public record ProjectResponse(
         if (path == null) {
             return null;
         }
-        String version = path.substring(path.lastIndexOf('/') + 1);
-        return "/projects/" + project.getId() + "/preview-image?v=" + version;
+        String storedFileName = path.substring(path.lastIndexOf('/') + 1);
+        return "/projects/" + project.getId() + "/preview-image?v=" + storedFileName;
     }
 }

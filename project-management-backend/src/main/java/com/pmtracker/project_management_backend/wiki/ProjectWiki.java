@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -37,6 +38,19 @@ public class ProjectWiki {
     @ManyToOne
     @JoinColumn(name = "updated_by")
     private User updatedBy;
+
+    /**
+     * Оптимистичная блокировка (3.4, V21). Hibernate сам подставляет её в WHERE каждого
+     * UPDATE и увеличивает при успехе; клиент присылает обратно ту версию, которую видел,
+     * и получает 409 CONCURRENT_MODIFICATION, если за это время сущность успели изменить.
+     *
+     * <p>Примитив, а не Long, сознательно: Spring Data определяет «новая сущность или нет»
+     * по версии, если её тип ссылочный, и тогда save() managed-сущности с version = null
+     * поехал бы по ветке persist. С примитивом проверка остаётся по id, как и была.
+     */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
@@ -77,6 +91,10 @@ public class ProjectWiki {
 
     public void setUpdatedBy(User updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public Instant getUpdatedAt() {

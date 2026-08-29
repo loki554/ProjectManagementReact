@@ -19,6 +19,10 @@ public record UpdateTaskRequest(
         @NotNull TaskUrgency urgency,
         Instant dueDate,
         UUID tagId,
-        @Size(max = 100) String category
+        @Size(max = 100) String category,
+        // Версия, которую клиент видел при загрузке формы (3.4). Обязательна: сделать её
+        // необязательной значило бы, что защита от затирания чужих правок отключается
+        // молчаливым забыванием параметра.
+        @NotNull Long version
 ) {
 }

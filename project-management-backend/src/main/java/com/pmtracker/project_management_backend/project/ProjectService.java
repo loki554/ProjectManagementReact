@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.project;
 
 import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.common.exception.ConcurrentModificationConflictException;
 import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.InvalidProjectNameException;
 import com.pmtracker.project_management_backend.common.exception.ProjectNameAlreadyExistsException;
@@ -132,6 +133,11 @@ public class ProjectService {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectMember membership = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(membership, ProjectRole.OWNER);
+        // Версия из формы (3.4) — до применения правок, чтобы конфликт не оставил
+        // за собой запись в ленте активности.
+        if (request.version() == null || request.version() != project.getVersion()) {
+            throw new ConcurrentModificationConflictException();
+        }
 
         // Список кодов изменённых полей — фронтенд переводит их сам; пустой дифф
         // (сабмит без правок) событием не считается.
@@ -149,7 +155,8 @@ public class ProjectService {
         project.setName(request.name());
         project.setDescription(request.description());
         project.setArchived(request.archived());
-        projectRepository.save(project);
+        // saveAndFlush — см. WikiService.update: ответ должен нести уже увеличенную версию.
+        projectRepository.saveAndFlush(project);
 
         if (!changedFields.isEmpty()) {
             activityService.record(project, currentUser, "project_updated", null,

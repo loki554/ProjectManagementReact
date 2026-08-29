@@ -29,9 +29,12 @@ export function ProjectWikiPage() {
   }
 
   function save() {
-    updateWiki.mutate(draft, {
-      onSuccess: () => setEditing(false),
-    })
+    updateWiki.mutate(
+      // Версия — та, что была при открытии редактора; wiki?.version отсутствует только
+      // до первой загрузки, когда и сохранять нечего.
+      { content: draft, version: wiki?.version ?? 0 },
+      { onSuccess: () => setEditing(false) },
+    )
   }
 
   // Косметическое скрытие — PUT на бэкенде в любом случае требует MEMBER и выше.
