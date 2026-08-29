@@ -49,6 +49,12 @@ import java.util.stream.Collectors;
 @Service
 public class TaskService {
 
+    // Размер страницы табличного списка задач (3.3). Не фиксирован, как у /tasks/mine: там
+    // страница — часть вёрстки виджета, здесь её выбирает пользователь. Потолок нужен, чтобы
+    // ?size=1000000 не возвращал ровно то, от чего пагинацию и вводили.
+    private static final int DEFAULT_TASK_PAGE_SIZE = 50;
+    private static final int MAX_TASK_PAGE_SIZE = 200;
+
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
     private final ProjectMemberRepository projectMemberRepository;
@@ -104,21 +110,48 @@ public class TaskService {
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
     }
 
+    /**
+     * Табличный список задач проекта: страница + серверные фильтры и сортировка (3.3).
+     * Раньше метод отдавал все top-level задачи проекта одним массивом, а фильтровал и
+     * сортировал их фронтенд — на проекте в пару тысяч задач это мегабайты JSON на каждое
+     * открытие вкладки и подвисающий рендер.
+     */
     @Transactional(readOnly = true)
-    public List<TaskResponse> list(User currentUser, UUID projectId, TaskStatus status, UUID assigneeId, UUID parentId) {
+    public PageResponse<TaskResponse> list(User currentUser, UUID projectId, TaskListQuery query, int page, int size) {
         projectAccessService.findProjectOrThrow(projectId);
         projectAccessService.requireMembership(projectId, currentUser);
 
-        List<Task> tasks;
-        if (parentId != null) {
-            Task parent = taskRepository.findById(parentId).orElseThrow(ParentTaskNotFoundException::new);
+        if (query.parentId() != null) {
+            Task parent = taskRepository.findById(query.parentId()).orElseThrow(ParentTaskNotFoundException::new);
             if (!parent.getProject().getId().equals(projectId)) {
                 throw new ParentTaskProjectMismatchException();
             }
-            tasks = taskRepository.findByParent(projectId, parentId, status, assigneeId);
-        } else {
-            tasks = taskRepository.findTopLevel(projectId, status, assigneeId);
         }
+
+        Pageable pageable = PageRequest.of(Math.max(page, 0), clampPageSize(size));
+        Page<Task> result = taskRepository.search(projectId, query, pageable);
+        return PageResponse.from(new PageImpl<>(toResponses(result.getContent()), pageable, result.getTotalElements()));
+    }
+
+    /**
+     * Задачи для канбан-доски — все top-level, без пагинации; см. TaskRepository.findBoardTasks
+     * о том, почему именно здесь она не нужна.
+     */
+    @Transactional(readOnly = true)
+    public List<TaskResponse> listBoard(User currentUser, UUID projectId) {
+        projectAccessService.findProjectOrThrow(projectId);
+        projectAccessService.requireMembership(projectId, currentUser);
+        return toResponses(taskRepository.findBoardTasks(projectId));
+    }
+
+    private static int clampPageSize(int size) {
+        if (size < 1) {
+            return DEFAULT_TASK_PAGE_SIZE;
+        }
+        return Math.min(size, MAX_TASK_PAGE_SIZE);
+    }
+
+    private List<TaskResponse> toResponses(List<Task> tasks) {
         Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(tasks.stream().map(Task::getId).toList());
         return tasks.stream()
                 .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
@@ -298,10 +331,7 @@ public class TaskService {
         Task parent = findTaskOrThrow(parentTaskId);
         projectAccessService.requireMembership(parent.getProject().getId(), currentUser);
         List<Task> subtasks = taskRepository.findByParentTaskIdOrderByPositionAsc(parentTaskId);
-        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(subtasks.stream().map(Task::getId).toList());
-        return subtasks.stream()
-                .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
-                .toList();
+        return toResponses(subtasks);
     }
 
     @Transactional

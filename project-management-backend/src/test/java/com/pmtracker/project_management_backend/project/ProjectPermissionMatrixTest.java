@@ -136,6 +136,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /projects/{id}/tasks",              f -> get("/api/projects/" + f.projectId + "/tasks"),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
+            endpoint("GET    /projects/{id}/tasks/board",        f -> get("/api/projects/" + f.projectId + "/tasks/board"),
+                    ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /projects/{id}/tasks/by-number/{n}", f -> get("/api/projects/" + f.projectId
                             + "/tasks/by-number/" + f.taskNumber),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
@@ -290,7 +292,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
 
     /**
      * Отдельный столбец матрицы, вынесенный в свой тест: он одинаков для всех строк, и
-     * повторять его 43 раза в таблице значило бы утопить в нём саму таблицу. Смысл при этом
+     * повторять его 44 раза в таблице значило бы утопить в нём саму таблицу. Смысл при этом
      * ровно тот же — посторонний не должен получить 2xx ни от одного эндпоинта проекта,
      * включая чтение.
      */
@@ -338,7 +340,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Test
     @DisplayName("в таблице учтены все эндпоинты проекта")
     void matrixCoversEveryProjectEndpoint() {
-        assertThat(ENDPOINTS).hasSize(43);
+        assertThat(ENDPOINTS).hasSize(44);
         assertThat(ENDPOINTS).extracting(Endpoint::name).doesNotHaveDuplicates();
     }
 

@@ -1,9 +1,17 @@
 import { apiClient } from './client'
 
-export function fetchTasks(projectId, filters = {}) {
+// Табличный список задач: страница ({items, page, pageSize, totalItems, totalPages}), а не
+// массив. Фильтрация и сортировка тоже на сервере — по неполному списку их не сделать.
+export function fetchTasks(projectId, params = {}) {
   return apiClient
-    .get(`/projects/${projectId}/tasks`, { params: filters })
+    .get(`/projects/${projectId}/tasks`, { params })
     .then((res) => res.data)
+}
+
+// Доска — отдельный эндпоинт и по-прежнему полный массив: канбану нужны все колонки целиком,
+// чтобы считать позицию перетаскиваемой карточки по её соседям.
+export function fetchBoardTasks(projectId) {
+  return apiClient.get(`/projects/${projectId}/tasks/board`).then((res) => res.data)
 }
 
 // taskNumber — порядковый номер задачи внутри проекта (#1, #2, ...), используется в читаемых

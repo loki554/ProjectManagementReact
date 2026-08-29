@@ -141,7 +141,7 @@
     "allCategories": "Все категории",
     "empty": "Ничего не найдено",
     "newTask": "Новая задача",
-    "counter": "{{shown}} из {{total}}"
+    "total": "Задач: {{count}}"
   },
   "wiki": {
     "title": "Вики",

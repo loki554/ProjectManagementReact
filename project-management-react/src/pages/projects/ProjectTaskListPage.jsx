@@ -1,16 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useTasks } from '../../api/tasksQueries'
+import { Pagination } from '../../components/ui/Pagination'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
-  TASK_URGENCIES,
   roleIsAtLeast,
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
@@ -18,6 +18,7 @@ import {
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
+import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { useAuthStore } from '../../stores/authStore'
 
 const UNASSIGNED = '__unassigned__'
@@ -25,31 +26,22 @@ const UNASSIGNED = '__unassigned__'
 // id категории (ср. UNASSIGNED).
 const NO_CATEGORY = '__no_category__'
 
-// Компараторы по ключу колонки. Для статуса/срочности порядок — как в канбане/селектах
-// (индекс в фиксированном массиве), а не алфавит локализованных подписей.
-const COMPARATORS = {
-  number: (a, b) => a.taskNumber - b.taskNumber,
-  title: (a, b) => a.title.localeCompare(b.title),
-  status: (a, b) => TASK_STATUSES.indexOf(a.status) - TASK_STATUSES.indexOf(b.status),
-  assignee: (a, b) => assigneeLabelOf(a).localeCompare(assigneeLabelOf(b)),
-  urgency: (a, b) => TASK_URGENCIES.indexOf(a.urgency) - TASK_URGENCIES.indexOf(b.urgency),
-  // Задачи без срока — в конец при любом направлении сортировки.
-  dueDate: (a, b) => {
-    if (!a.dueDate && !b.dueDate) return 0
-    if (!a.dueDate) return 1
-    if (!b.dueDate) return -1
-    return new Date(a.dueDate) - new Date(b.dueDate)
-  },
-  tag: (a, b) => (a.tag?.name ?? '').localeCompare(b.tag?.name ?? ''),
-  // Задачи без категории — в конец при любом направлении (как dueDate): пустая строка
-  // иначе всплывала бы наверх и прятала заполненные значения.
-  category: (a, b) => {
-    if (!a.category && !b.category) return 0
-    if (!a.category) return 1
-    if (!b.category) return -1
-    return a.category.name.localeCompare(b.category.name)
-  },
-  hours: (a, b) => Number(a.totalHoursSpent) - Number(b.totalHoursSpent),
+const PAGE_SIZE = 50
+
+// Ключи сортировки — это значения TaskSortKey на бэкенде: и порядок, и фильтрация теперь
+// считаются в БД (3.3). Клиентские компараторы, стоявшие здесь раньше, работали по
+// загруженному массиву и с постраничной выдачей давали бы отсортированную страницу
+// вместо первой страницы отсортированного списка.
+const SORT = {
+  NUMBER: 'NUMBER',
+  TITLE: 'TITLE',
+  STATUS: 'STATUS',
+  ASSIGNEE: 'ASSIGNEE',
+  URGENCY: 'URGENCY',
+  DUE_DATE: 'DUE_DATE',
+  TAG: 'TAG',
+  CATEGORY: 'CATEGORY',
+  HOURS: 'HOURS',
 }
 
 const cellClass = 'px-3 py-2 align-middle'
@@ -91,7 +83,6 @@ export function ProjectTaskListPage() {
 
   const { data: project } = useProjectBySlug(projectSlug)
   const projectId = project?.id
-  const { data: tasks, isLoading, isError, error } = useTasks(projectId)
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
   const { data: categories } = useCategories(projectId)
@@ -104,32 +95,38 @@ export function ProjectTaskListPage() {
   const [assigneeFilter, setAssigneeFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
-  const [sort, setSort] = useState({ key: 'number', dir: 1 })
+  const [sort, setSort] = useState({ key: SORT.NUMBER, dir: 1 })
+  const [page, setPage] = useState(0)
+
+  // Ввод в поиске уходит на сервер, поэтому не на каждый символ.
+  const debouncedSearch = useDebouncedValue(search.trim())
+
+  // Любая смена фильтра или порядка меняет и состав списка: остаться на седьмой странице
+  // выдачи, в которой теперь две, значит увидеть пустую таблицу вместо результата.
+  useEffect(() => {
+    setPage(0)
+  }, [debouncedSearch, statusFilter, assigneeFilter, tagFilter, categoryFilter, sort])
+
+  const params = useMemo(() => {
+    const query = { sort: sort.key, descending: sort.dir === -1, page, size: PAGE_SIZE }
+    if (debouncedSearch) query.search = debouncedSearch
+    if (statusFilter) query.status = statusFilter
+    // "Без исполнителя"/"без категории" — отдельные флаги, а не значение id: пустой id на
+    // сервере означает "фильтр не задан", и выразить им "поле пустое" нечем.
+    if (assigneeFilter === UNASSIGNED) query.unassigned = true
+    else if (assigneeFilter) query.assigneeId = assigneeFilter
+    if (tagFilter) query.tagId = tagFilter
+    if (categoryFilter === NO_CATEGORY) query.uncategorized = true
+    else if (categoryFilter) query.categoryId = categoryFilter
+    return query
+  }, [debouncedSearch, statusFilter, assigneeFilter, tagFilter, categoryFilter, sort, page])
+
+  const { data, isLoading, isError, error } = useTasks(projectId, params)
+  const visibleTasks = data?.items ?? []
 
   function toggleSort(key) {
     setSort((prev) => (prev.key === key ? { key, dir: -prev.dir } : { key, dir: 1 }))
   }
-
-  const visibleTasks = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    const filtered = (tasks ?? []).filter((task) => {
-      if (query && !task.title.toLowerCase().includes(query)) return false
-      if (statusFilter && task.status !== statusFilter) return false
-      if (assigneeFilter === UNASSIGNED) {
-        if (task.assignee) return false
-      } else if (assigneeFilter && task.assignee?.id !== assigneeFilter) {
-        return false
-      }
-      if (tagFilter && task.tag?.id !== tagFilter) return false
-      if (categoryFilter === NO_CATEGORY) {
-        if (task.category) return false
-      } else if (categoryFilter && task.category?.id !== categoryFilter) {
-        return false
-      }
-      return true
-    })
-    return filtered.sort((a, b) => COMPARATORS[sort.key](a, b) * sort.dir)
-  }, [tasks, search, statusFilter, assigneeFilter, tagFilter, categoryFilter, sort])
 
   return (
     <div className="flex h-full flex-col gap-3 px-4 py-4">
@@ -192,7 +189,7 @@ export function ProjectTaskListPage() {
           ))}
         </select>
         <span className="ml-auto text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-          {t('taskList.counter', { shown: visibleTasks.length, total: tasks?.length ?? 0 })}
+          {t('taskList.total', { count: data?.totalItems ?? 0 })}
         </span>
         {canManage && (
           <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} whitespace-nowrap`}>
@@ -201,6 +198,9 @@ export function ProjectTaskListPage() {
         )}
       </div>
 
+      {/* isLoading, а не isFetching: с keepPreviousData таблица остаётся на экране, пока
+          грузится следующая страница, и подменять её на «Загрузка...» на каждый шаг
+          пагинации значило бы вернуть то самое мигание, ради которого она включена. */}
       {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
       {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
@@ -224,31 +224,31 @@ export function ProjectTaskListPage() {
             </colgroup>
             <thead className="sticky top-0 z-10">
               <tr>
-                <SortableHeader colKey="number" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.NUMBER} sort={sort} onSort={toggleSort}>
                   №
                 </SortableHeader>
-                <SortableHeader colKey="title" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.TITLE} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.titleLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="status" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.STATUS} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.statusLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="assignee" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.ASSIGNEE} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.assigneeLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="urgency" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.URGENCY} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.urgencyLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="dueDate" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.DUE_DATE} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.dueDateLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="tag" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.TAG} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.tagLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="category" sort={sort} onSort={toggleSort}>
+                <SortableHeader colKey={SORT.CATEGORY} sort={sort} onSort={toggleSort}>
                   {t('tasks.detail.categoryLabel')}
                 </SortableHeader>
-                <SortableHeader colKey="hours" sort={sort} onSort={toggleSort} align="right">
+                <SortableHeader colKey={SORT.HOURS} sort={sort} onSort={toggleSort} align="right">
                   {t('tasks.timeLogs.hoursLabel')}
                 </SortableHeader>
               </tr>
@@ -357,6 +357,10 @@ export function ProjectTaskListPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!isLoading && !isError && (
+        <Pagination page={data?.page ?? 0} totalPages={data?.totalPages ?? 0} onPageChange={setPage} />
       )}
     </div>
   )

@@ -11,29 +11,34 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface TaskRepository extends JpaRepository<Task, UUID> {
+public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositoryCustom {
 
     Optional<Task> findByProjectIdAndTaskNumber(UUID projectId, int taskNumber);
 
+    /**
+     * Все top-level задачи проекта для канбан-доски. Единственный список, оставшийся без
+     * пагинации, и осознанно (3.3): доска раскладывает задачи по шести колонкам и считает
+     * position перетаскиваемой карточки по её соседям, то есть ей нужен полный набор.
+     * Ограничение на количество карточек здесь естественное — колонка, в которой их тысяча,
+     * нечитаема сама по себе, и следующий шаг для неё — виртуализация, а не страницы.
+     * Табличный список задач (search) с пагинацией живёт отдельно.
+     *
+     * <p>join fetch — по той же причине, что и в search: TaskResponse разворачивает каждую
+     * из этих связей, а они EAGER, то есть без fetch join Hibernate возьмёт их отдельными
+     * запросами на каждую задачу.
+     */
     @Query("""
             select t from Task t
+            join fetch t.project
+            join fetch t.createdBy
+            left join fetch t.assignee
+            left join fetch t.tag
+            left join fetch t.category
             where t.project.id = :projectId
               and t.parentTask is null
-              and (:status is null or t.status = :status)
-              and (:assigneeId is null or t.assignee.id = :assigneeId)
             order by t.position asc
             """)
-    List<Task> findTopLevel(UUID projectId, TaskStatus status, UUID assigneeId);
-
-    @Query("""
-            select t from Task t
-            where t.project.id = :projectId
-              and t.parentTask.id = :parentId
-              and (:status is null or t.status = :status)
-              and (:assigneeId is null or t.assignee.id = :assigneeId)
-            order by t.position asc
-            """)
-    List<Task> findByParent(UUID projectId, UUID parentId, TaskStatus status, UUID assigneeId);
+    List<Task> findBoardTasks(UUID projectId);
 
     List<Task> findByParentTaskIdOrderByPositionAsc(UUID parentTaskId);
 

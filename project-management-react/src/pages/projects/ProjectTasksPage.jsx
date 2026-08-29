@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
-import { useCreateTask, useTasks, useUpdateTaskStatus } from '../../api/tasksQueries'
+import { useBoardTasks, useCreateTask, useUpdateTaskStatus } from '../../api/tasksQueries'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
@@ -229,7 +229,7 @@ export function ProjectTasksPage() {
   const { data: project } = useProjectBySlug(projectSlug)
   const projectId = project?.id
   const { data: members } = useProjectMembers(projectId)
-  const { data: tasks, isLoading, isError, error } = useTasks(projectId)
+  const { data: tasks, isLoading, isError, error } = useBoardTasks(projectId)
   const createTask = useCreateTask(projectId)
   const updateTaskStatus = useUpdateTaskStatus(projectId)
 

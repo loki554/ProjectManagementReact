@@ -141,7 +141,7 @@
     "allCategories": "Alle Kategorien",
     "empty": "Nichts gefunden",
     "newTask": "Neue Aufgabe",
-    "counter": "{{shown}} von {{total}}"
+    "total": "Aufgaben: {{count}}"
   },
   "wiki": {
     "title": "Wiki",

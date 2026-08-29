@@ -1,14 +1,32 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as tasksApi from './tasksApi'
 
+// tasksKey — общий префикс всех задач проекта: по нему инвалидируются разом и доска,
+// и любая страница списка, и запрос задачи по номеру.
 const tasksKey = (projectId) => ['projects', projectId, 'tasks']
+const boardKey = (projectId) => [...tasksKey(projectId), 'board']
+const taskListKey = (projectId, params) => [...tasksKey(projectId), 'list', params]
 const taskKey = (taskId) => ['tasks', taskId]
 const subtasksKey = (taskId) => ['tasks', taskId, 'subtasks']
 
-export function useTasks(projectId, filters = {}) {
+// Страница табличного списка. params (фильтры + сортировка + page/size) уезжают на сервер
+// как есть и входят в ключ кэша — каждая комбинация кэшируется отдельно.
+// keepPreviousData — чтобы при перелистывании и смене фильтра таблица не мигала пустотой,
+// как в useMyActiveTasks.
+export function useTasks(projectId, params = {}) {
   return useQuery({
-    queryKey: [...tasksKey(projectId), filters],
-    queryFn: () => tasksApi.fetchTasks(projectId, filters),
+    queryKey: taskListKey(projectId, params),
+    queryFn: () => tasksApi.fetchTasks(projectId, params),
+    enabled: Boolean(projectId),
+    placeholderData: keepPreviousData,
+  })
+}
+
+// Канбан-доска: все top-level задачи проекта одним массивом (см. fetchBoardTasks).
+export function useBoardTasks(projectId) {
+  return useQuery({
+    queryKey: boardKey(projectId),
+    queryFn: () => tasksApi.fetchBoardTasks(projectId),
     enabled: Boolean(projectId),
   })
 }
@@ -116,18 +134,21 @@ export function useUpdateTaskStatus(projectId) {
   return useMutation({
     mutationFn: ({ taskId, status, position, expectedStatus }) =>
       tasksApi.updateTaskStatus(taskId, { status, position, expectedStatus }),
+    // Точечно по ключу доски, а не по префиксу tasksKey: под тем же префиксом лежат
+    // страницы табличного списка ({items, ...}) и отдельные задачи по номеру, а
+    // reorderTasksOptimistically умеет только плоский массив доски.
     onMutate: async ({ taskId, status, position }) => {
-      await queryClient.cancelQueries({ queryKey: tasksKey(projectId) })
-      const previous = queryClient.getQueriesData({ queryKey: tasksKey(projectId) })
-      queryClient.setQueriesData({ queryKey: tasksKey(projectId) }, (old) =>
+      await queryClient.cancelQueries({ queryKey: boardKey(projectId) })
+      const previous = queryClient.getQueryData(boardKey(projectId))
+      queryClient.setQueryData(boardKey(projectId), (old) =>
         old ? reorderTasksOptimistically(old, { taskId, status, position }) : old,
       )
       return { previous }
     },
     onError: (_error, _variables, context) => {
-      context?.previous?.forEach(([key, data]) => {
-        queryClient.setQueryData(key, data)
-      })
+      if (context?.previous) {
+        queryClient.setQueryData(boardKey(projectId), context.previous)
+      }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
