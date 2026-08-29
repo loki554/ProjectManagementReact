@@ -15,7 +15,9 @@
 #   MAIL_PASSWORD       пароль SMTP
 #   JWT_SECRET          случайные >= 32 байта; проверяется в JwtService (см. 1.2)
 #   FRONTEND_BASE_URL   https://<домен фронта>; идёт и в CORS (SecurityConfig), и в ссылки писем
-#   STORAGE_BASE_PATH   каталог для вложений и аватарок; должен переживать перезапуск контейнера
+#   STORAGE_BASE_PATH   каталог для вложений и аватарок; должен переживать перезапуск
+#                       контейнера. Не нужен только при STORAGE_TYPE=s3 (см. app.storage ниже);
+#                       при local его отсутствие роняет старт, а не подставляет рабочий каталог
 
 # Swagger/OpenAPI здесь намеренно не включаются: в application.properties springdoc выключен
 # по умолчанию, а включает его только dev. Пути /v3/api-docs/** и /swagger-ui/** при этом ещё и
@@ -71,7 +73,34 @@ spring:
 
 app:
   storage:
-    base-path: ${STORAGE_BASE_PATH}
+    # local — файлы на диске инстанса, s3 — объектное хранилище (3.7). Дефолт остаётся
+    # local, потому что менять способ хранения молча, самим фактом выката, нельзя: файлы,
+    # уже лежащие на диске, в бакете не появятся.
+    #
+    # Для local обязателен STORAGE_BASE_PATH, и каталог обязан переживать перезапуск
+    # контейнера. Локальный диск в проде годится ровно для одного инстанса: второй не
+    # увидит чужих вложений, см. S3FileStorageService.
+    #
+    # Для s3 (STORAGE_TYPE=s3) обязателен S3_BUCKET; остальное — по обстоятельствам:
+    #   S3_REGION            регион бакета (по умолчанию us-east-1)
+    #   S3_ENDPOINT          адрес не-AWS хранилища (MinIO, Ceph, Yandex/VK Object Storage);
+    #                        пусто для настоящего AWS
+    #   S3_ACCESS_KEY/SECRET ключи; НЕ задавать при работе под IAM-ролью инстанса — тогда
+    #                        SDK возьмёт временные учётные данные сам, и в конфиге не будет
+    #                        долгоживущего секрета
+    #   S3_PATH_STYLE        true для MinIO и большинства не-AWS реализаций
+    #   S3_PRESIGNED         true отдаёт вложения редиректом прямо в хранилище; включать
+    #                        только после того, как в CORS бакета разрешён origin фронтенда
+    type: ${STORAGE_TYPE:local}
+    base-path: ${STORAGE_BASE_PATH:}
+    s3:
+      bucket: ${S3_BUCKET:}
+      region: ${S3_REGION:}
+      endpoint: ${S3_ENDPOINT:}
+      access-key: ${S3_ACCESS_KEY:}
+      secret-key: ${S3_SECRET_KEY:}
+      path-style-access: ${S3_PATH_STYLE:false}
+      presigned-downloads: ${S3_PRESIGNED:false}
   frontend:
     base-url: ${FRONTEND_BASE_URL}
   rate-limit:

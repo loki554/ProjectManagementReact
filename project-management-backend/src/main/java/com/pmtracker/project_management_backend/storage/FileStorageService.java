@@ -4,7 +4,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Абстракция над файловым хранилищем. Сейчас единственная реализация — локальный диск
@@ -47,4 +49,13 @@ public interface FileStorageService {
      * рассчитан этот трекер, это несколько тысяч строк раз в сутки.
      */
     List<StoredObject> listAll();
+
+    /**
+     * Временная ссылка, по которой файл можно забрать напрямую из хранилища, минуя
+     * приложение (3.7). Пусто — хранилище такого не умеет (локальный диск) или это
+     * выключено настройкой; тогда файл отдаётся через {@link #load(String)}, как и раньше.
+     */
+    default Optional<URI> presignedUrl(String relativePath) {
+        return Optional.empty();
+    }
 }

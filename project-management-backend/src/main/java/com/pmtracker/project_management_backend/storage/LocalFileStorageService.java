@@ -1,6 +1,7 @@
 package com.pmtracker.project_management_backend.storage;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,27 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+/**
+ * Хранилище на локальном диске инстанса — реализация по умолчанию. Заменяется на
+ * {@link S3FileStorageService} свойством {@code app.storage.type=s3} (3.7); ровно одна из
+ * двух реализаций поднимается в контексте, вызывающий код о выборе не знает.
+ */
 @Service
+@ConditionalOnProperty(name = "app.storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalFileStorageService implements FileStorageService {
 
     private final Path basePath;
 
-    public LocalFileStorageService(@Value("${app.storage.base-path}") String basePathProperty) {
+    public LocalFileStorageService(@Value("${app.storage.base-path:}") String basePathProperty) {
+        // Пустое значение допустимо в конфиге (при app.storage.type=s3 каталог не нужен, и
+        // требовать его от S3-развёртывания было бы странно), но НЕ допустимо здесь: этот
+        // бин поднялся, значит хранилище выбрано локальное, а пустой путь тихо превратился
+        // бы в рабочий каталог процесса — то есть вложения оказались бы неизвестно где и
+        // исчезли при первом же перезапуске.
+        if (basePathProperty == null || basePathProperty.isBlank()) {
+            throw new IllegalStateException(
+                    "app.storage.base-path must be set when app.storage.type is local");
+        }
         this.basePath = Paths.get(basePathProperty).toAbsolutePath().normalize();
     }
 
@@ -36,7 +52,7 @@ public class LocalFileStorageService implements FileStorageService {
         // Имя файла всегда генерируем сами (UUID + безопасное расширение) — не используем
         // оригинальное имя от клиента напрямую даже частично, чтобы не открывать path traversal
         // через что-то вроде "../../../etc/passwd.png" в качестве originalFilename.
-        String extension = extractSafeExtension(file.getOriginalFilename());
+        String extension = StorageKeys.extractSafeExtension(file.getOriginalFilename());
         Path targetFile = targetDir.resolve(UUID.randomUUID() + extension);
 
         try (InputStream in = file.getInputStream()) {
@@ -53,7 +69,7 @@ public class LocalFileStorageService implements FileStorageService {
 
         // extension приходит из кода (ImageSanitizer), а не от клиента, но прогоняем через ту же
         // проверку: единственный способ гарантировать, что в имени не окажется ничего лишнего.
-        Path targetFile = targetDir.resolve(UUID.randomUUID() + sanitizeExtension(extension));
+        Path targetFile = targetDir.resolve(UUID.randomUUID() + StorageKeys.sanitizeExtension(extension));
         Files.write(targetFile, content);
 
         return new StoredFile(toRelativePath(targetFile), Files.size(targetFile));
@@ -120,21 +136,5 @@ public class LocalFileStorageService implements FileStorageService {
 
     private String toRelativePath(Path targetFile) {
         return basePath.relativize(targetFile).toString().replace('\\', '/');
-    }
-
-    private String extractSafeExtension(String originalFilename) {
-        if (originalFilename == null) {
-            return "";
-        }
-        int dotIndex = originalFilename.lastIndexOf('.');
-        if (dotIndex < 0) {
-            return "";
-        }
-        return sanitizeExtension(originalFilename.substring(dotIndex));
-    }
-
-    private String sanitizeExtension(String extension) {
-        String normalized = extension.toLowerCase();
-        return normalized.matches("\\.[a-z0-9]{1,5}") ? normalized : "";
     }
 }

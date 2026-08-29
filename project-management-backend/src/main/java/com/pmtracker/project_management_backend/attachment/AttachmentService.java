@@ -22,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -127,9 +129,19 @@ public class AttachmentService {
         Attachment attachment = findAttachmentOrThrow(attachmentId);
         projectAccessService.requireMembership(attachment.getTask().getProject().getId(), currentUser);
 
+        // Если хранилище умеет выдавать прямые ссылки (3.7) — отдаём её, и 20 мегабайт
+        // вложения не проходят через приложение вовсе. Локальный диск такого не умеет,
+        // и там всё остаётся как было.
+        Optional<URI> directUrl = fileStorageService.presignedUrl(attachment.getStoredPath());
+        if (directUrl.isPresent()) {
+            return AttachmentDownload.redirected(directUrl.get(),
+                    attachment.getOriginalFilename(), attachment.getContentType());
+        }
+
         try {
             var resource = fileStorageService.load(attachment.getStoredPath());
-            return new AttachmentDownload(resource, attachment.getOriginalFilename(), attachment.getContentType());
+            return AttachmentDownload.proxied(resource,
+                    attachment.getOriginalFilename(), attachment.getContentType());
         } catch (NoSuchElementException e) {
             // запись в БД есть, а файла на диске уже нет — не должно происходить в норме,
             // но лучше вернуть понятный 404, чем уронить запрос в 500 (см. UserService.getAvatarResource)

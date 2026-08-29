@@ -33,6 +33,17 @@ app:
       script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self';
       frame-ancestors 'none'; base-uri 'self'; form-action 'self'
   storage:
+    # local (по умолчанию) — файлы на диске инстанса; s3 — объектное хранилище (3.7).
+    # Локально s3 проверяется против MinIO из docker-compose: раскомментировать блок ниже,
+    # завести бакет в консоли http://localhost:9001 и перезапустить бэкенд.
+    #   type: s3
+    #   s3:
+    #     bucket: pmtracker
+    #     endpoint: http://localhost:9000
+    #     access-key: ${MINIO_ROOT_USER}
+    #     secret-key: ${MINIO_ROOT_PASSWORD}
+    #     path-style-access: true
+    type: local
     base-path: ./storage
   frontend:
     base-url: http://localhost:5173

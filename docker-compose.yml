@@ -16,6 +16,24 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # S3-совместимое хранилище для локальной разработки (3.7 IMPROVEMENTS.md). Приложение по
+  # умолчанию пишет файлы на диск и MinIO не трогает — контейнер нужен только тем, кто
+  # переключил app.storage.type=s3, чтобы проверить эту ветку до выката.
+  # Консоль на http://localhost:9001 (логин/пароль из .env), API на 9000.
+  # Бакет создать один раз руками: консоль → Buckets → Create Bucket → pmtracker.
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-pmtracker}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-changeme-minio}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
 volumes:
   pg_data:
+  minio_data:
   

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,13 +32,29 @@ public class AttachmentController {
 
     // Скачивание требует авторизации и членства в проекте задачи (не static hosting,
     // см. §5 IMPLEMENTATION_PLAN.md) — путь к файлу на диске не угадываемый и не публичный.
+    //
+    // Проверка прав остаётся здесь в любом случае: даже когда ответом становится редирект,
+    // ссылку выдаёт приложение и только тому, кто уже доказал своё членство в проекте. Сама
+    // ссылка живёт минуты и подписана — это не превращает бакет в публичный.
     @GetMapping("/{id}/download")
-    @Operation(summary = "Скачать вложение", description = "Доступно любому участнику проекта, включая VIEWER")
+    @Operation(summary = "Скачать вложение",
+            description = "Доступно любому участнику проекта, включая VIEWER. При объектном хранилище с "
+                    + "включёнными presigned-ссылками отвечает 302 на временную ссылку в хранилище")
     public ResponseEntity<Resource> download(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         AttachmentDownload download = attachmentService.download(currentUser, id);
         ContentDisposition contentDisposition = ContentDisposition.attachment()
                 .filename(download.originalFilename(), StandardCharsets.UTF_8)
                 .build();
+
+        if (download.directUrl().isPresent()) {
+            // Content-Disposition уезжает вместе с редиректом: имя файла знает приложение,
+            // а не хранилище, где объект называется UUID'ом.
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(download.directUrl().get())
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                    .build();
+        }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(download.contentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
