@@ -8,6 +8,7 @@ import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.ConcurrentModificationConflictException;
 import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
+import com.pmtracker.project_management_backend.common.exception.ParentTaskDeletedException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TagNotFoundException;
@@ -26,6 +27,7 @@ import com.pmtracker.project_management_backend.tag.TagRepository;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.MyActiveTaskResponse;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
+import com.pmtracker.project_management_backend.task.dto.TrashedTaskResponse;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.UpdateTaskStatusRequest;
 import com.pmtracker.project_management_backend.timelog.TimeLogRepository;
@@ -55,6 +57,13 @@ public class TaskService {
     // ?size=1000000 не возвращал ровно то, от чего пагинацию и вводили.
     private static final int DEFAULT_TASK_PAGE_SIZE = 50;
     private static final int MAX_TASK_PAGE_SIZE = 200;
+
+    /**
+     * Сколько задача лежит в корзине, прежде чем её физически удалит TaskCleanupJob (3.5).
+     * Значение живёт здесь, а не в задании чистки: показать срок в интерфейсе и соблюсти
+     * его при удалении должно одно и то же число.
+     */
+    static final Duration TRASH_RETENTION = Duration.ofDays(30);
 
     private final TaskRepository taskRepository;
     private final ProjectAccessService projectAccessService;
@@ -326,17 +335,58 @@ public class TaskService {
         }
     }
 
+    /**
+     * Удаление задачи (3.5) — теперь мягкое: задача уезжает в корзину проекта на 30 дней
+     * вместе с подзадачами, комментариями, вложениями и залогированным временем, которые
+     * раньше исчезали безвозвратно по ON DELETE CASCADE.
+     */
     @Transactional
     public void delete(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
         ProjectMember membership = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
         projectAccessService.requireRole(membership, ProjectRole.MEMBER);
-        // task = null сразу: ссылаться на задачу, удаляемую в этой же транзакции, нельзя
-        // (Hibernate падает на flush из-за висячей ссылки managed-сущности), а после
-        // удаления FK всё равно был бы обнулён. Идентичность задачи — в снапшоте payload.
+        // task = null в событии: задача перестаёт быть видимой для JPA сразу после UPDATE,
+        // и ссылка на неё из ленты активности вела бы в никуда — вернее, вела бы в 404 до
+        // самого восстановления. Идентичность задачи — в снапшоте payload.
         activityService.record(task.getProject(), currentUser, "task_deleted", null,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
-        taskRepository.deleteById(taskId);
+        taskRepository.softDelete(taskId, Instant.now());
+    }
+
+    /** Содержимое корзины проекта (3.5). Смотреть могут все участники, как и сами задачи. */
+    @Transactional(readOnly = true)
+    public List<TrashedTaskResponse> listTrash(User currentUser, UUID projectId) {
+        projectAccessService.findProjectOrThrow(projectId);
+        projectAccessService.requireMembership(projectId, currentUser);
+        return taskRepository.findTrashed(projectId).stream()
+                .map(t -> TrashedTaskResponse.from(t, t.getDeletedAt().plus(TRASH_RETENTION)))
+                .toList();
+    }
+
+    /**
+     * Возвращает задачу из корзины (3.5). Права те же, что и на удаление: кто мог отправить
+     * в корзину, тот может и достать.
+     */
+    @Transactional
+    public TaskResponse restore(User currentUser, UUID taskId) {
+        TaskRepository.DeletedTask deleted = taskRepository.findDeleted(taskId)
+                .orElseThrow(TaskNotFoundException::new);
+        Project project = projectAccessService.findProjectOrThrow(deleted.getProjectId());
+        ProjectMember membership = projectAccessService.requireMembership(project.getId(), currentUser);
+        projectAccessService.requireRole(membership, ProjectRole.MEMBER);
+
+        // Подзадача под удалённым родителем восстановлению не подлежит: возвращать её
+        // некуда, она повисла бы под невидимой задачей. Сначала родитель.
+        if (deleted.getParentDeletedAt() != null) {
+            throw new ParentTaskDeletedException();
+        }
+
+        taskRepository.restore(taskId, deleted.getDeletedAt());
+        activityService.record(project, currentUser, "task_restored", null,
+                Map.of("taskNumber", deleted.getTaskNumber(), "title", deleted.getTitle()));
+
+        Task task = findTaskOrThrow(taskId);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
     }
 
     @Transactional(readOnly = true)

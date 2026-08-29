@@ -63,16 +63,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
     List<Task> findSiblingsByStatus(UUID projectId, TaskStatus status, UUID parentTaskId);
 
     /**
-     * Bulk JPQL-delete по той же причине, что и ProjectRepository.deleteById() (см. комментарий
-     * там): избегаем Hibernate TransientPropertyValueException, когда в persistence context уже
-     * загружен managed граф (родитель/подзадачи), и полагаемся на ON DELETE CASCADE в БД для
-     * удаления подзадач.
-     */
-    @Modifying
-    @Query("delete from Task t where t.id = :id")
-    void deleteById(UUID id);
-
-    /**
      * "Мои активные задачи" (кросс-проектный список для главной страницы): assignee = текущий
      * пользователь, статус не в excludedStatuses (DONE/REJECTED). Сортировка в три уровня:
      * 1) задачи с дедлайном внутри urgentCutoff (т.е. просроченные или истекающие в ближайшие
@@ -127,4 +117,115 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
               and t.dueDate <= :cutoff
             """)
     List<Task> findActiveWithDueDateBefore(List<TaskStatus> excludedStatuses, Instant cutoff);
+
+    // ----------------------------------------------------------- мягкое удаление (3.5)
+    //
+    // Всё, что ниже, написано нативным SQL сознательно: Task помечена
+    // @SQLRestriction("deleted_at is null"), поэтому средствами JPA удалённая задача
+    // недостижима в принципе — её нельзя ни найти, ни обновить, ни удалить. Корзине,
+    // восстановлению и чистке нужна ровно та половина таблицы, которую ORM скрывает.
+
+    /**
+     * Отправляет задачу в корзину вместе с её живыми подзадачами — одним UPDATE и с одним
+     * и тем же deleted_at, по которому потом собирается обратно восстановление.
+     *
+     * <p>{@code and deleted_at is null} важно: подзадача, удалённая отдельно и раньше,
+     * сохраняет свою метку и остаётся собственной записью корзины, а не воскресает вместе
+     * с родителем, к удалению которого не имеет отношения.
+     */
+    @Modifying
+    @Query(value = """
+            update tasks set deleted_at = :deletedAt
+            where (id = :taskId or parent_task_id = :taskId) and deleted_at is null
+            """, nativeQuery = true)
+    int softDelete(UUID taskId, Instant deletedAt);
+
+    /**
+     * Возвращает из корзины задачу и те её подзадачи, что уехали туда вместе с ней (та же
+     * метка времени). Позиции при этом остаются старыми и вполне могут совпасть с чужими —
+     * канбан разводит дубликаты при первом же перетаскивании (см. findSiblingsByStatus).
+     */
+    @Modifying
+    @Query(value = """
+            update tasks set deleted_at = null
+            where id = :taskId
+               or (parent_task_id = :taskId and deleted_at = :deletedAt)
+            """, nativeQuery = true)
+    int restore(UUID taskId, Instant deletedAt);
+
+    /**
+     * Содержимое корзины проекта: удалённые задачи, родитель которых НЕ удалён. Подзадача,
+     * уехавшая в корзину вместе с родителем, отдельной строкой не показывается — вернётся
+     * она вместе с ним.
+     */
+    @Query(value = """
+            select t.id as id,
+                   t.task_number as taskNumber,
+                   t.title as title,
+                   t.status as status,
+                   t.deleted_at as deletedAt,
+                   (select count(*) from tasks s
+                     where s.parent_task_id = t.id and s.deleted_at = t.deleted_at) as subtaskCount
+            from tasks t
+            left join tasks p on p.id = t.parent_task_id
+            where t.project_id = :projectId
+              and t.deleted_at is not null
+              and (t.parent_task_id is null or p.deleted_at is null)
+            order by t.deleted_at desc, t.task_number asc
+            """, nativeQuery = true)
+    List<TrashedTask> findTrashed(UUID projectId);
+
+    /** Одна запись корзины по id — для восстановления: нужны проект, метка и родитель. */
+    @Query(value = """
+            select t.id as id,
+                   t.project_id as projectId,
+                   t.task_number as taskNumber,
+                   t.title as title,
+                   t.deleted_at as deletedAt,
+                   p.deleted_at as parentDeletedAt
+            from tasks t
+            left join tasks p on p.id = t.parent_task_id
+            where t.id = :taskId and t.deleted_at is not null
+            """, nativeQuery = true)
+    Optional<DeletedTask> findDeleted(UUID taskId);
+
+    /**
+     * Физическая чистка корзины (TaskCleanupJob). Подзадачи уезжают по ON DELETE CASCADE
+     * вместе с родителем; живых подзадач под удалённой задачей быть не может — softDelete
+     * помечает их вместе с ней, а завести новую под невидимым родителем нельзя.
+     */
+    @Modifying
+    @Query(value = "delete from tasks where deleted_at < :cutoff", nativeQuery = true)
+    int deleteTrashedBefore(Instant cutoff);
+
+    /** Строка корзины в списке проекта. */
+    interface TrashedTask {
+        UUID getId();
+
+        int getTaskNumber();
+
+        String getTitle();
+
+        String getStatus();
+
+        Instant getDeletedAt();
+
+        long getSubtaskCount();
+    }
+
+    /** Удалённая задача, как её видит восстановление. */
+    interface DeletedTask {
+        UUID getId();
+
+        UUID getProjectId();
+
+        int getTaskNumber();
+
+        String getTitle();
+
+        Instant getDeletedAt();
+
+        /** null — родителя нет или он жив; не null — восстанавливать некуда. */
+        Instant getParentDeletedAt();
+    }
 }

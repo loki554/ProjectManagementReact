@@ -6,6 +6,7 @@ import * as tasksApi from './tasksApi'
 const tasksKey = (projectId) => ['projects', projectId, 'tasks']
 const boardKey = (projectId) => [...tasksKey(projectId), 'board']
 const taskListKey = (projectId, params) => [...tasksKey(projectId), 'list', params]
+const trashKey = (projectId) => [...tasksKey(projectId), 'trash']
 const taskKey = (taskId) => ['tasks', taskId]
 const subtasksKey = (taskId) => ['tasks', taskId, 'subtasks']
 
@@ -151,6 +152,27 @@ export function useUpdateTaskStatus(projectId) {
       }
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+    },
+  })
+}
+
+// Корзина проекта (3.5).
+export function useTrash(projectId) {
+  return useQuery({
+    queryKey: trashKey(projectId),
+    queryFn: () => tasksApi.fetchTrash(projectId),
+    enabled: Boolean(projectId),
+  })
+}
+
+// Инвалидируем весь префикс проекта: восстановленная задача возвращается и в корзину
+// (её там больше нет), и в список, и на доску.
+export function useRestoreTask(projectId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (taskId) => tasksApi.restoreTask(taskId),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
     },
   })

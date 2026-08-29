@@ -124,6 +124,7 @@
     "wiki": "Wiki",
     "tags": "Tags",
     "categories": "Categories",
+    "trash": "Trash",
     "collapse": "Collapse",
     "expand": "Expand"
   },
@@ -438,6 +439,7 @@
     "ASSIGNEE_NOT_PROJECT_MEMBER": "The assignee must be a member of the project",
     "INVALID_TARGET_POSITION": "Invalid position in the column, please refresh the page",
     "TASK_STATUS_CONFLICT": "Someone else already changed this task's status. The board has been refreshed — try again",
+    "PARENT_TASK_DELETED": "Restore the parent task first — there is nowhere to put this subtask back",
     "CONCURRENT_MODIFICATION": "Someone else changed this while you were editing. Reload the page and redo your changes — otherwise you would overwrite their work",
     "TIME_LOG_NOT_FOUND": "Time log not found",
     "NOT_TIME_LOG_OWNER": "Only the author or a project admin can delete this entry",
@@ -458,5 +460,14 @@
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again",
     "INVALID_CURRENT_PASSWORD": "The current password is incorrect"
+  },
+  "trash": {
+    "title": "Trash",
+    "description": "Deleted tasks are kept for 30 days, then removed for good",
+    "empty": "The trash is empty",
+    "deletedAt": "Deleted",
+    "purgeAfter": "Gone after",
+    "restore": "Restore",
+    "withSubtasks": "and {{count}} subtask(s)"
   }
 }

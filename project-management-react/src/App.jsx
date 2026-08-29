@@ -19,6 +19,7 @@ import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
+import { ProjectTrashPage } from './pages/projects/ProjectTrashPage'
 import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
 import { TaskCreatePage } from './pages/projects/TaskCreatePage'
 import { TaskEditPage } from './pages/projects/TaskEditPage'
@@ -103,6 +104,7 @@ function AppRoutes() {
           <Route index element={<ProjectOverviewPage />} />
           <Route path="tasks" element={<ProjectTaskListPage />} />
           <Route path="board" element={<ProjectTasksPage />} />
+          <Route path="trash" element={<ProjectTrashPage />} />
           {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
               поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
               с ?parent=<taskNumber>. */}

@@ -17,12 +17,28 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Задача проекта.
+ *
+ * <p>@SQLRestriction — мягкое удаление (3.5, V22): условие дописывается ко всем загрузкам
+ * и HQL-запросам этой сущности, поэтому удалённая задача не видна ни списку, ни доске, ни
+ * findById, ни комментариям, вложениям и учёту времени, которые ищут задачу через него же.
+ * Альтернатива — фильтр в каждом запросе — требует не забыть его полтора десятка раз,
+ * причём забытый не ломает ничего заметного, а просто показывает удалённую задачу в одном
+ * экране из десяти.
+ *
+ * <p>Цена решения: корзина, восстановление и чистка обязаны обходить это условие, а
+ * отключить @SQLRestriction для отдельного запроса нечем — они написаны нативным SQL, см.
+ * TaskRepository.
+ */
 @Entity
 @Table(name = "tasks")
+@SQLRestriction("deleted_at is null")
 public class Task {
 
     @Id
@@ -90,6 +106,14 @@ public class Task {
     @Version
     @Column(nullable = false)
     private long version;
+
+    /**
+     * Момент мягкого удаления (3.5). Не null — задача в корзине проекта; через 30 дней её
+     * заберёт TaskCleanupJob. Поле только читается кодом на Java: проставляют и снимают его
+     * нативные UPDATE в TaskRepository, потому что сущность для них уже невидима.
+     */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -219,6 +243,10 @@ public class Task {
 
     public long getVersion() {
         return version;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
     }
 
     public Instant getCreatedAt() {

@@ -4,6 +4,7 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
+import com.pmtracker.project_management_backend.task.dto.TrashedTaskResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -74,6 +75,15 @@ public class ProjectTaskController {
     public ResponseEntity<List<TaskResponse>> board(@AuthenticationPrincipal User currentUser,
                                                       @PathVariable UUID projectId) {
         return ResponseEntity.ok(taskService.listBoard(currentUser, projectId));
+    }
+
+    @GetMapping("/trash")
+    @Operation(summary = "Корзина проекта",
+            description = "Задачи, удалённые за последние 30 дней, вместе со сроком их окончательного "
+                    + "удаления. Доступно любому участнику проекта, включая VIEWER")
+    public ResponseEntity<List<TrashedTaskResponse>> trash(@AuthenticationPrincipal User currentUser,
+                                                             @PathVariable UUID projectId) {
+        return ResponseEntity.ok(taskService.listTrash(currentUser, projectId));
     }
 
     @GetMapping("/by-number/{taskNumber}")

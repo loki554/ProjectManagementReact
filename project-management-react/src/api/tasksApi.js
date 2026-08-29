@@ -32,6 +32,16 @@ export function updateTaskStatus(taskId, payload) {
   return apiClient.patch(`/tasks/${taskId}/status`, payload).then((res) => res.data)
 }
 
+// Корзина проекта (3.5): задачи, удалённые за последние 30 дней. Удаление стало мягким,
+// поэтому deleteTask выше отправляет задачу именно сюда, а не стирает её.
+export function fetchTrash(projectId) {
+  return apiClient.get(`/projects/${projectId}/tasks/trash`).then((res) => res.data)
+}
+
+export function restoreTask(taskId) {
+  return apiClient.post(`/tasks/${taskId}/restore`).then((res) => res.data)
+}
+
 export function deleteTask(taskId) {
   return apiClient.delete(`/tasks/${taskId}`)
 }

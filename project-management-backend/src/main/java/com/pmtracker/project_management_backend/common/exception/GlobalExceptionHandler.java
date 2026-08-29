@@ -134,6 +134,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("PARENT_TASK_NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(ParentTaskDeletedException.class)
+    public ResponseEntity<ErrorResponse> handleParentTaskDeleted(ParentTaskDeletedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("PARENT_TASK_DELETED", ex.getMessage()));
+    }
+
     @ExceptionHandler(ParentTaskProjectMismatchException.class)
     public ResponseEntity<ErrorResponse> handleParentTaskProjectMismatch(ParentTaskProjectMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

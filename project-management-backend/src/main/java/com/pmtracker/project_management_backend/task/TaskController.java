@@ -60,10 +60,19 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить задачу", description = "OWNER/ADMIN/MEMBER; каскадно удаляет подзадачи на уровне БД")
+    @Operation(summary = "Удалить задачу",
+            description = "OWNER/ADMIN/MEMBER. Мягкое удаление: задача уезжает в корзину проекта "
+                    + "вместе с подзадачами и хранится там 30 дней, после чего удаляется физически")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         taskService.delete(currentUser, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/restore")
+    @Operation(summary = "Восстановить задачу из корзины",
+            description = "OWNER/ADMIN/MEMBER. Возвращает задачу и подзадачи, уехавшие в корзину вместе с ней")
+    public ResponseEntity<TaskResponse> restore(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.restore(currentUser, id));
     }
 
     @GetMapping("/{id}/subtasks")

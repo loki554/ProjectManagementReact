@@ -124,6 +124,7 @@
     "wiki": "Wiki",
     "tags": "Tags",
     "categories": "Kategorien",
+    "trash": "Papierkorb",
     "collapse": "Einklappen",
     "expand": "Ausklappen"
   },
@@ -438,6 +439,7 @@
     "ASSIGNEE_NOT_PROJECT_MEMBER": "Der Zuständige muss Mitglied des Projekts sein",
     "INVALID_TARGET_POSITION": "Ungültige Position in der Spalte, bitte Seite neu laden",
     "TASK_STATUS_CONFLICT": "Jemand anderes hat den Status dieser Aufgabe bereits geändert. Das Board wurde aktualisiert — bitte erneut versuchen",
+    "PARENT_TASK_DELETED": "Stellen Sie zuerst die übergeordnete Aufgabe wieder her — diese Unteraufgabe hat sonst keinen Platz",
     "CONCURRENT_MODIFICATION": "Jemand anderes hat dies während Ihrer Bearbeitung geändert. Laden Sie die Seite neu und wiederholen Sie Ihre Änderungen — sonst überschreiben Sie fremde Arbeit",
     "TIME_LOG_NOT_FOUND": "Zeiteintrag nicht gefunden",
     "NOT_TIME_LOG_OWNER": "Nur der Autor oder ein Projekt-Administrator kann diesen Eintrag löschen",
@@ -458,5 +460,14 @@
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut",
     "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch"
+  },
+  "trash": {
+    "title": "Papierkorb",
+    "description": "Gelöschte Aufgaben werden 30 Tage aufbewahrt und danach endgültig entfernt",
+    "empty": "Der Papierkorb ist leer",
+    "deletedAt": "Gelöscht",
+    "purgeAfter": "Verschwindet am",
+    "restore": "Wiederherstellen",
+    "withSubtasks": "und {{count}} Unteraufgabe(n)"
   }
 }

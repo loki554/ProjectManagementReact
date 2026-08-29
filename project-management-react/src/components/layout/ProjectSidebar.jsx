@@ -1,4 +1,14 @@
-import { BookOpen, ChevronsLeft, ChevronsRight, FolderTree, List, SquareKanban, Tag, Users } from 'lucide-react'
+import {
+  BookOpen,
+  ChevronsLeft,
+  ChevronsRight,
+  FolderTree,
+  List,
+  SquareKanban,
+  Tag,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
@@ -13,6 +23,7 @@ const NAV_ITEMS = [
   { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
   { to: 'settings/categories', icon: FolderTree, labelKey: 'projectSidebar.categories' },
+  { to: 'trash', icon: Trash2, labelKey: 'projectSidebar.trash' },
 ]
 
 export function ProjectSidebar({ project }) {

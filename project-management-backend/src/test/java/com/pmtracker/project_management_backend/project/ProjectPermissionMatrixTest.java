@@ -26,6 +26,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.ResultActions;
@@ -41,6 +42,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.List;
@@ -138,6 +141,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("GET    /projects/{id}/tasks",              f -> get("/api/projects/" + f.projectId + "/tasks"),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /projects/{id}/tasks/board",        f -> get("/api/projects/" + f.projectId + "/tasks/board"),
+                    ALLOWED, ALLOWED, ALLOWED, ALLOWED),
+            endpoint("GET    /projects/{id}/tasks/trash",        f -> get("/api/projects/" + f.projectId + "/tasks/trash"),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /projects/{id}/tasks/by-number/{n}", f -> get("/api/projects/" + f.projectId
                             + "/tasks/by-number/" + f.taskNumber),
@@ -244,6 +249,8 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
                     ALLOWED, ALLOWED, ALLOWED, INSUFFICIENT_ROLE),
             endpoint("DELETE /tasks/{id}",                       f -> delete("/api/tasks/" + f.taskId),
                     ALLOWED, ALLOWED, ALLOWED, INSUFFICIENT_ROLE),
+            endpoint("POST   /tasks/{id}/restore",               f -> post("/api/tasks/" + f.trashedTaskId + "/restore"),
+                    ALLOWED, ALLOWED, ALLOWED, INSUFFICIENT_ROLE),
             endpoint("POST   /tasks/{id}/subtasks",              f -> post("/api/tasks/" + f.taskId + "/subtasks")
                             .contentType(APPLICATION_JSON)
                             .content(NEW_TASK_BODY),
@@ -296,7 +303,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
 
     /**
      * Отдельный столбец матрицы, вынесенный в свой тест: он одинаков для всех строк, и
-     * повторять его 44 раза в таблице значило бы утопить в нём саму таблицу. Смысл при этом
+     * повторять его 46 раз в таблице значило бы утопить в нём саму таблицу. Смысл при этом
      * ровно тот же — посторонний не должен получить 2xx ни от одного эндпоинта проекта,
      * включая чтение.
      */
@@ -344,7 +351,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Test
     @DisplayName("в таблице учтены все эндпоинты проекта")
     void matrixCoversEveryProjectEndpoint() {
-        assertThat(ENDPOINTS).hasSize(44);
+        assertThat(ENDPOINTS).hasSize(46);
         assertThat(ENDPOINTS).extracting(Endpoint::name).doesNotHaveDuplicates();
     }
 
@@ -385,7 +392,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
 
     /** Всё, на что ссылаются запросы из таблицы. Пересоздаётся перед каждым запуском. */
     private record Fixture(UUID projectId, String projectSlug, long projectVersion,
-                           UUID taskId, int taskNumber, long taskVersion,
+                           UUID taskId, int taskNumber, long taskVersion, UUID trashedTaskId,
                            UUID viewerUserId, String outsiderEmail,
                            UUID categoryId, UUID tagId,
                            UUID commentId, UUID timeLogId, UUID attachmentId,
@@ -402,6 +409,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     private static final String PREVIEW_IMAGE_PATH = "fixtures/preview.png";
     private static final String ATTACHMENT_PATH = "fixtures/note.txt";
 
+    @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private JwtService jwtService;
     @Autowired private UserRepository userRepository;
     @Autowired private ProjectRepository projectRepository;
@@ -475,6 +483,22 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         task.setCreatedBy(owner);
         taskRepository.save(task);
 
+        // Отдельная задача, уже лежащая в корзине (3.5): строке «восстановить» нужно, чтобы
+        // было что восстанавливать, иначе она проверяла бы 404 вместо прав.
+        Task trashedTask = new Task();
+        trashedTask.setProject(project);
+        trashedTask.setTaskNumber(projectRepository.reserveNextTaskNumber(project.getId()));
+        trashedTask.setTitle("Fixture trashed task");
+        trashedTask.setStatus(TaskStatus.NEW);
+        trashedTask.setUrgency(TaskUrgency.MEDIUM);
+        trashedTask.setPosition(1);
+        trashedTask.setCreatedBy(owner);
+        taskRepository.save(trashedTask);
+        // Метку ставим напрямую: TaskRepository.softDelete — @Modifying-запрос и требует
+        // транзакции, а фикстура собирается вне неё (см. комментарий к её сборке выше).
+        jdbcTemplate.update("UPDATE tasks SET deleted_at = ? WHERE id = ?",
+                Timestamp.from(Instant.now()), trashedTask.getId());
+
         Category category = new Category();
         category.setProject(project);
         category.setName("Fixture category");
@@ -497,7 +521,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         Attachment ownAttachment = attachment(task, member);
 
         fixture = new Fixture(project.getId(), project.getSlug(), project.getVersion(),
-                task.getId(), taskNumber, task.getVersion(),
+                task.getId(), taskNumber, task.getVersion(), trashedTask.getId(),
                 viewer.getId(), outsider.getEmail(),
                 category.getId(), tag.getId(),
                 foreignComment.getId(), foreignTimeLog.getId(), foreignAttachment.getId(),
