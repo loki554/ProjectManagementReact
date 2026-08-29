@@ -1,5 +1,7 @@
 package com.pmtracker.project_management_backend.notification;
 
+import com.pmtracker.project_management_backend.common.scheduling.SchedulerLock;
+import com.pmtracker.project_management_backend.common.scheduling.SchedulerLockKey;
 import com.pmtracker.project_management_backend.task.Task;
 import com.pmtracker.project_management_backend.task.TaskRepository;
 import com.pmtracker.project_management_backend.task.TaskStatus;
@@ -20,6 +22,12 @@ import java.util.List;
  * состояния "кого уже проверяли". DUE_SOON_WINDOW совпадает с порогом "горящих" карточек на
  * фронтенде (ActiveTaskCard.DUE_SOON_THRESHOLD_MS) и с TaskService.URGENT_DUE_WINDOW —
  * единое определение "скоро истекает" на весь продукт, а не третье отдельное число.
+ * <p>
+ * Повторные тики безопасны, а вот ОДНОВРЕМЕННЫЕ — нет, и в этом разница между «сканировать
+ * дважды» и «сканировать на двух инстансах» (3.8). Дедупликация в NotificationService
+ * читает и пишет, то есть проигрывает гонке ровно тогда, когда два скана идут параллельно:
+ * оба видят, что уведомления ещё нет, и оба его создают. Поэтому тик берёт
+ * advisory-блокировку и просто пропускает работу, если её держит другой инстанс.
  */
 @Component
 public class NotificationScheduler {
@@ -37,15 +45,26 @@ public class NotificationScheduler {
 
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
+    private final SchedulerLock schedulerLock;
 
-    public NotificationScheduler(TaskRepository taskRepository, NotificationService notificationService) {
+    public NotificationScheduler(TaskRepository taskRepository,
+                                 NotificationService notificationService,
+                                 SchedulerLock schedulerLock) {
         this.taskRepository = taskRepository;
         this.notificationService = notificationService;
+        this.schedulerLock = schedulerLock;
     }
 
     @Scheduled(fixedRateString = FIXED_RATE_MS, initialDelayString = INITIAL_DELAY_MS)
     @Transactional
     public void checkDueDates() {
+        // Блокировка живёт до конца этой транзакции, то есть ровно столько, сколько идёт
+        // скан, и снимается сама — в том числе если инстанс упадёт посреди работы.
+        if (!schedulerLock.tryAcquire(SchedulerLockKey.NOTIFICATION_DUE_SCAN)) {
+            log.debug("Due date scan skipped: another instance is running it");
+            return;
+        }
+
         Instant now = Instant.now();
         Instant cutoff = now.plus(DUE_SOON_WINDOW);
         List<Task> candidates = taskRepository.findActiveWithDueDateBefore(INACTIVE_STATUSES, cutoff);
