@@ -9,6 +9,31 @@
     "logout": "Выйти",
     "loggingOut": "Выходим..."
   },
+  "search": {
+    "label": "Поиск",
+    "title": "Поиск",
+    "placeholder": "Поиск по задачам, комментариям и вики",
+    "placeholderProject": "Поиск по проекту",
+    "searching": "Ищем...",
+    "hint": "Введите слово, чтобы начать поиск",
+    "empty": "По запросу «{{query}}» ничего не нашлось",
+    "found": "Найдено: {{total}}",
+    "showAll": "Показать все результаты ({{total}})",
+    "allProjects": "Все проекты",
+    "scopeLabel": "Где искать",
+    "wikiTitle": "Вики · {{project}}",
+    "types": {
+      "ALL": "Всё",
+      "TASK": "Задачи",
+      "COMMENT": "Комментарии",
+      "WIKI": "Вики"
+    },
+    "resultTypes": {
+      "TASK": "Задача",
+      "COMMENT": "Комментарий",
+      "WIKI": "Вики"
+    }
+  },
   "notifications": {
     "title": "Уведомления",
     "loading": "Загрузка уведомлений...",

@@ -7,6 +7,7 @@ import { SUPPORTED_LANGUAGES } from '../../i18n'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useAuthStore } from '../../stores/authStore'
 import { ThemeToggle } from '../ThemeToggle'
+import { GlobalSearch } from './GlobalSearch'
 import { NotificationBell } from './NotificationBell'
 
 export function AppHeader() {
@@ -39,10 +40,12 @@ export function AppHeader() {
   })
 
   return (
-    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-      <Link to="/projects" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+    <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+      <Link to="/projects" className="shrink-0 text-lg font-semibold text-gray-900 dark:text-gray-100">
         {t('app.name')}
       </Link>
+
+      <GlobalSearch />
 
       <div className="flex items-center gap-3">
         <div className="flex gap-1 rounded-md border border-gray-200 p-1 dark:border-gray-700">

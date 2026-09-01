@@ -4,6 +4,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { ProfilePage } from './pages/ProfilePage'
+import { SearchPage } from './pages/SearchPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
@@ -56,7 +57,8 @@ function App() {
 // (auth-страницы, профиль).
 function AppRoutes() {
   const location = useLocation()
-  const hasOwnHeader = location.pathname.startsWith('/projects')
+  const hasOwnHeader =
+    location.pathname.startsWith('/projects') || location.pathname.startsWith('/search')
 
   return (
     <>
@@ -80,6 +82,16 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ProjectsListPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Выдача поиска — свой роут, а не оверлей: состояние поиска целиком лежит в
+            query-параметрах, чтобы ссылкой можно было поделиться (см. SearchPage). */}
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
             </ProtectedRoute>
           }
         />

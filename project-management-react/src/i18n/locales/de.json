@@ -9,6 +9,31 @@
     "logout": "Abmelden",
     "loggingOut": "Abmeldung läuft..."
   },
+  "search": {
+    "label": "Suche",
+    "title": "Suche",
+    "placeholder": "Aufgaben, Kommentare und Wiki durchsuchen",
+    "placeholderProject": "In diesem Projekt suchen",
+    "searching": "Wird gesucht...",
+    "hint": "Geben Sie ein Wort ein, um zu suchen",
+    "empty": "Nichts gefunden für „{{query}}“",
+    "found": "Gefunden: {{total}}",
+    "showAll": "Alle Ergebnisse anzeigen ({{total}})",
+    "allProjects": "Alle Projekte",
+    "scopeLabel": "Suchbereich",
+    "wikiTitle": "Wiki · {{project}}",
+    "types": {
+      "ALL": "Alles",
+      "TASK": "Aufgaben",
+      "COMMENT": "Kommentare",
+      "WIKI": "Wiki"
+    },
+    "resultTypes": {
+      "TASK": "Aufgabe",
+      "COMMENT": "Kommentar",
+      "WIKI": "Wiki"
+    }
+  },
   "notifications": {
     "title": "Benachrichtigungen",
     "loading": "Benachrichtigungen werden geladen...",
