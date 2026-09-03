@@ -4,6 +4,7 @@ import com.pmtracker.project_management_backend.auth.dto.AuthResponse;
 import com.pmtracker.project_management_backend.auth.dto.LoginRequest;
 import com.pmtracker.project_management_backend.auth.dto.RegisterRequest;
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.common.SecureTokens;
 import com.pmtracker.project_management_backend.common.exception.EmailNotVerifiedException;
 import com.pmtracker.project_management_backend.common.exception.InvalidCredentialsException;
 import com.pmtracker.project_management_backend.common.exception.InvalidOrExpiredTokenException;
@@ -19,14 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.UUID;
 
 @Service
@@ -57,7 +52,6 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final JwtService jwtService;
     private final JwtProperties jwtProperties;
-    private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthService(UserRepository userRepository,
                         EmailVerificationTokenRepository verificationTokenRepository,
@@ -125,6 +119,10 @@ public class AuthService {
         userRepository.save(user);
 
         verificationTokenRepository.delete(verificationToken);
+
+        // Адрес подтверждён — значит, приглашения, выписанные на него до появления аккаунта,
+        // можно наконец принять (см. EmailVerifiedEvent и ProjectInvitationService).
+        eventPublisher.publishEvent(new EmailVerifiedEvent(user.getId(), user.getEmail()));
     }
 
     @Transactional
@@ -153,10 +151,10 @@ public class AuthService {
             // и каждая живая — это ещё одна рабочая дверь в аккаунт.
             passwordResetTokenRepository.deleteByUser(user);
 
-            String rawToken = generateSecureToken(PASSWORD_RESET_TOKEN_BYTES);
+            String rawToken = SecureTokens.generate(PASSWORD_RESET_TOKEN_BYTES);
             PasswordResetToken token = new PasswordResetToken();
             token.setUser(user);
-            token.setTokenHash(hashToken(rawToken));
+            token.setTokenHash(SecureTokens.sha256Hex(rawToken));
             token.setExpiresAt(Instant.now().plus(PASSWORD_RESET_TOKEN_TTL_HOURS, ChronoUnit.HOURS));
             passwordResetTokenRepository.save(token);
 
@@ -176,7 +174,7 @@ public class AuthService {
      */
     @Transactional
     public void resetPassword(String rawToken, String newPassword) {
-        PasswordResetToken token = passwordResetTokenRepository.findByTokenHash(hashToken(rawToken))
+        PasswordResetToken token = passwordResetTokenRepository.findByTokenHash(SecureTokens.sha256Hex(rawToken))
                 .orElseThrow(InvalidOrExpiredTokenException::new);
 
         if (token.getExpiresAt().isBefore(Instant.now())) {
@@ -222,7 +220,7 @@ public class AuthService {
      */
     @Transactional(noRollbackFor = InvalidRefreshTokenException.class)
     public AuthResponse refresh(String rawRefreshToken) {
-        RefreshToken existingToken = refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))
+        RefreshToken existingToken = refreshTokenRepository.findByTokenHash(SecureTokens.sha256Hex(rawRefreshToken))
                 .orElseThrow(InvalidRefreshTokenException::new);
 
         // Токен отозван, и у него есть replacedBy — значит, им уже один раз успешно
@@ -259,7 +257,7 @@ public class AuthService {
 
     @Transactional
     public void logout(String rawRefreshToken) {
-        refreshTokenRepository.findByTokenHash(hashToken(rawRefreshToken))
+        refreshTokenRepository.findByTokenHash(SecureTokens.sha256Hex(rawRefreshToken))
                 .ifPresent(token -> {
                     token.setRevoked(true);
                     refreshTokenRepository.save(token);
@@ -277,11 +275,11 @@ public class AuthService {
      * в БД пишется только её SHA-256 хеш — так утечка базы не даёт готовых токенов для входа.
      */
     private GeneratedRefreshToken createRefreshToken(User user) {
-        String rawValue = generateSecureToken(REFRESH_TOKEN_BYTES);
+        String rawValue = SecureTokens.generate(REFRESH_TOKEN_BYTES);
 
         RefreshToken entity = new RefreshToken();
         entity.setUser(user);
-        entity.setTokenHash(hashToken(rawValue));
+        entity.setTokenHash(SecureTokens.sha256Hex(rawValue));
         entity.setExpiresAt(Instant.now().plus(jwtProperties.getRefreshTokenTtlDays(), ChronoUnit.DAYS));
         refreshTokenRepository.save(entity);
 
@@ -289,23 +287,6 @@ public class AuthService {
     }
 
     private record GeneratedRefreshToken(RefreshToken entity, String rawValue) {
-    }
-
-    /** Случайное значение в Base64URL: numBytes байт из SecureRandom, без паддинга. */
-    private String generateSecureToken(int numBytes) {
-        byte[] randomBytes = new byte[numBytes];
-        secureRandom.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-    }
-
-    private String hashToken(String rawToken) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available in this JVM", e);
-        }
     }
 
     private void issueAndSendVerificationToken(User user) {

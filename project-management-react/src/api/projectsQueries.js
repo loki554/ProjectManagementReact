@@ -131,12 +131,16 @@ export function useProjectMembers(projectId) {
   })
 }
 
+// Один запрос с двумя исходами (4.2): зарегистрированный появляется в участниках,
+// незарегистрированному уходит письмо и создаётся приглашение. Какой именно — сказано в
+// поле status ответа; какой список обновлять, заранее неизвестно, поэтому инвалидируются оба.
 export function useInviteMember(projectId) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (payload) => projectsApi.inviteMember(projectId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: membersKey(projectId) })
+      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'invitations'] })
     },
   })
 }

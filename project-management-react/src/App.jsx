@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ToastContainer } from './components/ui/ToastContainer'
+import { InvitePage } from './pages/InvitePage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SearchPage } from './pages/SearchPage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
@@ -69,6 +70,10 @@ function AppRoutes() {
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Не под ProtectedRoute: по этой ссылке приходят из письма, и чаще всего — ещё
+            не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
+            (см. InvitePage). */}
+        <Route path="/invite" element={<InvitePage />} />
         <Route
           path="/profile"
           element={

@@ -231,7 +231,35 @@
     "invite": "Einladen",
     "inviting": "Wird eingeladen...",
     "remove": "Entfernen",
-    "loading": "Mitglieder werden geladen..."
+    "loading": "Mitglieder werden geladen...",
+    "invitationSent": "Einladung an {{email}} gesendet — Mitglied wird die Person, sobald sie dem Link folgt",
+    "memberAdded": "{{email}} wurde zum Projekt hinzugefügt",
+    "pendingTitle": "Einladungen",
+    "pendingHint": "Gesendet, aber noch nicht angenommen. Zum erneuten Senden dieselbe Adresse oben einladen — der neue Link ersetzt den alten.",
+    "invitationExpired": "abgelaufen",
+    "revokeInvitation": "Zurückziehen"
+  },
+  "invitation": {
+    "title": "Projekteinladung",
+    "loading": "Einladung wird geprüft...",
+    "missingToken": "Im Link fehlt das Einladungs-Token. Öffnen Sie den vollständigen Link aus der E-Mail.",
+    "expiredHint": "Bitten Sie um eine erneute Einladung — es wird ein neuer Link gesendet.",
+    "intro": "{{inviter}} lädt Sie zum Projekt „{{project}}“ ein.",
+    "someone": "Eine Projektadministration",
+    "email": "Ausgestellt für",
+    "role": "Rolle im Projekt",
+    "accept": "Einladung annehmen",
+    "accepting": "Wird angenommen...",
+    "signedInAs": "Sie sind als {{email}} angemeldet.",
+    "switchAccount": "Mit einem anderen Konto anmelden",
+    "createAccount": "Konto erstellen",
+    "signIn": "Ich habe bereits ein Konto",
+    "acceptedTitle": "Fertig",
+    "acceptedMessage": "Sie sind jetzt Mitglied von „{{project}}“.",
+    "goToProject": "Zum Projekt",
+    "backToProjects": "Zurück zu den Projekten",
+    "registerBanner": "Sie wurden zu „{{project}}“ eingeladen. Das Konto wird für die Adresse erstellt, für die die Einladung ausgestellt wurde, und lässt sich hier nicht ändern.",
+    "registeredMessage": "Wir haben eine E-Mail an diese Adresse gesendet. Bestätigen Sie sie — danach sind Sie in „{{project}}“."
   },
   "roles": {
     "OWNER": "Eigentümer",
@@ -455,7 +483,6 @@
     "PROJECT_NAME_INVALID": "Der Name muss mindestens einen Buchstaben oder eine Ziffer enthalten",
     "NOT_A_PROJECT_MEMBER": "Sie sind kein Mitglied dieses Projekts",
     "INSUFFICIENT_ROLE": "Sie haben keine Berechtigung für diese Aktion",
-    "USER_NOT_FOUND_FOR_INVITE": "Kein registrierter Benutzer mit dieser E-Mail-Adresse",
     "ALREADY_PROJECT_MEMBER": "Dieser Benutzer ist bereits Mitglied des Projekts",
     "CANNOT_REMOVE_LAST_OWNER": "Das Projekt muss mindestens einen Eigentümer behalten",
     "TASK_NOT_FOUND": "Aufgabe nicht gefunden",
@@ -484,7 +511,8 @@
     "TOO_MANY_REQUESTS_RETRY_other": "Zu viele Versuche. Bitte versuchen Sie es in {{count}} Minuten erneut.",
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut",
-    "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch"
+    "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch",
+    "INVITATION_EMAIL_MISMATCH": "Diese Einladung wurde für eine andere Adresse ausgestellt. Melden Sie sich mit dem Konto an, das die E-Mail erhalten hat."
   },
   "trash": {
     "title": "Papierkorb",

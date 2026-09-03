@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -142,6 +143,14 @@ public class SecurityConfig {
                             "/api/auth/refresh",
                             "/api/auth/logout"
                     ).permitAll();
+                    // Просмотр приглашения (4.2) — единственный публичный эндпоинт за
+                    // пределами /api/auth. Иначе приглашённый видел бы только токен в
+                    // адресной строке и должен был бы заводить аккаунт вслепую, не зная,
+                    // ни в какой проект его зовут, ни кто именно. Ключ доступа — сам токен
+                    // (32 случайных байта, в БД только его SHA-256); GET и только GET:
+                    // принятие приглашения (POST .../accept) требует входа, потому что
+                    // принимать его должен конкретный аккаунт.
+                    auth.requestMatchers(HttpMethod.GET, "/api/invitations/*").permitAll();
                     // Swagger UI/OpenAPI-спека не содержит чувствительных данных, но это полная
                     // карта API — читать её анонимно даём только там, где сама документация
                     // включена, то есть в dev. В проде springdoc выключен целиком, и эти пути

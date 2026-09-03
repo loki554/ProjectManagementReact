@@ -42,18 +42,18 @@ function decodeBody(message) {
 }
 
 /**
- * Ждёт письмо с подтверждением и возвращает путь ссылки из него (`/verify-email?token=...`).
- * Именно путь, а не полный URL: письмо строится из app.frontend.base-url бэкенда, а тест
- * ходит на свой baseURL, и на разных портах это разные адреса при одном и том же токене.
+ * Ждёт письмо и возвращает путь ссылки из него — именно путь, а не полный URL: письмо
+ * строится из app.frontend.base-url бэкенда, а тест ходит на свой baseURL, и на разных
+ * портах это разные адреса при одном и том же токене.
  */
-export async function awaitVerificationLink(email) {
+async function awaitLink(email, pattern, what) {
   let link = null
 
   await expect
     .poll(
       async () => {
         for (const message of await search(email)) {
-          const match = decodeBody(message).match(/\/verify-email\?token=[0-9a-fA-F-]{36}/)
+          const match = decodeBody(message).match(pattern)
           if (match) {
             link = match[0]
             return true
@@ -62,12 +62,21 @@ export async function awaitVerificationLink(email) {
         return false
       },
       {
-        message: `Письмо с подтверждением для ${email} так и не дошло до MailHog`,
-        // Письмо уходит асинхронно, уже после ответа на /register (см. MailDispatcher).
+        message: `Письмо (${what}) для ${email} так и не дошло до MailHog`,
+        // Письмо уходит асинхронно, уже после ответа на запрос (см. MailDispatcher).
         timeout: 20_000,
       },
     )
     .toBe(true)
 
   return link
+}
+
+export function awaitVerificationLink(email) {
+  return awaitLink(email, /\/verify-email\?token=[0-9a-fA-F-]{36}/, 'подтверждение адреса')
+}
+
+/** Ссылка из письма-приглашения в проект (4.2): `/invite?token=...`. */
+export function awaitInvitationLink(email) {
+  return awaitLink(email, /\/invite\?token=[A-Za-z0-9_-]+/, 'приглашение в проект')
 }

@@ -9,4 +9,7 @@ public interface MailService {
     void sendPasswordResetEmail(String toEmail, String token);
 
     void sendAccountAlreadyExistsEmail(String toEmail);
+
+    void sendProjectInvitationEmail(String toEmail, String token, String projectName,
+                                    String inviterName, int expiresInDays);
 }

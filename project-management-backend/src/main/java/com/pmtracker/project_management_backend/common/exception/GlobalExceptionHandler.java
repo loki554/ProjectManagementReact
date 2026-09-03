@@ -104,10 +104,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("INSUFFICIENT_ROLE", ex.getMessage()));
     }
 
-    @ExceptionHandler(UserNotFoundForInviteException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundForInvite(UserNotFoundForInviteException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("USER_NOT_FOUND_FOR_INVITE", ex.getMessage()));
+    // 403, а не 404: приглашение существует и предъявитель это видит (превью публичное) —
+    // отказ здесь именно в том, что оно выписано не на его адрес.
+    @ExceptionHandler(InvitationEmailMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleInvitationEmailMismatch(InvitationEmailMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("INVITATION_EMAIL_MISMATCH", ex.getMessage()));
     }
 
     @ExceptionHandler(AlreadyProjectMemberException.class)

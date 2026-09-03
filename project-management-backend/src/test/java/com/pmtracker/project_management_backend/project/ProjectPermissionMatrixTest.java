@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.EnumMap;
@@ -224,6 +225,14 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("DELETE /projects/{id}/members/{userId}",   f -> delete("/api/projects/" + f.projectId
                             + "/members/" + f.viewerUserId),
                     ALLOWED, ALLOWED, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE),
+            // Приглашения (4.2) — та же полка прав, что и участники: это управление составом.
+            // Строже, чем чтение списка участников (доступно всем), — здесь адреса людей,
+            // которые в проект ещё не вошли.
+            endpoint("GET    /projects/{id}/invitations",        f -> get("/api/projects/" + f.projectId + "/invitations"),
+                    ALLOWED, ALLOWED, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE),
+            endpoint("DELETE /projects/{id}/invitations/{id}",   f -> delete("/api/projects/" + f.projectId
+                            + "/invitations/" + f.invitationId),
+                    ALLOWED, ALLOWED, INSUFFICIENT_ROLE, INSUFFICIENT_ROLE),
 
             // ---- Работа по проекту: MEMBER и выше, но не VIEWER (§5) ----
             endpoint("PUT    /projects/{id}/wiki",               f -> put("/api/projects/" + f.projectId + "/wiki")
@@ -351,7 +360,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Test
     @DisplayName("в таблице учтены все эндпоинты проекта")
     void matrixCoversEveryProjectEndpoint() {
-        assertThat(ENDPOINTS).hasSize(46);
+        assertThat(ENDPOINTS).hasSize(48);
         assertThat(ENDPOINTS).extracting(Endpoint::name).doesNotHaveDuplicates();
     }
 
@@ -394,6 +403,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     private record Fixture(UUID projectId, String projectSlug, long projectVersion,
                            UUID taskId, int taskNumber, long taskVersion, UUID trashedTaskId,
                            UUID viewerUserId, String outsiderEmail,
+                           UUID invitationId,
                            UUID categoryId, UUID tagId,
                            UUID commentId, UUID timeLogId, UUID attachmentId,
                            UUID ownCommentId, UUID ownTimeLogId, UUID ownAttachmentId) {
@@ -414,6 +424,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private ProjectRepository projectRepository;
     @Autowired private ProjectMemberRepository projectMemberRepository;
+    @Autowired private ProjectInvitationRepository projectInvitationRepository;
     @Autowired private TaskRepository taskRepository;
     @Autowired private TaskCommentRepository taskCommentRepository;
     @Autowired private TimeLogRepository timeLogRepository;
@@ -516,6 +527,17 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         TimeLog foreignTimeLog = timeLog(task, someoneElse);
         Attachment foreignAttachment = attachment(task, someoneElse);
 
+        // Непринятое приглашение — строке «отозвать» нужно, что отзывать, иначе она
+        // проверяла бы 404 вместо прав.
+        ProjectInvitation invitation = new ProjectInvitation();
+        invitation.setProject(project);
+        invitation.setEmail("invited.stranger@example.com");
+        invitation.setRole(ProjectRole.MEMBER);
+        invitation.setTokenHash("fixture-invitation-token-hash");
+        invitation.setInvitedBy(owner);
+        invitation.setExpiresAt(Instant.now().plus(Duration.ofDays(7)));
+        projectInvitationRepository.save(invitation);
+
         TaskComment ownComment = comment(task, member);
         TimeLog ownTimeLog = timeLog(task, member);
         Attachment ownAttachment = attachment(task, member);
@@ -523,6 +545,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         fixture = new Fixture(project.getId(), project.getSlug(), project.getVersion(),
                 task.getId(), taskNumber, task.getVersion(), trashedTask.getId(),
                 viewer.getId(), outsider.getEmail(),
+                invitation.getId(),
                 category.getId(), tag.getId(),
                 foreignComment.getId(), foreignTimeLog.getId(), foreignAttachment.getId(),
                 ownComment.getId(), ownTimeLog.getId(), ownAttachment.getId());

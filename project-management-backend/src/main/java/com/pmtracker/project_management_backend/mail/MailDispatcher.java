@@ -65,6 +65,13 @@ public class MailDispatcher {
         sendWithRetries("account already exists", () -> mailService.sendAccountAlreadyExistsEmail(event.email()));
     }
 
+    @Async(AsyncConfig.MAIL_EXECUTOR)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onProjectInvitationEmailRequested(ProjectInvitationEmailRequestedEvent event) {
+        sendWithRetries("project invitation", () -> mailService.sendProjectInvitationEmail(
+                event.email(), event.token(), event.projectName(), event.inviterName(), event.expiresInDays()));
+    }
+
     /**
      * @param kind короткое название письма для логов — ни адреса, ни токена в лог не попадает:
      *             первое засоряло бы логи почтой пользователей, второе равносильно выдаче

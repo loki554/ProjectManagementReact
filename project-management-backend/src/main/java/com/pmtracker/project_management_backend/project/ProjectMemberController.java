@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.project;
 
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.project.dto.InviteMemberRequest;
+import com.pmtracker.project_management_backend.project.dto.InviteResponse;
 import com.pmtracker.project_management_backend.project.dto.MemberResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateMemberRoleRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,9 +29,12 @@ import java.util.UUID;
 public class ProjectMemberController {
 
     private final ProjectMemberService projectMemberService;
+    private final ProjectInvitationService projectInvitationService;
 
-    public ProjectMemberController(ProjectMemberService projectMemberService) {
+    public ProjectMemberController(ProjectMemberService projectMemberService,
+                                    ProjectInvitationService projectInvitationService) {
         this.projectMemberService = projectMemberService;
+        this.projectInvitationService = projectInvitationService;
     }
 
     @GetMapping
@@ -40,13 +44,20 @@ public class ProjectMemberController {
         return ResponseEntity.ok(projectMemberService.list(currentUser, projectId));
     }
 
+    /**
+     * 201 в обоих исходах, и это не небрежность: с точки зрения вызывающего создано именно
+     * то, что он просил, — членство, если адресат зарегистрирован, приглашение, если нет.
+     * Что именно, написано в теле ответа ({@code status}), а не в коде статуса.
+     */
     @PostMapping
-    @Operation(summary = "Пригласить участника по email", description = "Только для уже зарегистрированных пользователей; OWNER/ADMIN")
-    public ResponseEntity<MemberResponse> invite(@AuthenticationPrincipal User currentUser,
+    @Operation(summary = "Пригласить участника по email",
+            description = "OWNER/ADMIN. Зарегистрированный добавляется сразу (status=MEMBER_ADDED), "
+                    + "остальным уходит письмо со ссылкой (status=INVITATION_SENT)")
+    public ResponseEntity<InviteResponse> invite(@AuthenticationPrincipal User currentUser,
                                                   @PathVariable UUID projectId,
                                                   @Valid @RequestBody InviteMemberRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(projectMemberService.invite(currentUser, projectId, request));
+                .body(projectInvitationService.invite(currentUser, projectId, request));
     }
 
     @PatchMapping("/{userId}")

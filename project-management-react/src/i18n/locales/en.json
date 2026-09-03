@@ -231,7 +231,35 @@
     "invite": "Invite",
     "inviting": "Inviting...",
     "remove": "Remove",
-    "loading": "Loading members..."
+    "loading": "Loading members...",
+    "invitationSent": "An invitation was sent to {{email}} — they join once they follow the link",
+    "memberAdded": "{{email}} has been added to the project",
+    "pendingTitle": "Invitations",
+    "pendingHint": "Sent but not accepted yet. To send the link again, invite the same address above — the new link replaces the old one.",
+    "invitationExpired": "expired",
+    "revokeInvitation": "Revoke"
+  },
+  "invitation": {
+    "title": "Project invitation",
+    "loading": "Checking the invitation...",
+    "missingToken": "The link has no invitation token. Open the full link from the email.",
+    "expiredHint": "Ask to be invited again — a new link will be sent.",
+    "intro": "{{inviter}} is inviting you to the project \"{{project}}\".",
+    "someone": "A project admin",
+    "email": "Issued for",
+    "role": "Role in the project",
+    "accept": "Accept invitation",
+    "accepting": "Accepting...",
+    "signedInAs": "You are signed in as {{email}}.",
+    "switchAccount": "Sign in with another account",
+    "createAccount": "Create an account",
+    "signIn": "I already have an account",
+    "acceptedTitle": "Done",
+    "acceptedMessage": "You are now a member of \"{{project}}\".",
+    "goToProject": "Go to the project",
+    "backToProjects": "Back to projects",
+    "registerBanner": "You have been invited to \"{{project}}\". The account is created for the address the invitation was issued for, so it cannot be changed here.",
+    "registeredMessage": "We have sent an email to that address. Confirm it and you will land in \"{{project}}\"."
   },
   "roles": {
     "OWNER": "Owner",
@@ -455,7 +483,6 @@
     "PROJECT_NAME_INVALID": "Name must contain at least one letter or digit",
     "NOT_A_PROJECT_MEMBER": "You are not a member of this project",
     "INSUFFICIENT_ROLE": "You don't have permission to do this",
-    "USER_NOT_FOUND_FOR_INVITE": "No registered user with this email",
     "ALREADY_PROJECT_MEMBER": "This user is already a project member",
     "CANNOT_REMOVE_LAST_OWNER": "The project must keep at least one owner",
     "TASK_NOT_FOUND": "Task not found",
@@ -484,7 +511,8 @@
     "TOO_MANY_REQUESTS_RETRY_other": "Too many attempts. Please try again in {{count}} minutes.",
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again",
-    "INVALID_CURRENT_PASSWORD": "The current password is incorrect"
+    "INVALID_CURRENT_PASSWORD": "The current password is incorrect",
+    "INVITATION_EMAIL_MISMATCH": "This invitation was issued for a different address. Sign in with the account that received the email."
   },
   "trash": {
     "title": "Trash",

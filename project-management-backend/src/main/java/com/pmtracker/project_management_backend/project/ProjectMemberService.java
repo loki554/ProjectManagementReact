@@ -2,15 +2,13 @@ package com.pmtracker.project_management_backend.project;
 
 import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
-import com.pmtracker.project_management_backend.auth.UserRepository;
 import com.pmtracker.project_management_backend.common.exception.AlreadyProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.CannotRemoveLastOwnerException;
 import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
-import com.pmtracker.project_management_backend.common.exception.UserNotFoundForInviteException;
-import com.pmtracker.project_management_backend.project.dto.InviteMemberRequest;
 import com.pmtracker.project_management_backend.project.dto.MemberResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateMemberRoleRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -22,18 +20,15 @@ public class ProjectMemberService {
 
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMembershipCache membershipCache;
-    private final UserRepository userRepository;
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
 
     public ProjectMemberService(ProjectMemberRepository projectMemberRepository,
                                  ProjectMembershipCache membershipCache,
-                                 UserRepository userRepository,
                                  ProjectAccessService projectAccessService,
                                  ActivityService activityService) {
         this.projectMemberRepository = projectMemberRepository;
         this.membershipCache = membershipCache;
-        this.userRepository = userRepository;
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
     }
@@ -48,30 +43,37 @@ public class ProjectMemberService {
                 .toList();
     }
 
-    @Transactional
-    public MemberResponse invite(User currentUser, UUID projectId, InviteMemberRequest request) {
-        Project project = projectAccessService.findProjectOrThrow(projectId);
-        ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
-
-        User invitee = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new UserNotFoundForInviteException(request.email()));
-
-        if (projectMemberRepository.findByProjectIdAndUserId(projectId, invitee.getId()).isPresent()) {
+    /**
+     * Добавление пользователя в проект. Внутренний метод: прав не проверяет — их проверил
+     * вызывающий, — и живёт в транзакции вызывающего (MANDATORY).
+     * <p>
+     * Вызывается из двух мест {@link ProjectInvitationService}: приглашение уже
+     * зарегистрированного (участник появляется сразу) и принятие приглашения тем, кто
+     * зарегистрировался по ссылке. Отдельный метод, а не два одинаковых куска: забыть в
+     * одном из них сброс кэша (3.10) или запись в ленту — ровно тот класс расхождения,
+     * который потом ищут неделю.
+     *
+     * @param actor кто инициировал добавление — для ленты активности. У приглашения,
+     *              принятого самим приглашённым, это он сам: администратор нажал «пригласить»
+     *              когда-то давно, а в проект человек вошёл сейчас и своими руками.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    MemberResponse addMember(Project project, User user, ProjectRole role, User actor) {
+        if (projectMemberRepository.findByProjectIdAndUserId(project.getId(), user.getId()).isPresent()) {
             throw new AlreadyProjectMemberException();
         }
 
         ProjectMember member = new ProjectMember();
         member.setProject(project);
-        member.setUser(invitee);
-        member.setRole(request.role());
+        member.setUser(user);
+        member.setRole(role);
         projectMemberRepository.save(member);
         // Кэш проверки доступа (3.10) сбрасывается на каждое изменение состава участников,
         // и строго после коммита — иначе параллельный запрос вернёт в него старую роль.
-        membershipCache.invalidate(projectId, invitee.getId());
+        membershipCache.invalidate(project.getId(), user.getId());
 
-        activityService.record(project, currentUser, "member_added", null,
-                Map.of("userName", displayName(invitee), "role", request.role().name()));
+        activityService.record(project, actor, "member_added", null,
+                Map.of("userName", displayName(user), "role", role.name()));
 
         return MemberResponse.from(member);
     }

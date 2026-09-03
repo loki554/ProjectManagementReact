@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
 import { login, resendVerification } from '../../api/authApi'
 import { getErrorCode, getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -24,6 +24,12 @@ export function LoginPage() {
   const setSession = useAuthStore((state) => state.setSession)
   const schema = useMemo(() => buildSchema(t), [i18n.language])
 
+  // Пришли со страницы приглашения (4.2) — туда же и возвращаем: принять инвайт можно
+  // только войдя, и после входа человек должен оказаться там, откуда ушёл, а не в общем
+  // списке проектов, где нужного проекта ещё нет.
+  const [searchParams] = useSearchParams()
+  const inviteToken = searchParams.get('invite')
+
   const {
     register,
     handleSubmit,
@@ -35,7 +41,7 @@ export function LoginPage() {
     mutationFn: ({ email, password }) => login(email, password),
     onSuccess: (data) => {
       setSession(data)
-      navigate('/', { replace: true })
+      navigate(inviteToken ? `/invite?token=${encodeURIComponent(inviteToken)}` : '/', { replace: true })
     },
   })
 
@@ -98,7 +104,10 @@ export function LoginPage() {
 
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         {t('auth.login.noAccount')}{' '}
-        <Link to="/register" className="text-purple-600 hover:underline dark:text-purple-400">
+        <Link
+          to={inviteToken ? `/register?invite=${encodeURIComponent(inviteToken)}` : '/register'}
+          className="text-purple-600 hover:underline dark:text-purple-400"
+        >
           {t('auth.login.register')}
         </Link>
       </p>

@@ -117,6 +117,21 @@ public abstract class IntegrationTest {
     }
 
     /**
+     * Ждёт, пока придёт ровно {@code expected} писем, и отдаёт их. Нужно там, где одно
+     * действие рассылает несколько писем сразу (например, приглашение в два проекта):
+     * awaitSingleEmail в такой ситуации либо поймает первое пришедшее, либо упадёт —
+     * в зависимости от того, кто из фоновых потоков успел раньше.
+     */
+    protected MimeMessage[] awaitEmails(int expected) {
+        await().atMost(MAIL_TIMEOUT).until(() -> SMTP.getReceivedMessages().length >= expected);
+        MimeMessage[] messages = SMTP.getReceivedMessages();
+        if (messages.length != expected) {
+            throw new AssertionError("Expected exactly " + expected + " emails, got " + messages.length);
+        }
+        return messages;
+    }
+
+    /**
      * Проверяет, что письма нет. Ждать нечего только на первый взгляд: отправка асинхронная,
      * поэтому «сейчас пусто» ещё не значит «не придёт». Даём почте фору и убеждаемся, что
      * ящик всё это время оставался пустым.

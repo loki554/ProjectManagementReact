@@ -11,6 +11,7 @@ import {
   useRemoveMember,
   useUpdateMemberRole,
 } from '../../api/projectsQueries'
+import { useProjectInvitations, useRevokeInvitation } from '../../api/invitationsQueries'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { PROJECT_ROLES, roleIsAtLeast } from '../../lib/constants'
@@ -39,6 +40,12 @@ export function ProjectMembersPage() {
   // write-эндпоинте (INSUFFICIENT_ROLE), это не единственная линия защиты.
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'ADMIN') : false
+
+  // Непринятые приглашения (4.2) — список только для OWNER/ADMIN, поэтому запрос и
+  // включается только им: остальным он вернул бы 403 и нарисовал бы ошибку на странице,
+  // где всё в порядке.
+  const { data: invitations } = useProjectInvitations(projectId, { enabled: canManage })
+  const revokeInvitation = useRevokeInvitation(projectId)
 
   const schema = useMemo(() => buildInviteSchema(t), [i18n.language, t])
 
@@ -82,6 +89,17 @@ export function ProjectMembersPage() {
               {inviteMember.isPending ? t('members.inviting') : t('members.invite')}
             </button>
           </form>
+        )}
+
+        {/* Исход приглашения не очевиден заранее: адрес мог оказаться и зарегистрированным,
+            и нет. Молчаливый успех оставлял бы приглашающего гадать, появится человек в
+            списке или ему ушло письмо. */}
+        {inviteMember.isSuccess && (
+          <p className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800 dark:bg-green-950/50 dark:text-green-300">
+            {inviteMember.data?.status === 'INVITATION_SENT'
+              ? t('members.invitationSent', { email: inviteMember.data.invitation.email })
+              : t('members.memberAdded', { email: inviteMember.data?.member?.email })}
+          </p>
         )}
 
         {inviteMember.isError && (
@@ -144,6 +162,46 @@ export function ProjectMembersPage() {
               </li>
             ))}
           </ul>
+        )}
+
+        {canManage && invitations && invitations.length > 0 && (
+          <section className="mt-8">
+            <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {t('members.pendingTitle')}
+            </h2>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">{t('members.pendingHint')}</p>
+
+            {revokeInvitation.isError && (
+              <p className="mb-3 text-sm text-red-600 dark:text-red-400">
+                {getLocalizedErrorMessage(revokeInvitation.error, t)}
+              </p>
+            )}
+
+            <ul className="divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white dark:divide-gray-700 dark:border-gray-700 dark:bg-gray-800">
+              {invitations.map((invitation) => (
+                <li key={invitation.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{invitation.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {t(`roles.${invitation.role}`)}
+                      {invitation.invitedByName ? ` · ${invitation.invitedByName}` : ''}
+                      {/* Просроченные не прячем: «человек не пришёл» и «ссылка протухла» —
+                          разные ситуации, и вторая чинится повторным приглашением. */}
+                      {invitation.expired ? ` · ${t('members.invitationExpired')}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => revokeInvitation.mutate(invitation.id)}
+                    disabled={revokeInvitation.isPending}
+                    className="text-xs text-red-600 hover:underline disabled:opacity-60 dark:text-red-400"
+                  >
+                    {t('members.revokeInvitation')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
   )
