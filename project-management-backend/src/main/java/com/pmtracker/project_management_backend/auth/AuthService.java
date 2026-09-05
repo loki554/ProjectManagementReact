@@ -11,6 +11,7 @@ import com.pmtracker.project_management_backend.common.exception.InvalidOrExpire
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
 import com.pmtracker.project_management_backend.mail.AccountAlreadyExistsEmailRequestedEvent;
+import com.pmtracker.project_management_backend.common.EmailNormalizer;
 import com.pmtracker.project_management_backend.mail.PasswordResetEmailRequestedEvent;
 import com.pmtracker.project_management_backend.mail.VerificationEmailRequestedEvent;
 import org.slf4j.Logger;
@@ -86,13 +87,17 @@ public class AuthService {
         // который мы только что убрали из тела ответа.
         String passwordHash = passwordEncoder.encode(request.password());
 
-        if (userRepository.existsByEmail(request.email())) {
-            eventPublisher.publishEvent(new AccountAlreadyExistsEmailRequestedEvent(request.email()));
+        // Адрес канонизируется до всех проверок и записи: без этого Ivan@Company.com и
+        // ivan@company.com — два аккаунта на один ящик (см. EmailNormalizer).
+        String email = EmailNormalizer.normalize(request.email());
+
+        if (userRepository.existsByEmail(email)) {
+            eventPublisher.publishEvent(new AccountAlreadyExistsEmailRequestedEvent(email));
             return;
         }
 
         User user = new User();
-        user.setEmail(request.email());
+        user.setEmail(email);
         user.setPasswordHash(passwordHash);
         user.setLastName(request.lastName());
         user.setFirstName(request.firstName());
@@ -127,7 +132,7 @@ public class AuthService {
 
     @Transactional
     public void resendVerification(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmail(EmailNormalizer.normalize(email)).ifPresent(user -> {
             if (user.isEmailVerified()) {
                 return;
             }
@@ -146,7 +151,7 @@ public class AuthService {
      */
     @Transactional
     public void forgotPassword(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
+        userRepository.findByEmail(EmailNormalizer.normalize(email)).ifPresent(user -> {
             // Прошлые ссылки гасим: их могло накопиться сколько угодно (эндпоинт публичный),
             // и каждая живая — это ещё одна рабочая дверь в аккаунт.
             passwordResetTokenRepository.deleteByUser(user);
@@ -195,7 +200,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.email())
+        User user = userRepository.findByEmail(EmailNormalizer.normalize(request.email()))
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {

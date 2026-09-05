@@ -3,6 +3,7 @@ package com.pmtracker.project_management_backend.common.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -181,6 +182,33 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
         log.debug("Optimistic locking failure", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("CONCURRENT_MODIFICATION",
+                        "The item was changed by someone else while you were editing it"));
+    }
+
+    /**
+     * Тот же конфликт, но проигранный не на версии, а на блокировке БД: Postgres обнаружил
+     * взаимоблокировку и снял одну из транзакций.
+     * <p>
+     * Ловится это на канбане, где перетаскивание карточки сдвигает позиции соседей: два
+     * человека двигают карточки в одной колонке одновременно, транзакции берут те же строки
+     * {@code tasks} в разном порядке — и получается классический deadlock. Без этого
+     * обработчика он уходил в {@code handleUnexpected} и превращался в 500, хотя ничего не
+     * сломалось: проигравшему достаточно перечитать доску и повторить.
+     * <p>
+     * Отвечаем тем же CONCURRENT_MODIFICATION, что и оптимистичная блокировка выше: для
+     * пользователя это одно событие («пока вы тянули, доску изменили»), и разделять их в
+     * интерфейсе незачем — действие в обоих случаях одно. {@code PessimisticLockingFailureException},
+     * а не только {@code CannotAcquireLockException}: сюда же относится и таймаут ожидания
+     * блокировки, у которого и причина, и лечение те же.
+     * <p>
+     * Обработчик — не замена нормальному порядку захвата строк в reorder'е: он делает отказ
+     * честным и повторяемым, но сам deadlock не убирает.
+     */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handlePessimisticLockingFailure(PessimisticLockingFailureException ex) {
+        log.warn("Database lock could not be acquired while processing request", ex);
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse("CONCURRENT_MODIFICATION",
                         "The item was changed by someone else while you were editing it"));

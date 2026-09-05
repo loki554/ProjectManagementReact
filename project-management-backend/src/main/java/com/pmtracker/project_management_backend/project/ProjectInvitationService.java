@@ -100,11 +100,14 @@ public class ProjectInvitationService {
     /**
      * Пригласить по email. OWNER/ADMIN, как и раньше.
      * <p>
-     * Пользователь ищется по точному адресу — тем же {@code findByEmail}, что и при входе:
-     * завести здесь регистронезависимый поиск значило бы, что «Ivan@example.com» и
-     * «ivan@example.com» — один человек для приглашения и разные для логина. Промах по
-     * регистру не ломает сценарий, а лишь уводит его в ветку приглашения: письмо придёт в
-     * тот же ящик, а по ссылке человек войдёт под своим настоящим аккаунтом.
+     * Пользователь ищется по нормализованному адресу — тем же каноном, в котором адреса
+     * теперь лежат в {@code users} и по которому идёт вход (см. {@code EmailNormalizer}).
+     * Раньше здесь стоял поиск по сырому адресу, и обоснованием было «для логина это разные
+     * люди, значит и здесь пусть будут разные»; после того как регистрация и вход перестали
+     * различать регистр, обоснование отпало вместе с расхождением. Промах по регистру уводил
+     * сценарий в ветку приглашения — то есть выписывал ссылку человеку, который давно
+     * зарегистрирован и подтверждён, а его {@link #onEmailVerified} уже отработал и второй
+     * раз не сработает: приглашение просто висело бы до истечения срока.
      * <p>
      * Повторное приглашение того же адреса — не вторая строка, а замена: у существующего
      * приглашения обновляются роль, токен и срок, и уходит новое письмо. Так «пригласить
@@ -116,9 +119,18 @@ public class ProjectInvitationService {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        // Пригласить сразу с ролью OWNER — третий путь к тому же захвату проекта, что и смена
+        // роли: ADMIN зовёт свой второй аккаунт владельцем и снимает настоящего.
+        if (request.role() == ProjectRole.OWNER) {
+            projectAccessService.requireOwnerForOwnershipChange(myRole);
+        }
 
         String email = normalizeEmail(request.email());
-        Optional<User> registered = userRepository.findByEmail(request.email());
+        // Искать надо по тому же канону, в котором адреса лежат в users: поиск по сырому
+        // адресу промахивался мимо уже существующего пользователя, если регистр не совпал,
+        // и вместо «добавить участника» выписывал приглашение в проект человеку, который
+        // давно зарегистрирован и подтверждён, — а его onEmailVerified уже не сработает.
+        Optional<User> registered = userRepository.findByEmail(email);
 
         if (registered.isPresent()) {
             MemberResponse member =

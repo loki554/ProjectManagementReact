@@ -452,6 +452,74 @@ class AuthFlowIntegrationTest extends IntegrationTest {
         }
     }
 
+    // -------------------------------------------------------------- регистр адреса
+
+    /**
+     * Ящик один, значит и аккаунт один — независимо от того, каким регистром человек набрал
+     * свой адрес в этот раз (см. EmailNormalizer).
+     * <p>
+     * До нормализации {@code Ivan@Company.com} и {@code ivan@company.com} заводили две
+     * отдельные учётные записи: уникальный индекс по {@code users.email} регистрозависим и
+     * их не склеивал. Дальше начиналось интересное — вход «не тем регистром» отвечал
+     * «неверный пароль» при верном пароле, ссылка сброса уходила в ту из двух записей,
+     * которую человек не заводил, а приглашения в проект (они всегда хранились в нижнем
+     * регистре) не находили уже зарегистрированного пользователя и выписывали ему
+     * приглашение вместо членства.
+     */
+    @Nested
+    @DisplayName("регистр почтового адреса")
+    class EmailCase {
+
+        private static final String MIXED_CASE = "Ivan.Petrov@Example.COM";
+        private static final String LOWER_CASE = "ivan.petrov@example.com";
+
+        @Test
+        @DisplayName("адрес сохраняется в нижнем регистре")
+        void storesEmailLowercased() throws Exception {
+            register(MIXED_CASE, PASSWORD).andExpect(status().isCreated());
+            awaitSingleEmail();
+
+            assertThat(countUsers(LOWER_CASE)).isEqualTo(1);
+            assertThat(countUsers(MIXED_CASE)).isZero();
+        }
+
+        @Test
+        @DisplayName("повторная регистрация другим регистром не заводит второй аккаунт")
+        void doesNotCreateASecondAccountForTheSameMailbox() throws Exception {
+            register(MIXED_CASE, PASSWORD).andExpect(status().isCreated());
+            awaitSingleEmail();
+            clearMailbox();
+
+            // Тот же ответ, что и на свободный адрес (1.10) — но письмо уходит другое,
+            // «аккаунт уже существует», и второй строки в users не появляется.
+            register(LOWER_CASE, PASSWORD).andExpect(status().isCreated());
+            awaitSingleEmail();
+
+            assertThat(countUsers(LOWER_CASE)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("вход работает любым регистром")
+        void loginIsCaseInsensitive() throws Exception {
+            registerAndVerify(MIXED_CASE, PASSWORD);
+
+            login(LOWER_CASE, PASSWORD).andExpect(status().isOk());
+            login(MIXED_CASE, PASSWORD).andExpect(status().isOk());
+            login(LOWER_CASE.toUpperCase(java.util.Locale.ROOT), PASSWORD).andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("сброс пароля находит аккаунт по адресу в другом регистре")
+        void forgotPasswordIsCaseInsensitive() throws Exception {
+            registerAndVerify(MIXED_CASE, PASSWORD);
+
+            forgotPassword(LOWER_CASE.toUpperCase(java.util.Locale.ROOT)).andExpect(status().isOk());
+            resetPassword(extractResetToken(awaitSingleEmail()), NEW_PASSWORD).andExpect(status().isOk());
+
+            login(MIXED_CASE, NEW_PASSWORD).andExpect(status().isOk());
+        }
+    }
+
     // ----------------------------------------------------------- запросы к API
 
     private ResultActions register(String email, String password) throws Exception {

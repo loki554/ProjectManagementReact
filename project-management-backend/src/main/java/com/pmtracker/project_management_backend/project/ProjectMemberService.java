@@ -86,6 +86,12 @@ public class ProjectMemberService {
 
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 
+        // Трогать владельца и раздавать владение может только владелец (см.
+        // requireOwnerForOwnershipChange): иначе ADMIN повышает себя и снимает настоящего OWNER.
+        if (target.getRole() == ProjectRole.OWNER || request.role() == ProjectRole.OWNER) {
+            projectAccessService.requireOwnerForOwnershipChange(myRole);
+        }
+
         if (target.getRole() == ProjectRole.OWNER && request.role() != ProjectRole.OWNER) {
             requireAnotherOwnerExists(projectId);
         }
@@ -113,6 +119,7 @@ public class ProjectMemberService {
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 
         if (target.getRole() == ProjectRole.OWNER) {
+            projectAccessService.requireOwnerForOwnershipChange(myRole);
             requireAnotherOwnerExists(projectId);
         }
 

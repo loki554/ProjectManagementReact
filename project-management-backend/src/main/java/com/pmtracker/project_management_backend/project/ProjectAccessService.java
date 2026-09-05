@@ -46,4 +46,18 @@ public class ProjectAccessService {
             throw new InsufficientProjectRoleException();
         }
     }
+
+    /**
+     * Владение — граница, за которую ADMIN не пускают: выдавать и отбирать роль OWNER может
+     * только OWNER. Обычной проверки «не ниже ADMIN» тут мало, и «должен остаться хотя бы один
+     * владелец» тоже не спасает: администратор повышает себя до OWNER (владельцев становится
+     * двое, guard молчит), понижает настоящего владельца — и проект у него. Ровно те же три
+     * двери ведут внутрь: смена роли, исключение участника и приглашение сразу с ролью OWNER,
+     * поэтому проверка одна на всех, а не по месту.
+     */
+    public void requireOwnerForOwnershipChange(ProjectRole role) {
+        if (role != ProjectRole.OWNER) {
+            throw new InsufficientProjectRoleException();
+        }
+    }
 }
