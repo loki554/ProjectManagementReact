@@ -56,6 +56,12 @@ public class Notification {
     @Column(name = "read_at")
     private Instant readAt;
 
+    // Когда по этому уведомлению ушло письмо; null — не уходило (см. V25). Ставится в той
+    // же транзакции, что создаёт уведомление, если получателю положено мгновенное письмо,
+    // либо вечером дайджестом. У выключенного типа остаётся null навсегда — письма не было.
+    @Column(name = "email_sent_at")
+    private Instant emailSentAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -114,6 +120,14 @@ public class Notification {
 
     public void setReadAt(Instant readAt) {
         this.readAt = readAt;
+    }
+
+    public Instant getEmailSentAt() {
+        return emailSentAt;
+    }
+
+    public void setEmailSentAt(Instant emailSentAt) {
+        this.emailSentAt = emailSentAt;
     }
 
     public Instant getCreatedAt() {

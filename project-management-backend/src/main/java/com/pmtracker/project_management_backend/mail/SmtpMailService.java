@@ -5,6 +5,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -126,6 +127,84 @@ public class SmtpMailService implements MailService {
                 Если вы не знаете отправителя — просто проигнорируйте письмо: пока по ссылке
                 не перешли, ничего не произошло, и никакого аккаунта на ваш адрес не заведено.
                 """.formatted(inviterName, projectName, link, expiresInDays));
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Письмо об одном уведомлении — мгновенная доставка (4.3).
+     * <p>
+     * Первое письмо приложения, которого человек сам не запрашивал: остальные четыре уходят
+     * в ответ на действие (регистрация, сброс пароля, приглашение). Отсюда две вещи, которых
+     * у них нет, — ссылка отписки в каждом письме (см. {@link NotificationMailTexts#footer})
+     * и настройки, решающие, отправлять ли его вообще (см. {@code NotificationSettings}).
+     * <p>
+     * В теме письма стоит заголовок задачи — единственный пользовательский текст, попадающий
+     * у нас в заголовок письма; чем это опасно и что с этим делается, написано в
+     * {@link NotificationMailTexts#sanitizeHeaderValue}.
+     */
+    @Override
+    public void sendNotificationEmail(String toEmail, NotificationMailItem item, String unsubscribeToken) {
+        StringBuilder text = new StringBuilder("Здравствуйте!\n\n");
+        text.append(NotificationMailTexts.line(item)).append('\n');
+
+        String context = NotificationMailTexts.context(item);
+        if (!context.isEmpty()) {
+            text.append(context).append('\n');
+        }
+
+        String link = NotificationMailTexts.taskLink(frontendBaseUrl, item);
+        if (link != null) {
+            text.append('\n').append("Открыть задачу: ").append(link).append('\n');
+        }
+        text.append(NotificationMailTexts.footer(frontendBaseUrl, unsubscribeToken));
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(NotificationMailTexts.subject(item));
+        message.setText(text.toString());
+
+        mailSender.send(message);
+    }
+
+    /**
+     * Сводка за сутки (4.3, режим DAILY_DIGEST).
+     * <p>
+     * Одно письмо вместо десяти — весь смысл режима, поэтому и оформление другое: не «событие
+     * и ссылка», а список, где у каждой строки своя ссылка. Заголовок задачи в тему не
+     * попадает вовсе — сводка не про одну задачу, и подставлять туда первую попавшуюся
+     * значило бы врать темой письма.
+     */
+    @Override
+    public void sendNotificationDigestEmail(String toEmail, List<NotificationMailItem> items,
+                                            int totalCount, String unsubscribeToken) {
+        StringBuilder text = new StringBuilder("Здравствуйте!\n\nЗа последние сутки:\n\n");
+        for (NotificationMailItem item : items) {
+            text.append("• ").append(NotificationMailTexts.line(item)).append('\n');
+            String context = NotificationMailTexts.context(item);
+            if (!context.isEmpty()) {
+                text.append("  ").append(context).append('\n');
+            }
+            String link = NotificationMailTexts.taskLink(frontendBaseUrl, item);
+            if (link != null) {
+                text.append("  ").append(link).append('\n');
+            }
+            text.append('\n');
+        }
+        // Хвост «и ещё N» появляется, когда накопилось больше, чем помещается в одно письмо:
+        // отметку «отправлено» получают все уведомления сводки, поэтому сюда они больше
+        // не вернутся, и умолчать о них нельзя (см. NotificationDigestJob.MAX_ITEMS_PER_EMAIL).
+        int hidden = totalCount - items.size();
+        if (hidden > 0) {
+            text.append("…и ещё ").append(hidden).append(" — целиком видно в приложении: ")
+                    .append(frontendBaseUrl).append("/projects").append('\n');
+        }
+        text.append(NotificationMailTexts.footer(frontendBaseUrl, unsubscribeToken));
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject(NotificationMailTexts.digestSubject(totalCount));
+        message.setText(text.toString());
 
         mailSender.send(message);
     }

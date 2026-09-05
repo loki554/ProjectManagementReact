@@ -13,7 +13,10 @@ package com.pmtracker.project_management_backend.common.scheduling;
 public enum SchedulerLockKey {
 
     /** Сканирование дедлайнов и рассылка task_due_soon/task_overdue (NotificationScheduler). */
-    NOTIFICATION_DUE_SCAN(7_710_001L);
+    NOTIFICATION_DUE_SCAN(7_710_001L),
+
+    /** Суточная сводка уведомлений почтой (NotificationDigestJob, 4.3). */
+    NOTIFICATION_DIGEST(7_710_002L);
 
     private final long value;
 

@@ -73,6 +73,25 @@ public class MailDispatcher {
     }
 
     /**
+     * Уведомление, доставляемое почтой (4.3). Событие публикуется только тогда, когда
+     * настройки получателя это разрешают, — решение «слать или нет» принимается в
+     * транзакции, вместе с самим уведомлением, а не здесь (см. NotificationService).
+     */
+    @Async(AsyncConfig.MAIL_EXECUTOR)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onNotificationEmailRequested(NotificationEmailRequestedEvent event) {
+        sendWithRetries("notification", () -> mailService.sendNotificationEmail(
+                event.email(), event.item(), event.unsubscribeToken()));
+    }
+
+    @Async(AsyncConfig.MAIL_EXECUTOR)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    public void onNotificationDigestEmailRequested(NotificationDigestEmailRequestedEvent event) {
+        sendWithRetries("notification digest", () -> mailService.sendNotificationDigestEmail(
+                event.email(), event.items(), event.totalCount(), event.unsubscribeToken()));
+    }
+
+    /**
      * @param kind короткое название письма для логов — ни адреса, ни токена в лог не попадает:
      *             первое засоряло бы логи почтой пользователей, второе равносильно выдаче
      *             рабочей ссылки сброса всякому, кто дотянулся до логов.

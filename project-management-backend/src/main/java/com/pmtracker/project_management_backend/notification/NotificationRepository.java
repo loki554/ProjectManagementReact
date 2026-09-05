@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,6 +32,33 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Modifying
     @Query("delete from Notification n where n.task.id = :taskId and n.type in ('task_due_soon', 'task_overdue')")
     void deleteDueDateAlerts(UUID taskId);
+
+    /**
+     * Что собрать в вечернюю сводку (4.3, {@code NotificationDigestJob}): уведомления
+     * перечисленных получателей, по которым письма ещё не было.
+     *
+     * <p>Окно {@code cutoff} обязательно. Без него человек, впервые включивший дайджест,
+     * получил бы письмо со всей своей историей за три месяца: {@code email_sent_at} остаётся
+     * null не только у «ещё не отправленных», но и у тех, что созданы до появления почтовых
+     * уведомлений вообще, и у тех, чей тип был выключен.
+     *
+     * <p>Получатель и автор подтягиваются fetch join: письмо собирается уже вне этой
+     * транзакции, и адрес с именем должны быть в руках заранее. Задача не нужна — всё, что
+     * попадает в письмо, лежит в payload (см. {@code NotificationService.basePayload}).
+     *
+     * <p>Порядок — по получателю и времени: джобу остаётся сгруппировать подряд идущие,
+     * а внутри письма события идут так же, как в колокольчике, но снизу вверх по времени.
+     */
+    @Query("""
+            select n from Notification n
+            join fetch n.recipient
+            left join fetch n.actor
+            where n.recipient.id in :recipientIds
+              and n.emailSentAt is null
+              and n.createdAt >= :cutoff
+            order by n.recipient.id, n.createdAt
+            """)
+    List<Notification> findPendingForDigest(Collection<UUID> recipientIds, Instant cutoff);
 
     /**
      * Чистка давно прочитанных уведомлений (3.9, NotificationCleanupJob).

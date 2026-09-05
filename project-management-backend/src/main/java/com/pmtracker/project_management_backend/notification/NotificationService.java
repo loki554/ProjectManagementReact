@@ -3,8 +3,12 @@ package com.pmtracker.project_management_backend.notification;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.NotificationNotFoundException;
+import com.pmtracker.project_management_backend.mail.NotificationEmailRequestedEvent;
+import com.pmtracker.project_management_backend.mail.NotificationMailItem;
+import com.pmtracker.project_management_backend.mail.UnsubscribeTokenService;
 import com.pmtracker.project_management_backend.notification.dto.NotificationResponse;
 import com.pmtracker.project_management_backend.task.Task;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,12 @@ import java.util.UUID;
  * что и само действие — тот же приём, что ActivityService.record (см. её комментарий).
  * Типы task_due_soon/task_overdue не событийные, а вычисляемые по расписанию — их
  * создаёт NotificationScheduler.
+ * <p>
+ * С 4.3 у уведомления есть второй канал доставки — почта. Решение «писать ли письмо и когда»
+ * принимается здесь же, в той же транзакции: настройки получателя читаются один раз на
+ * уведомление, и результат фиксируется в самой строке (email_sent_at), а не пересчитывается
+ * потом. Иначе рассылке пришлось бы гадать, что человек хотел вчера, когда уведомление
+ * создавалось, — а между созданием и вечерним дайджестом настройки вполне могли поменяться.
  */
 @Service
 public class NotificationService {
@@ -37,9 +47,18 @@ public class NotificationService {
     public static final String TYPE_TASK_OVERDUE = "task_overdue";
 
     private final NotificationRepository notificationRepository;
+    private final NotificationSettingsRepository settingsRepository;
+    private final UnsubscribeTokenService unsubscribeTokenService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               NotificationSettingsRepository settingsRepository,
+                               UnsubscribeTokenService unsubscribeTokenService,
+                               ApplicationEventPublisher eventPublisher) {
         this.notificationRepository = notificationRepository;
+        this.settingsRepository = settingsRepository;
+        this.unsubscribeTokenService = unsubscribeTokenService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -104,6 +123,46 @@ public class NotificationService {
         notification.setTask(task);
         notification.setPayload(payload);
         notificationRepository.save(notification);
+        planEmail(notification, recipient, actor);
+    }
+
+    /**
+     * Решает судьбу письма по только что созданному уведомлению (4.3). Три исхода:
+     * <ul>
+     *   <li>почта выключена целиком или выключен этот тип — письма не будет, и
+     *       {@code emailSentAt} остаётся null: это «не отправляли», а не «отправим потом»;</li>
+     *   <li>режим DAILY_DIGEST — тоже null, но вечером строку заберёт
+     *       {@link NotificationDigestJob} и отметит уже он;</li>
+     *   <li>режим INSTANT (он же поведение по умолчанию, когда настроек нет вовсе) —
+     *       отметка ставится прямо сейчас, а письмо уходит после коммита.</li>
+     * </ul>
+     * «Отправлено» здесь означает «передано MailDispatcher»: ретраи и дальнейшая судьба
+     * письма — его дело, и повторять их вечером сводкой было бы вторым письмом об одном
+     * и том же в самом частом случае — когда первое как раз дошло.
+     * <p>
+     * Событие публикуется внутри транзакции, а уходит после коммита: письмо со ссылкой на
+     * задачу не должно опережать саму задачу (см. MailDispatcher).
+     */
+    private void planEmail(Notification notification, User recipient, User actor) {
+        NotificationSettings settings = settingsRepository.findById(recipient.getId()).orElse(null);
+        if (settings != null
+                && (!settings.isEmailEnabled() || !settings.allows(notification.getType()))) {
+            return;
+        }
+        if (settings != null && settings.getMode() == NotificationDeliveryMode.DAILY_DIGEST) {
+            return;
+        }
+
+        notification.setEmailSentAt(Instant.now());
+        eventPublisher.publishEvent(new NotificationEmailRequestedEvent(
+                recipient.getEmail(),
+                NotificationMailItem.from(notification, displayName(actor)),
+                unsubscribeTokenService.tokenFor(recipient.getId())));
+    }
+
+    /** null у системных уведомлений: их создаёт планировщик, действующего лица там нет. */
+    static String displayName(User user) {
+        return user != null ? user.getLastName() + " " + user.getFirstName() : null;
     }
 
     // Дедлайн задачи сдвинулся или задача больше не активна (DONE/REJECTED) — старые
