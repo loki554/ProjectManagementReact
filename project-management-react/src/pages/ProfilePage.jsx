@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { updateProfile, uploadAvatar } from '../api/userApi'
 import { ChangePasswordForm } from '../components/profile/ChangePasswordForm'
+import { NotificationSettingsForm } from '../components/profile/NotificationSettingsForm'
 import { Field, inputClass, secondaryButtonClass, submitButtonClass } from '../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../lib/errorMessage'
 import { useAuthenticatedImage } from '../lib/useAuthenticatedImage'
@@ -187,6 +188,10 @@ export function ProfilePage() {
       {/* Отдельной формой, а не полями выше: смена пароля разлогинивает, и путать её
           с обычным "сохранить профиль" нельзя ни визуально, ни по кнопке. */}
       <ChangePasswordForm />
+
+      {/* Настройки писем — тоже своя форма и своя кнопка (4.3). Стоит после пароля, а не
+          между ним и ФИО: это самая редко используемая секция профиля из трёх. */}
+      <NotificationSettingsForm />
     </div>
   )
 }

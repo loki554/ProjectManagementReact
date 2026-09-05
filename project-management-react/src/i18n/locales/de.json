@@ -261,6 +261,18 @@
     "registerBanner": "Sie wurden zu „{{project}}“ eingeladen. Das Konto wird für die Adresse erstellt, für die die Einladung ausgestellt wurde, und lässt sich hier nicht ändern.",
     "registeredMessage": "Wir haben eine E-Mail an diese Adresse gesendet. Bestätigen Sie sie — danach sind Sie in „{{project}}“."
   },
+  "unsubscribe": {
+    "title": "E-Mails abbestellen",
+    "intro": "Klicken Sie auf die Schaltfläche, um keine Benachrichtigungs-E-Mails mehr zu erhalten.",
+    "bellStaysHint": "Die Benachrichtigungen bleiben in der Glocke — nur die E-Mails hören auf.",
+    "submit": "Abbestellen",
+    "submitting": "Wird abbestellt...",
+    "doneTitle": "Fertig",
+    "doneMessage": "Sie erhalten keine Benachrichtigungs-E-Mails mehr.",
+    "goToSettings": "E-Mails im Profil einstellen",
+    "missingToken": "Der Link enthält kein Token. Öffnen Sie den vollständigen Link aus der E-Mail.",
+    "backToProjects": "Zu den Projekten"
+  },
   "roles": {
     "OWNER": "Eigentümer",
     "ADMIN": "Administrator",
@@ -467,6 +479,30 @@
       "submit": "Passwort ändern",
       "submitting": "Wird geändert...",
       "changedSignInAgain": "Passwort geändert. Bitte melden Sie sich mit dem neuen Passwort an."
+    },
+    "notifications": {
+      "title": "Benachrichtigungs-E-Mails",
+      "hint": "Benachrichtigungen erscheinen immer in der Glocke. Hier legen Sie fest, ob sie zusätzlich per E-Mail kommen.",
+      "loading": "Einstellungen werden geladen...",
+      "emailEnabled": "Benachrichtigungen per E-Mail senden",
+      "emailEnabledHint": "Ausschalten, wenn die Glocke genügt.",
+      "mode": "Wie oft",
+      "modes": {
+        "INSTANT": "Sofort",
+        "DAILY_DIGEST": "Einmal täglich als Zusammenfassung"
+      },
+      "modeHints": {
+        "INSTANT": "Eine E-Mail pro Ereignis.",
+        "DAILY_DIGEST": "Eine Morgen-E-Mail mit allem, was angefallen ist."
+      },
+      "types": "Worüber informieren",
+      "typeLabels": {
+        "taskAssigned": "Mir wurde eine Aufgabe zugewiesen",
+        "taskComment": "Kommentar zu meiner Aufgabe",
+        "taskDueSoon": "Frist läuft bald ab",
+        "taskOverdue": "Frist ist abgelaufen"
+      },
+      "bellStaysHint": "Was Sie hier auch ausschalten — in der Glocke bleiben die Benachrichtigungen."
     }
   },
   "errors": {

@@ -261,6 +261,18 @@
     "registerBanner": "You have been invited to \"{{project}}\". The account is created for the address the invitation was issued for, so it cannot be changed here.",
     "registeredMessage": "We have sent an email to that address. Confirm it and you will land in \"{{project}}\"."
   },
+  "unsubscribe": {
+    "title": "Unsubscribe from emails",
+    "intro": "Press the button to stop receiving notification emails.",
+    "bellStaysHint": "Notifications stay in the bell — only the emails stop.",
+    "submit": "Unsubscribe",
+    "submitting": "Unsubscribing...",
+    "doneTitle": "Done",
+    "doneMessage": "You will not receive notification emails any more.",
+    "goToSettings": "Fine-tune emails in your profile",
+    "missingToken": "The link has no token. Open the full link from the email.",
+    "backToProjects": "Back to projects"
+  },
   "roles": {
     "OWNER": "Owner",
     "ADMIN": "Admin",
@@ -467,6 +479,30 @@
       "submit": "Change password",
       "submitting": "Changing...",
       "changedSignInAgain": "Password changed. Sign in again with the new password."
+    },
+    "notifications": {
+      "title": "Notification emails",
+      "hint": "Notifications always show up in the bell. Here you choose whether to also get them by email.",
+      "loading": "Loading settings...",
+      "emailEnabled": "Send notifications by email",
+      "emailEnabledHint": "Turn this off if the bell is enough.",
+      "mode": "How often",
+      "modes": {
+        "INSTANT": "Right away",
+        "DAILY_DIGEST": "Once a day, as a digest"
+      },
+      "modeHints": {
+        "INSTANT": "One email per event.",
+        "DAILY_DIGEST": "One morning email with everything that piled up."
+      },
+      "types": "What to email about",
+      "typeLabels": {
+        "taskAssigned": "A task is assigned to me",
+        "taskComment": "A comment on my task",
+        "taskDueSoon": "A due date is approaching",
+        "taskOverdue": "A due date has passed"
+      },
+      "bellStaysHint": "Whatever you turn off here, the notifications stay in the bell."
     }
   },
   "errors": {

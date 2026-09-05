@@ -6,6 +6,7 @@ import { ToastContainer } from './components/ui/ToastContainer'
 import { InvitePage } from './pages/InvitePage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SearchPage } from './pages/SearchPage'
+import { UnsubscribePage } from './pages/UnsubscribePage'
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
@@ -74,6 +75,10 @@ function AppRoutes() {
             не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
             (см. InvitePage). */}
         <Route path="/invite" element={<InvitePage />} />
+        {/* Тоже не под ProtectedRoute: по этой ссылке приходят из письма-уведомления, и
+            требовать входа ради «перестаньте мне писать» — верный способ получить вместо
+            отписки жалобу на спам (см. UnsubscribePage). */}
+        <Route path="/unsubscribe" element={<UnsubscribePage />} />
         <Route
           path="/profile"
           element={
