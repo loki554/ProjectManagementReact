@@ -10,6 +10,7 @@ const { register } = await import('../../api/authApi')
 
 const VALID = {
   email: 'user@example.com',
+  username: 'ivanov',
   password: 'long-enough-password',
   lastName: 'Иванов',
   firstName: 'Иван',
@@ -20,6 +21,7 @@ async function fill(user, overrides = {}) {
   // Пустые значения просто не набираем: поле и так пустое, а user.type('') падает.
   for (const [label, value] of [
     ['Email', values.email],
+    ['Username', values.username],
     ['Password', values.password],
     ['Last name', values.lastName],
     ['First name', values.firstName],
@@ -70,6 +72,7 @@ describe('RegisterPage', () => {
     await waitFor(() => expect(register).toHaveBeenCalled())
     expect(register.mock.calls[0][0]).toMatchObject({
       email: VALID.email,
+      username: VALID.username,
       lastName: 'Иванов',
       firstName: 'Иван',
       patronymic: '',
@@ -83,6 +86,31 @@ describe('RegisterPage', () => {
     await fill(user, { lastName: '', firstName: '' })
 
     expect(await screen.findAllByText('This field is required')).toHaveLength(2)
+    expect(register).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Формат никнейма продублирован на бэкенде (@Pattern в RegisterRequest и CHECK в V28) —
+   * здесь он нужен, чтобы человек узнал о нём до отправки. На нём же держится разбор
+   * @упоминаний: никнейм с точкой или пробелом означал бы человека, которого нельзя позвать.
+   */
+  it('никнейм не по формату не уходит на сервер', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<RegisterPage />)
+
+    await fill(user, { username: 'ivan.ov' })
+
+    expect(await screen.findByText('3–30 characters: latin letters, digits, _ and -')).toBeInTheDocument()
+    expect(register).not.toHaveBeenCalled()
+  })
+
+  it('никнейм обязателен', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<RegisterPage />)
+
+    await fill(user, { username: '' })
+
+    expect(await screen.findByText('This field is required')).toBeInTheDocument()
     expect(register).not.toHaveBeenCalled()
   })
 

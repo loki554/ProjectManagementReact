@@ -462,6 +462,7 @@ class TaskListIntegrationTest extends IntegrationTest {
     private User saveUser(String email, String lastName, String firstName) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         user.setLastName(lastName);
         user.setFirstName(firstName);

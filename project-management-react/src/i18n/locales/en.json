@@ -73,6 +73,9 @@
     "register": {
       "title": "Sign up",
       "email": "Email",
+      "username": "Username",
+      "usernamePlaceholder": "ivanov",
+      "usernameHint": "Unique, 3–30 characters: latin letters, digits, _ and -. People will mention you by it in comments: @ivanov",
       "password": "Password",
       "lastName": "Last name",
       "firstName": "First name",
@@ -94,6 +97,7 @@
     },
     "validation": {
       "required": "This field is required",
+      "usernameFormat": "3–30 characters: latin letters, digits, _ and -",
       "invalidEmail": "Enter a valid email address",
       "passwordMin": "Password must be at least 8 characters",
       "passwordsDoNotMatch": "Passwords do not match"
@@ -440,7 +444,7 @@
       "sortLabel": "Comment sorting",
       "sortNewest": "Newest first",
       "sortOldest": "Oldest first",
-      "mentionHint": "Type @ to mention a project member — they will get a notification",
+      "mentionHint": "Type @ and a member’s username to mention them — they will get a notification",
       "mentionListLabel": "Project members"
     }
   },
@@ -472,6 +476,8 @@
     "changeAvatar": "Change avatar",
     "avatarHint": "PNG, JPEG, WEBP or GIF, up to 5MB",
     "avatarPending": "The new avatar will be uploaded when you save",
+    "username": "Username",
+    "usernameHint": "People mention you by it in comments. If you change it, mentions in existing comments keep the old one.",
     "lastName": "Last name",
     "firstName": "First name",
     "patronymic": "Middle name",
@@ -530,6 +536,7 @@
     "NOT_A_PROJECT_MEMBER": "You are not a member of this project",
     "INSUFFICIENT_ROLE": "You don't have permission to do this",
     "ALREADY_PROJECT_MEMBER": "This user is already a project member",
+    "USERNAME_TAKEN": "This username is already taken — pick another one",
     "CANNOT_REMOVE_LAST_OWNER": "The project must keep at least one owner",
     "TASK_NOT_FOUND": "Task not found",
     "PARENT_TASK_NOT_FOUND": "Parent task not found",

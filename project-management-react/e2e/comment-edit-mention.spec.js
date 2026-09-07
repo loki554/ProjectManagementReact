@@ -20,12 +20,14 @@ const RUN_ID = Date.now()
 
 const AUTHOR = {
   email: `e2e-commenter-${RUN_ID}@example.com`,
+  username: `e2e-cmt-${RUN_ID}`.slice(0, 30),
   password: 'e2e-password-123',
   lastName: 'Playwright',
   firstName: 'Commenter',
 }
 const TEAMMATE = {
   email: `e2e-teammate-${RUN_ID}@example.com`,
+  username: `e2e-tmt-${RUN_ID}`.slice(0, 30),
   password: 'e2e-password-456',
   lastName: 'Playwright',
   firstName: 'Teammate',
@@ -36,6 +38,7 @@ const TASK_TITLE = `Discuss the mention flow ${RUN_ID}`
 async function registerVerifyAndSignIn(page, user) {
   await page.goto('/register')
   await page.getByLabel('Email').fill(user.email)
+  await page.getByLabel('Username').fill(user.username)
   await page.getByLabel('Password').fill(user.password)
   await page.getByLabel('Last name').fill(user.lastName)
   await page.getByLabel('First name').fill(user.firstName)
@@ -85,26 +88,28 @@ test('комментарии: @упоминание из автокомплит�
 
   const commentBox = page.getByPlaceholder('Write a comment...')
 
-  await test.step('@ открывает список участников, выбор подставляет адрес', async () => {
+  await test.step('@ открывает список участников, выбор подставляет никнейм', async () => {
     await commentBox.click()
     // Печатаем по клавише: подсказки завязаны на позицию каретки, а fill() выставил бы
     // значение одним присваиванием — то есть проверял бы не тот путь, которым ходят люди.
-    await commentBox.pressSequentially('Please take a look, @teammate')
+    await commentBox.pressSequentially('Please take a look, @e2e-tmt')
 
-    const suggestion = page.getByRole('option').filter({ hasText: TEAMMATE.email })
+    const suggestion = page.getByRole('option').filter({ hasText: TEAMMATE.username })
     await expect(suggestion).toBeVisible()
     await suggestion.click()
 
-    // В поле оказывается адрес, а не имя: хранится упоминание именно так — это
-    // единственная форма, которую разбирает сервер (см. MentionParser.java).
-    await expect(commentBox).toHaveValue(`Please take a look, @${TEAMMATE.email} `)
+    // В поле оказывается никнейм — та самая форма, которую разбирает сервер
+    // (см. MentionParser.java), и та самая, которую человек потом увидит в треде.
+    await expect(commentBox).toHaveValue(`Please take a look, @${TEAMMATE.username} `)
   })
 
-  await test.step('отправленное упоминание показано именем, а не адресом', async () => {
+  await test.step('отправленное упоминание подсвечено в тексте комментария', async () => {
     await page.getByRole('button', { name: 'Send' }).click()
 
-    // Адрес заменён на «@Фамилия Имя» — ради этого разбор на стороне отображения и нужен.
-    await expect(page.getByText(`@${TEAMMATE.lastName} ${TEAMMATE.firstName}`)).toBeVisible()
+    // Никнейм показан как есть (настоящее имя уходит в подсказку): написанное и увиденное
+    // совпадают — ради этого никнеймы и заводились вместо адресов.
+    const mention = page.getByTitle(`${TEAMMATE.lastName} ${TEAMMATE.firstName}`)
+    await expect(mention).toHaveText(`@${TEAMMATE.username}`)
     await expect(page.getByText('Please take a look,')).toBeVisible()
   })
 
@@ -120,7 +125,7 @@ test('комментарии: @упоминание из автокомплит�
     await page.getByRole('button', { name: 'Edit' }).click()
 
     const editBox = page.getByPlaceholder('Write a comment...').first()
-    await editBox.fill(`Please take a look today, @${TEAMMATE.email}`)
+    await editBox.fill(`Please take a look today, @${TEAMMATE.username}`)
     await page.getByRole('button', { name: 'Save' }).click()
 
     await expect(page.getByText('(edited)')).toBeVisible()

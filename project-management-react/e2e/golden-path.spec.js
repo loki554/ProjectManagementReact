@@ -22,6 +22,9 @@ import { awaitVerificationLink } from './mailhog.js'
 const RUN_ID = Date.now()
 const USER = {
   email: `e2e-${RUN_ID}@example.com`,
+  // Никнейм уникален глобально (V28), а база между прогонами не чистится — поэтому,
+  // как и адрес, он завязан на время запуска.
+  username: `e2e-golden-${RUN_ID}`.slice(0, 30),
   password: 'e2e-password-123',
   lastName: 'Playwright',
   firstName: 'Golden',
@@ -66,6 +69,7 @@ test('золотой путь: регистрация → проект → за�
     await page.goto('/register')
 
     await page.getByLabel('Email').fill(USER.email)
+    await page.getByLabel('Username').fill(USER.username)
     await page.getByLabel('Password').fill(USER.password)
     await page.getByLabel('Last name').fill(USER.lastName)
     await page.getByLabel('First name').fill(USER.firstName)

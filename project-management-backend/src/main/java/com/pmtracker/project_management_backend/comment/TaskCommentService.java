@@ -32,10 +32,10 @@ public class TaskCommentService {
 
     /**
      * Потолок числа упомянутых в одном комментарии (4.5). В 2000 символов тела помещается
-     * около сотни адресов, а каждый упомянутый — это уведомление и, по умолчанию, письмо.
-     * Двадцати хватает, чтобы позвать хоть всю команду небольшого проекта, и мало, чтобы
-     * одним сообщением устроить рассылку по всем участникам большого. Отрезается хвост
-     * (адреса идут в порядке появления в тексте) — то есть работает начало списка, которое
+     * заметно больше сотни никнеймов, а каждый упомянутый — это уведомление и, по умолчанию,
+     * письмо. Двадцати хватает, чтобы позвать хоть всю команду небольшого проекта, и мало,
+     * чтобы одним сообщением устроить рассылку по всем участникам большого. Отрезается хвост
+     * (никнеймы идут в порядке появления в тексте) — то есть работает начало списка, которое
      * человек и писал осмысленно.
      */
     private static final int MAX_MENTIONS_PER_COMMENT = 20;
@@ -160,24 +160,24 @@ public class TaskCommentService {
     }
 
     /**
-     * Кого из упомянутых в тексте надо уведомить: адреса из тела, минус уже упомянутые
+     * Кого из упомянутых в тексте надо уведомить: никнеймы из тела, минус уже упомянутые
      * раньше ({@code alreadyMentioned} — упоминания предыдущей редакции, при создании пусто),
      * сведённые к реальным участникам этого проекта.
      * <p>
-     * Фильтр по участникам делает запрос в БД ({@code findUsersByProjectIdAndEmailIn}) и он
-     * же служит проверкой прав: адрес постороннего просто не найдётся, и упоминание тихо
-     * останется текстом. Тихо — намеренно: отвечать 400 на «в проекте нет такого адреса»
+     * Фильтр по участникам делает запрос в БД ({@code findUsersByProjectIdAndUsernameIn}) и он
+     * же служит проверкой прав: никнейм постороннего просто не найдётся, и упоминание тихо
+     * останется текстом. Тихо — намеренно: отвечать 400 на «в проекте нет такого никнейма»
      * значило бы, что опечатка в упоминании отменяет отправку всего комментария, а заодно
-     * превращало бы форму комментария в способ проверять, зарегистрирован ли адрес.
+     * превращало бы форму комментария в способ перебирать чужие никнеймы по проектам.
      */
     private List<User> resolveMentions(Task task, String body, Set<String> alreadyMentioned) {
-        Set<String> emails = new LinkedHashSet<>(MentionParser.parse(body));
-        emails.removeAll(alreadyMentioned);
-        if (emails.isEmpty()) {
+        Set<String> usernames = new LinkedHashSet<>(MentionParser.parse(body));
+        usernames.removeAll(alreadyMentioned);
+        if (usernames.isEmpty()) {
             return List.of();
         }
-        List<String> capped = emails.stream().limit(MAX_MENTIONS_PER_COMMENT).toList();
-        return projectMemberRepository.findUsersByProjectIdAndEmailIn(task.getProject().getId(), capped);
+        List<String> capped = usernames.stream().limit(MAX_MENTIONS_PER_COMMENT).toList();
+        return projectMemberRepository.findUsersByProjectIdAndUsernameIn(task.getProject().getId(), capped);
     }
 
     private Task findTaskOrThrow(UUID taskId) {

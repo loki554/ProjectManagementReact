@@ -3,45 +3,62 @@ import { applyMention, filterMembers, findActiveMention, splitMentions } from '.
 
 // Разбор @упоминаний (4.5). Клиентская половина обязана совпадать с серверной
 // (MentionParser.java) в одном: что считать упоминанием, а что — обычным текстом.
-// Разъезд здесь виден сразу и обидно: подсвеченное имя, по которому никого не позвали,
-// или наоборот — уведомление там, где человек просто вставил в комментарий чей-то адрес.
+// Разъезд здесь виден сразу и обидно: подсвеченный никнейм, по которому никого не позвали,
+// или наоборот — уведомление там, где человек ничего такого не имел в виду.
 
-const member = (email, lastName, firstName) => ({ userId: email, email, lastName, firstName })
+const member = (username, lastName, firstName) => ({ userId: username, username, lastName, firstName })
 
 describe('splitMentions', () => {
   it('вытаскивает упоминание и оставляет текст вокруг', () => {
-    expect(splitMentions('Привет, @ivan@example.com, глянь')).toEqual([
+    expect(splitMentions('Привет, @ivanov, глянь')).toEqual([
       { type: 'text', value: 'Привет, ' },
-      { type: 'mention', email: 'ivan@example.com' },
+      { type: 'mention', username: 'ivanov' },
       { type: 'text', value: ', глянь' },
     ])
   })
 
   it('упоминание в самом начале строки', () => {
-    expect(splitMentions('@ivan@example.com глянь')).toEqual([
-      { type: 'mention', email: 'ivan@example.com' },
+    expect(splitMentions('@ivanov глянь')).toEqual([
+      { type: 'mention', username: 'ivanov' },
       { type: 'text', value: ' глянь' },
     ])
   })
 
-  // То же правило, что на сервере: отличает упоминание от адреса ровно символ перед «@».
-  // Иначе строчка из письма, вставленная в комментарий, звала бы человека в тред.
-  it('адрес без ведущего @ упоминанием не считается', () => {
+  // Точка не входит в набор символов никнейма именно ради этого случая: конец предложения
+  // не должен съедаться упоминанием и не должен мешать его разобрать.
+  it('точка в конце предложения не мешает', () => {
+    expect(splitMentions('спроси у @ivanov.')).toEqual([
+      { type: 'text', value: 'спроси у ' },
+      { type: 'mention', username: 'ivanov' },
+      { type: 'text', value: '.' },
+    ])
+  })
+
+  // То же правило, что на сервере: отличает упоминание от почтового адреса в тексте ровно
+  // символ перед «@». Иначе строчка из письма, вставленная в комментарий, звала бы человека.
+  it('почтовый адрес в тексте упоминанием не считается', () => {
     expect(splitMentions('пиши на ivan@example.com')).toEqual([
       { type: 'text', value: 'пиши на ivan@example.com' },
     ])
   })
 
   it('два упоминания подряд разбираются оба, пробел между ними остаётся текстом', () => {
-    expect(splitMentions('@a@x.com @b@y.com')).toEqual([
-      { type: 'mention', email: 'a@x.com' },
+    expect(splitMentions('@ivanov @petrov')).toEqual([
+      { type: 'mention', username: 'ivanov' },
       { type: 'text', value: ' ' },
-      { type: 'mention', email: 'b@y.com' },
+      { type: 'mention', username: 'petrov' },
     ])
   })
 
-  it('регистр адреса не мешает: бэкенд сравнивает в нижнем', () => {
-    expect(splitMentions('@Ivan@Example.COM')).toEqual([{ type: 'mention', email: 'ivan@example.com' }])
+  it('регистр не мешает: бэкенд хранит и сравнивает в нижнем', () => {
+    expect(splitMentions('@Ivanov')).toEqual([{ type: 'mention', username: 'ivanov' }])
+  })
+
+  // Без верхней границы «@» и тридцать пять символов подряд дали бы «упоминание» из первых
+  // тридцати — то есть чужой никнейм, собранный из куска чужого слова.
+  it('слишком длинное и слишком короткое упоминанием не считается', () => {
+    expect(splitMentions('@' + 'a'.repeat(35))).toEqual([{ type: 'text', value: '@' + 'a'.repeat(35) }])
+    expect(splitMentions('@ab')).toEqual([{ type: 'text', value: '@ab' }])
   })
 
   it('пустое тело — пустой список, а не падение', () => {
@@ -55,6 +72,8 @@ describe('findActiveMention', () => {
     expect(findActiveMention('глянь @iva', 10)).toEqual({ query: 'iva', start: 6 })
   })
 
+  // Требований к набранному меньше, чем к готовому никнейму: подсказки нужны как раз тому,
+  // кто ещё не дописал.
   it('только что набранный @ показывает всех: запрос пустой', () => {
     expect(findActiveMention('глянь @', 7)).toEqual({ query: '', start: 6 })
   })
@@ -68,51 +87,52 @@ describe('findActiveMention', () => {
     expect(findActiveMention('глянь @iva', 3)).toBeNull()
   })
 
-  it('@ внутри слова — это адрес или часть слова, а не начало упоминания', () => {
+  it('@ внутри слова — это почтовый адрес или часть слова, а не начало упоминания', () => {
     expect(findActiveMention('ivan@exa', 8)).toBeNull()
   })
 })
 
 describe('applyMention', () => {
-  it('подставляет адрес вместо набранного и ставит каретку за ним', () => {
+  it('подставляет никнейм вместо набранного и ставит каретку за ним', () => {
     const text = 'глянь @iva'
-    const result = applyMention(text, findActiveMention(text, 10), 'ivan@example.com')
-    expect(result.text).toBe('глянь @ivan@example.com ')
+    const result = applyMention(text, findActiveMention(text, 10), 'ivanov')
+    expect(result.text).toBe('глянь @ivanov ')
     expect(result.caret).toBe(result.text.length)
   })
 
   // Перед знаком препинания пробел не нужен: упоминание и так на нём кончается, а лишний
-  // пробел пришлось бы стирать руками в самом частом случае — «@Иванов, посмотри».
+  // пробел пришлось бы стирать руками в самом частом случае — «@ivanov, посмотри».
   it('перед запятой пробел не дописывается, хвост строки сохраняется', () => {
     const text = 'глянь @iva, спасибо'
-    const result = applyMention(text, findActiveMention(text, 10), 'ivan@example.com')
-    expect(result.text).toBe('глянь @ivan@example.com, спасибо')
-    expect(result.caret).toBe('глянь @ivan@example.com'.length)
+    const result = applyMention(text, findActiveMention(text, 10), 'ivanov')
+    expect(result.text).toBe('глянь @ivanov, спасибо')
+    expect(result.caret).toBe('глянь @ivanov'.length)
   })
 
-  it('перед следующим словом пробел нужен — иначе оно приклеится к адресу', () => {
+  it('перед следующим словом пробел нужен — иначе оно приклеится к никнейму', () => {
     const text = 'глянь @iva пожалуйста'
-    const result = applyMention(text, findActiveMention(text, 10), 'ivan@example.com')
-    expect(result.text).toBe('глянь @ivan@example.com пожалуйста')
+    const result = applyMention(text, findActiveMention(text, 10), 'ivanov')
+    expect(result.text).toBe('глянь @ivanov пожалуйста')
   })
 })
 
 describe('filterMembers', () => {
   const members = [
-    member('ivanov@example.com', 'Иванов', 'Иван'),
-    member('petrov@example.com', 'Петров', 'Пётр'),
+    member('ivanov', 'Иванов', 'Иван'),
+    member('petrov-p', 'Петров', 'Пётр'),
   ]
 
   it('пустой запрос показывает всех', () => {
     expect(filterMembers(members, '')).toEqual(members)
   })
 
-  it('ищет по фамилии', () => {
-    expect(filterMembers(members, 'петр')).toEqual([members[1]])
+  it('ищет по никнейму', () => {
+    expect(filterMembers(members, 'petrov')).toEqual([members[1]])
   })
 
-  it('ищет по адресу — его человек помнит реже, но подсказку по нему ждёт', () => {
-    expect(filterMembers(members, 'ivanov@')).toEqual([members[0]])
+  // Никнейм человек помнит не всегда, а фамилию — всегда; подсказка обязана находиться и так.
+  it('ищет по фамилии', () => {
+    expect(filterMembers(members, 'иванов')).toEqual([members[0]])
   })
 
   it('ничего не совпало — пустой список, а не все', () => {

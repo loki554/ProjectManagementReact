@@ -36,6 +36,7 @@ class NotificationCleanupJobTest extends IntegrationTest {
     void createRecipient() {
         recipient = new User();
         recipient.setEmail("recipient@example.com");
+        recipient.setUsername(usernameFrom("recipient@example.com"));
         recipient.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         recipient.setLastName("Тестов");
         recipient.setFirstName("Получатель");

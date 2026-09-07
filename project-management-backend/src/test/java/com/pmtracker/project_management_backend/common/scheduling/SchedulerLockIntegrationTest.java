@@ -59,6 +59,7 @@ class SchedulerLockIntegrationTest extends IntegrationTest {
     void createOverdueTask() {
         assignee = new User();
         assignee.setEmail("assignee@example.com");
+        assignee.setUsername(usernameFrom("assignee@example.com"));
         assignee.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         assignee.setLastName("Тестов");
         assignee.setFirstName("Исполнитель");

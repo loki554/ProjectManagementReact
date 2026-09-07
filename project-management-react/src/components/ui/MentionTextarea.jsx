@@ -57,7 +57,13 @@ export function MentionTextarea({
 
   function refresh(text, caret) {
     const next = findActiveMention(text, caret)
-    setMention(next)
+    // Дописанный до конца никнейм закрывает подсказки. Без этого комментарий, кончающийся
+    // упоминанием (а это самый обычный случай — «посмотри, @ivanov»), оставлял бы открытый
+    // список висеть поверх кнопки «Отправить», и клик по ней попадал бы в список. Стоит
+    // продолжить печатать — запрос перестаёт совпадать точно, и подсказки возвращаются.
+    const complete =
+      next !== null && (members ?? []).some((member) => member.username === next.query.toLowerCase())
+    setMention(complete ? null : next)
     setHighlighted(0)
   }
 
@@ -78,7 +84,7 @@ export function MentionTextarea({
   }
 
   function select(member) {
-    const { text, caret } = applyMention(value ?? '', mention, member.email)
+    const { text, caret } = applyMention(value ?? '', mention, member.username)
     onChange(text)
     setMention(null)
     const textarea = textareaRef.current
@@ -167,8 +173,12 @@ export function MentionTextarea({
                     него только avatarUrl и инициалы, поэтому подходит как есть. */}
                 <UserAvatar user={member} sizeClass="h-6 w-6" />
                 <span className="min-w-0">
-                  <span className="block truncate">{memberName(member)}</span>
-                  <span className="block truncate text-xs text-gray-400 dark:text-gray-500">{member.email}</span>
+                  {/* Никнейм первой строкой, а имя второй: в текст подставится именно он,
+                      и видеть человек должен то, что получит. */}
+                  <span className="block truncate font-medium">@{member.username}</span>
+                  <span className="block truncate text-xs text-gray-400 dark:text-gray-500">
+                    {memberName(member)}
+                  </span>
                 </span>
               </button>
             </li>

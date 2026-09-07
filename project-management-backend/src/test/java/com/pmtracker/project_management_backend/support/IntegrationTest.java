@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.time.Duration;
+import java.util.Locale;
 
 import static org.awaitility.Awaitility.await;
 
@@ -91,6 +92,22 @@ public abstract class IntegrationTest {
     void resetState() {
         jdbcTemplate.execute("TRUNCATE TABLE users CASCADE");
         clearMailbox();
+    }
+
+    /**
+     * Никнейм для тестовой фикстуры пользователя (V28). Выводится из локальной части адреса —
+     * тем же способом, что бэкофилл в самой миграции, и по той же причине: адреса в фикстурах
+     * говорящие («assignee@example.com»), и никнейм, выведенный из них, читается в тестах про
+     * @упоминания как настоящий, а не как случайная строка.
+     * <p>
+     * Уникальности внутри класса это не гарантирует — её обеспечивают сами адреса, которые
+     * в пределах одной фикстуры и так различаются локальной частью. Совпадение проявится
+     * нарушением уникального индекса, то есть громко.
+     */
+    protected static String usernameFrom(String email) {
+        String base = email.split("@")[0].toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "-");
+        base = base.substring(0, Math.min(base.length(), 30));
+        return base.length() >= 3 ? base : base + "-user";
     }
 
     /** Выкидывает всё, что уже пришло на SMTP: дальше тест ждёт только своё письмо. */

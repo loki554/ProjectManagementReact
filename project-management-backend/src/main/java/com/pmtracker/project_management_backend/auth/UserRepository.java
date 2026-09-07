@@ -14,6 +14,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmail(String email);
 
     /**
+     * Свободен ли никнейм. Отдельно от вставки, ради внятного 409 вместо 500 на нарушении
+     * уникального индекса; сам индекс при этом никуда не девается и остаётся единственной
+     * настоящей гарантией — между этой проверкой и вставкой помещается чужая регистрация
+     * (см. AuthService.register).
+     */
+    boolean existsByUsername(String username);
+
+    /** Занят ли никнейм кем-то, кроме этого пользователя, — проверка при смене в профиле. */
+    boolean existsByUsernameAndIdNot(String username, UUID id);
+
+    /**
      * Пути аватарок, на которые ссылаются пользователи — для сверки с диском (3.6).
      * Нативный запрос по той же причине, что и AttachmentRepository.findAllStoredPaths.
      */

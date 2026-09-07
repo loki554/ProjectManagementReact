@@ -250,6 +250,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("NOT_COMMENT_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(UsernameAlreadyTakenException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameTaken(UsernameAlreadyTakenException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("USERNAME_TAKEN", ex.getMessage()));
+    }
+
     @ExceptionHandler(NotCommentAuthorException.class)
     public ResponseEntity<ErrorResponse> handleNotCommentAuthor(NotCommentAuthorException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)

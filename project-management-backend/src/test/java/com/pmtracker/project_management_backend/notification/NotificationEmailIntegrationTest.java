@@ -148,7 +148,7 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
             awaitSingleEmail();
             clearMailbox();
 
-            comment(taskId, authorAuth, "@assignee@example.com глянь, пожалуйста")
+            comment(taskId, authorAuth, "@assignee глянь, пожалуйста")
                     .andExpect(status().isCreated());
 
             MimeMessage message = awaitSingleEmail();
@@ -177,7 +177,7 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
             comment(taskId, authorAuth, "просто комментарий").andExpect(status().isCreated());
             assertNoEmailSent();
 
-            comment(taskId, authorAuth, "@assignee@example.com а вот это важно")
+            comment(taskId, authorAuth, "@assignee а вот это важно")
                     .andExpect(status().isCreated());
 
             assertThat(subjectOf(awaitSingleEmail())).contains("Вас упомянули");
@@ -669,6 +669,7 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
     private User createUser(String email, String firstName) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         user.setLastName("Тестов");
         user.setFirstName(firstName);

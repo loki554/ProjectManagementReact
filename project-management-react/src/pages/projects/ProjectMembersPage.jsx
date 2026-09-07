@@ -123,7 +123,13 @@ export function ProjectMembersPage() {
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {member.lastName} {member.firstName}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{member.email}</p>
+                  {/* Никнейм здесь — не украшение: это то, что набирают в комментарии,
+                      чтобы позвать человека, и подсмотреть его больше негде. */}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-purple-700 dark:text-purple-300">@{member.username}</span>
+                    {' · '}
+                    {member.email}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">

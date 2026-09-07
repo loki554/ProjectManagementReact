@@ -23,6 +23,18 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    /**
+     * Публичный идентификатор: по нему человека зовут в комментариях (@упоминания, 4.5).
+     * Обязателен, уникален, только нижний регистр — см. UsernameNormalizer и V28.
+     * <p>
+     * Отдельно от почты, а не вместо неё: почта — это способ войти и получить письмо, и
+     * показывать её всему проекту ради «позвать в тред» не следует. Отдельно от ФИО —
+     * потому что тёзки в одном проекте вопрос времени, а разбирать «@Иванов Иван Петрович»
+     * в свободном тексте нечем.
+     */
+    @Column(nullable = false, unique = true, length = 30)
+    private String username;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -69,6 +81,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPasswordHash() {

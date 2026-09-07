@@ -20,12 +20,14 @@ const RUN_ID = Date.now()
 
 const ADMIN = {
   email: `e2e-inviter-${RUN_ID}@example.com`,
+  username: `e2e-inv-${RUN_ID}`.slice(0, 30),
   password: 'e2e-password-123',
   lastName: 'Playwright',
   firstName: 'Inviter',
 }
 const INVITEE = {
   email: `e2e-invitee-${RUN_ID}@example.com`,
+  username: `e2e-ive-${RUN_ID}`.slice(0, 30),
   password: 'e2e-password-456',
   lastName: 'Playwright',
   firstName: 'Invitee',
@@ -35,6 +37,7 @@ const PROJECT_NAME = `E2E invitation ${RUN_ID}`
 async function registerVerifyAndSignIn(page, user) {
   await page.goto('/register')
   await page.getByLabel('Email').fill(user.email)
+  await page.getByLabel('Username').fill(user.username)
   await page.getByLabel('Password').fill(user.password)
   await page.getByLabel('Last name').fill(user.lastName)
   await page.getByLabel('First name').fill(user.firstName)
@@ -109,6 +112,9 @@ test('приглашение по email: письмо → страница пр�
     await expect(email).toHaveValue(INVITEE.email)
     await expect(email).toHaveAttribute('readonly', '')
 
+    // Никнейм приглашение не задаёт: адресное в нём только приглашение, а публичное имя
+    // человек выбирает себе сам.
+    await inviteePage.getByLabel('Username').fill(INVITEE.username)
     await inviteePage.getByLabel('Password').fill(INVITEE.password)
     await inviteePage.getByLabel('Last name').fill(INVITEE.lastName)
     await inviteePage.getByLabel('First name').fill(INVITEE.firstName)

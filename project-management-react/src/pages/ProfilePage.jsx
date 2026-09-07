@@ -9,11 +9,16 @@ import { ChangePasswordForm } from '../components/profile/ChangePasswordForm'
 import { NotificationSettingsForm } from '../components/profile/NotificationSettingsForm'
 import { Field, inputClass, secondaryButtonClass, submitButtonClass } from '../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../lib/errorMessage'
+import { USERNAME_MAX_LENGTH, USERNAME_PATTERN } from '../lib/mentions'
 import { useAuthenticatedImage } from '../lib/useAuthenticatedImage'
 import { useAuthStore } from '../stores/authStore'
 
 function buildSchema(t) {
   return z.object({
+    username: z
+      .string()
+      .min(1, t('auth.validation.required'))
+      .regex(USERNAME_PATTERN, t('auth.validation.usernameFormat')),
     lastName: z.string().min(1, t('auth.validation.required')),
     firstName: z.string().min(1, t('auth.validation.required')),
     patronymic: z.string().optional(),
@@ -60,6 +65,7 @@ export function ProfilePage() {
     // values (а не defaultValues) пересинхронизирует форму, когда user в сторе
     // меняется — например, сразу после успешного сохранения ниже.
     values: {
+      username: user?.username ?? '',
       lastName: user?.lastName ?? '',
       firstName: user?.firstName ?? '',
       patronymic: user?.patronymic ?? '',
@@ -165,6 +171,25 @@ export function ProfilePage() {
         }}
         className="space-y-4"
       >
+        {/* Никнейм меняется здесь же, вместе с ФИО, а не своей формой: это такое же поле
+            профиля, и отдельная кнопка ему не нужна — в отличие от смены пароля, которая
+            разлогинивает. Предупреждение под полем обязательно: сменив никнейм, человек
+            уносит с собой и подсветку старых упоминаний себя (см. MentionParser). */}
+        <div>
+          <Field label={t('profile.username')} error={errors.username?.message}>
+            <input
+              type="text"
+              className={inputClass}
+              maxLength={USERNAME_MAX_LENGTH}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              {...register('username')}
+            />
+          </Field>
+          {/* Снаружи Field — иначе подсказка попадёт в доступное имя поля (см. RegisterPage). */}
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('profile.usernameHint')}</p>
+        </div>
         <Field label={t('profile.lastName')} error={errors.lastName?.message}>
           <input type="text" className={inputClass} maxLength={100} {...register('lastName')} />
         </Field>

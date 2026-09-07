@@ -581,6 +581,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     private User user(String email) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash(UNUSED_PASSWORD_HASH);
         user.setLastName("Тестов");
         user.setFirstName(email.substring(0, email.indexOf('@')));

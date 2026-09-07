@@ -7,17 +7,20 @@ import com.pmtracker.project_management_backend.auth.dto.UserSummary;
 import com.pmtracker.project_management_backend.common.SecureTokens;
 import com.pmtracker.project_management_backend.common.exception.EmailNotVerifiedException;
 import com.pmtracker.project_management_backend.common.exception.InvalidCredentialsException;
+import com.pmtracker.project_management_backend.common.exception.UsernameAlreadyTakenException;
 import com.pmtracker.project_management_backend.common.exception.InvalidOrExpiredTokenException;
 import com.pmtracker.project_management_backend.common.exception.InvalidRefreshTokenException;
 import com.pmtracker.project_management_backend.config.JwtProperties;
 import com.pmtracker.project_management_backend.mail.AccountAlreadyExistsEmailRequestedEvent;
 import com.pmtracker.project_management_backend.common.EmailNormalizer;
+import com.pmtracker.project_management_backend.common.UsernameNormalizer;
 import com.pmtracker.project_management_backend.mail.PasswordResetEmailRequestedEvent;
 import com.pmtracker.project_management_backend.mail.VerificationEmailRequestedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +93,16 @@ public class AuthService {
         // Адрес канонизируется до всех проверок и записи: без этого Ivan@Company.com и
         // ivan@company.com — два аккаунта на один ящик (см. EmailNormalizer).
         String email = EmailNormalizer.normalize(request.email());
+        String username = UsernameNormalizer.normalize(request.username());
+
+        // Никнейм проверяется ПЕРВЫМ, до ветки с занятым адресом, и порядок здесь не вкусовой.
+        // Наоборот эта пара проверок стала бы тем самым индикатором существования аккаунта,
+        // который выше так старательно убран: занятый никнейм при свободном адресе отвечал бы
+        // 409, а тот же никнейм при занятом адресе — успехом, и разница в ответе выдавала бы
+        // владельца ящика. В нынешнем порядке ответ на занятый адрес одинаков всегда.
+        if (userRepository.existsByUsername(username)) {
+            throw new UsernameAlreadyTakenException();
+        }
 
         if (userRepository.existsByEmail(email)) {
             eventPublisher.publishEvent(new AccountAlreadyExistsEmailRequestedEvent(email));
@@ -98,14 +111,33 @@ public class AuthService {
 
         User user = new User();
         user.setEmail(email);
+        user.setUsername(username);
         user.setPasswordHash(passwordHash);
         user.setLastName(request.lastName());
         user.setFirstName(request.firstName());
         user.setPatronymic(request.patronymic());
         user.setEmailVerified(false);
-        userRepository.save(user);
+        saveWithUniqueUsername(user);
 
         issueAndSendVerificationToken(user);
+    }
+
+    /**
+     * Вставка с переводом гонки по никнейму в внятный 409.
+     * <p>
+     * Проверка {@code existsByUsername} выше отвечает за нормальный случай, но между ней и
+     * вставкой помещается чужая регистрация с тем же никнеймом. Настоящая гарантия — уникальный
+     * индекс (V28), и без этой обёртки его срабатывание уходило бы в {@code handleUnexpected}
+     * пятисоткой: человек видел бы «внутренняя ошибка» там, где ему всего лишь надо выбрать
+     * другое имя. {@code saveAndFlush}, а не {@code save}, именно ради этого — иначе нарушение
+     * всплыло бы на коммите, уже за пределами try.
+     */
+    private void saveWithUniqueUsername(User user) {
+        try {
+            userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UsernameAlreadyTakenException();
+        }
     }
 
     @Transactional

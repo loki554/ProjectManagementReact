@@ -4,9 +4,11 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.auth.RefreshTokenRepository;
 import com.pmtracker.project_management_backend.auth.UserRepository;
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
+import com.pmtracker.project_management_backend.common.UsernameNormalizer;
 import com.pmtracker.project_management_backend.common.exception.InvalidCurrentPasswordException;
 import com.pmtracker.project_management_backend.common.exception.InvalidFileException;
 import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.UsernameAlreadyTakenException;
 import com.pmtracker.project_management_backend.storage.FileStorageService;
 import com.pmtracker.project_management_backend.storage.FileTypeValidator;
 import com.pmtracker.project_management_backend.storage.ImageSanitizer;
@@ -17,6 +19,7 @@ import com.pmtracker.project_management_backend.user.dto.UpdateProfileRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,10 +95,25 @@ public class UserService {
 
     @Transactional
     public UserSummary updateProfile(User user, UpdateProfileRequest request) {
+        String username = UsernameNormalizer.normalize(request.username());
+        // ...AndIdNot, а не existsByUsername: сохранение профиля без единой правки не должно
+        // спотыкаться о собственный же никнейм человека.
+        if (userRepository.existsByUsernameAndIdNot(username, user.getId())) {
+            throw new UsernameAlreadyTakenException();
+        }
+
+        user.setUsername(username);
         user.setLastName(request.lastName());
         user.setFirstName(request.firstName());
         user.setPatronymic(request.patronymic());
-        userRepository.save(user);
+        // saveAndFlush в try — по той же причине, что в AuthService.register: между проверкой
+        // и записью помещается чужая регистрация, а настоящая гарантия это уникальный индекс
+        // (V28), и его срабатывание должно доехать до человека как «имя занято», а не 500.
+        try {
+            userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new UsernameAlreadyTakenException();
+        }
         return UserSummary.from(user);
     }
 

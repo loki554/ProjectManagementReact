@@ -8,12 +8,17 @@ import { z } from 'zod'
 import { register as registerRequest } from '../../api/authApi'
 import { useInvitation } from '../../api/invitationsQueries'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { USERNAME_MAX_LENGTH, USERNAME_PATTERN } from '../../lib/mentions'
 import { Field, inputClass, submitButtonClass } from '../../components/ui/FormKit'
 import { AuthLayout } from './authFormKit'
 
 function buildSchema(t) {
   return z.object({
     email: z.string().min(1, t('auth.validation.required')).email(t('auth.validation.invalidEmail')),
+    username: z
+      .string()
+      .min(1, t('auth.validation.required'))
+      .regex(USERNAME_PATTERN, t('auth.validation.usernameFormat')),
     password: z.string().min(8, t('auth.validation.passwordMin')),
     lastName: z.string().min(1, t('auth.validation.required')),
     firstName: z.string().min(1, t('auth.validation.required')),
@@ -81,6 +86,28 @@ export function RegisterPage() {
             {...register('email')}
           />
         </Field>
+
+        {/* Никнейм спрашивается при регистрации, а не «потом в профиле»: придуманный за
+            человека, он всё равно никому не известен, а половина проекта без никнейма
+            означала бы, что @упоминания работают через раз. Стоит сразу за адресом —
+            это тоже идентификатор, только публичный. */}
+        {/* Подсказка снаружи Field: тот оборачивает содержимое в <label>, и текст внутри
+            стал бы частью доступного имени поля («Username Unique, 3-30 characters…»). */}
+        <div>
+          <Field label={t('auth.register.username')} error={errors.username?.message}>
+            <input
+              type="text"
+              className={inputClass}
+              maxLength={USERNAME_MAX_LENGTH}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder={t('auth.register.usernamePlaceholder')}
+              {...register('username')}
+            />
+          </Field>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('auth.register.usernameHint')}</p>
+        </div>
 
         <Field label={t('auth.register.password')} error={errors.password?.message}>
           <input type="password" className={inputClass} {...register('password')} />

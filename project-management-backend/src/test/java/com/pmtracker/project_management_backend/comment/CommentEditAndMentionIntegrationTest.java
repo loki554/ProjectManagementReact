@@ -248,7 +248,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("упомянутый участник получает task_mention")
         void mentioningAMemberNotifiesThem() throws Exception {
-            createComment(authorAuth, "Посмотри, пожалуйста, @bystander@example.com");
+            createComment(authorAuth, "Посмотри, пожалуйста, @bystander");
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
         }
@@ -260,7 +260,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("упоминание исполнителя приходит как task_mention, а не как task_comment")
         void aMentionOutranksTheCommentNotification() throws Exception {
-            createComment(authorAuth, "@assignee@example.com глянь");
+            createComment(authorAuth, "@assignee глянь");
 
             assertThat(notificationsOf(assignee)).containsExactly(TYPE_TASK_MENTION);
         }
@@ -270,7 +270,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         void everyoneElseStillGetsTheCommentNotification() throws Exception {
             // Комментирует исполнитель и зовёт постороннего; постановщик (author) при этом
             // должен получить обычное «прокомментировали вашу задачу».
-            createComment(assigneeAuth, "@bystander@example.com посмотри");
+            createComment(assigneeAuth, "@bystander посмотри");
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
             assertThat(notificationsOf(author)).containsExactly(TYPE_TASK_COMMENT);
@@ -279,7 +279,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("упоминание себя ничего не присылает")
         void mentioningYourselfIsSilent() throws Exception {
-            createComment(assigneeAuth, "напоминание себе: @assignee@example.com");
+            createComment(assigneeAuth, "напоминание себе: @assignee");
 
             assertThat(notificationsOf(assignee)).isEmpty();
         }
@@ -292,35 +292,62 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("упоминание человека не из проекта никого не уведомляет")
         void mentioningAnOutsiderNotifiesNobody() throws Exception {
-            comment(authorAuth, "@stranger@example.com, а ты что думаешь?")
+            comment(authorAuth, "@stranger, а ты что думаешь?")
                     .andExpect(status().isCreated());
 
             assertThat(notificationsOf(stranger)).isEmpty();
         }
 
         @Test
-        @DisplayName("несуществующий адрес не мешает отправить комментарий")
+        @DisplayName("несуществующий никнейм не мешает отправить комментарий")
         void aTypoInAMentionDoesNotBlockTheComment() throws Exception {
-            comment(authorAuth, "@нет-такого@example.com привет").andExpect(status().isCreated());
+            comment(authorAuth, "@no-such-person привет").andExpect(status().isCreated());
         }
 
         /**
-         * «Пишите на ivan@example.com» — это адрес в тексте, а не обращение к человеку.
+         * «Пишите на bystander@example.com» — это почтовый адрес в тексте, а не обращение.
          * Отличает их ровно одно: символ перед «@». Ошибка здесь означала бы уведомления
-         * всякий раз, когда кто-то скопировал в комментарий строчку из письма.
+         * всякий раз, когда кто-то скопировал в комментарий строчку из письма — а локальная
+         * часть адреса, выведенная из того же имени, совпадает с никнеймом чаще всего.
          */
         @Test
-        @DisplayName("адрес в тексте без ведущего @ упоминанием не считается")
+        @DisplayName("почтовый адрес в тексте упоминанием не считается")
         void aBareEmailInTheTextIsNotAMention() throws Exception {
             createComment(authorAuth, "Отправь отчёт на bystander@example.com, он ждёт");
 
             assertThat(notificationsOf(bystander)).isEmpty();
         }
 
+        /**
+         * Точка не входит в набор символов никнейма (V28) именно ради этого: конец
+         * предложения не должен ни съедаться упоминанием, ни мешать его разобрать.
+         */
+        @Test
+        @DisplayName("точка сразу после никнейма упоминанию не мешает")
+        void aTrailingPeriodDoesNotBreakTheMention() throws Exception {
+            createComment(authorAuth, "Это к @bystander.");
+
+            assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
+        }
+
+        /**
+         * Без верхней границы длины «@» и тридцать пять символов подряд дали бы упоминание
+         * из первых тридцати — то есть чужой никнейм, собранный из куска чужого слова.
+         */
+        @Test
+        @DisplayName("слишком длинная строка после @ упоминанием не считается")
+        void anOverlongTokenIsNotAMention() throws Exception {
+            comment(authorAuth, "@" + "a".repeat(35)).andExpect(status().isCreated());
+
+            // Обычные уведомления о комментарии при этом никуда не деваются — проверяем
+            // именно отсутствие упоминаний, а не тишину вообще.
+            assertThat(allNotifications()).doesNotContain(TYPE_TASK_MENTION);
+        }
+
         @Test
         @DisplayName("регистр в адресе не мешает упоминанию сработать")
         void mentionsAreCaseInsensitive() throws Exception {
-            createComment(authorAuth, "@Bystander@Example.COM глянь");
+            createComment(authorAuth, "@Bystander глянь");
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
         }
@@ -328,7 +355,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("один человек, упомянутый дважды, получает одно уведомление")
         void repeatingAMentionDoesNotDoubleTheNotification() throws Exception {
-            createComment(authorAuth, "@bystander@example.com и ещё раз @bystander@example.com");
+            createComment(authorAuth, "@bystander и ещё раз @bystander");
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
         }
@@ -349,7 +376,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
                     })
                     .toList();
             String body = crowd.stream()
-                    .map(user -> "@" + user.getEmail())
+                    .map(user -> "@" + user.getUsername())
                     .collect(Collectors.joining(" "));
 
             comment(authorAuth, body).andExpect(status().isCreated());
@@ -375,10 +402,10 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("уже упомянутого правка не уведомляет повторно")
         void anAlreadyMentionedPersonIsNotCalledTwice() throws Exception {
-            UUID commentId = createComment(authorAuth, "@bystander@example.com глянь пожалуста");
+            UUID commentId = createComment(authorAuth, "@bystander глянь пожалуста");
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
 
-            editComment(authorAuth, commentId, "@bystander@example.com глянь пожалуйста")
+            editComment(authorAuth, commentId, "@bystander глянь пожалуйста")
                     .andExpect(status().isOk());
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
@@ -390,7 +417,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
             UUID commentId = createComment(authorAuth, "Надо посмотреть");
             assertThat(notificationsOf(bystander)).isEmpty();
 
-            editComment(authorAuth, commentId, "Надо посмотреть, @bystander@example.com")
+            editComment(authorAuth, commentId, "Надо посмотреть, @bystander")
                     .andExpect(status().isOk());
 
             assertThat(notificationsOf(bystander)).containsExactly(TYPE_TASK_MENTION);
@@ -415,7 +442,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("убранное из текста упоминание не отзывает уже отправленное уведомление")
         void removingAMentionKeepsTheNotificationThatWasAlreadySent() throws Exception {
-            UUID commentId = createComment(authorAuth, "@bystander@example.com глянь");
+            UUID commentId = createComment(authorAuth, "@bystander глянь");
 
             editComment(authorAuth, commentId, "уже не актуально").andExpect(status().isOk());
 
@@ -427,10 +454,10 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
         @Test
         @DisplayName("возвращённое обратно упоминание зовёт человека заново")
         void reAddingAMentionCallsThePersonAgain() throws Exception {
-            UUID commentId = createComment(authorAuth, "@bystander@example.com глянь");
+            UUID commentId = createComment(authorAuth, "@bystander глянь");
             editComment(authorAuth, commentId, "уже не актуально").andExpect(status().isOk());
 
-            editComment(authorAuth, commentId, "всё-таки глянь, @bystander@example.com")
+            editComment(authorAuth, commentId, "всё-таки глянь, @bystander")
                     .andExpect(status().isOk());
 
             // Два уведомления — так и задумано: между ними человека из треда отпустили, и
@@ -477,6 +504,10 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
                 String.class, recipient.getId());
     }
 
+    private List<String> allNotifications() {
+        return jdbcTemplate.queryForList("SELECT type FROM notifications", String.class);
+    }
+
     private List<String> activityTypes() {
         return jdbcTemplate.queryForList(
                 "SELECT type FROM project_activity WHERE project_id = ? ORDER BY created_at",
@@ -490,6 +521,7 @@ class CommentEditAndMentionIntegrationTest extends IntegrationTest {
     private User createUser(String email, String firstName) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         user.setLastName("Тестов");
         user.setFirstName(firstName);

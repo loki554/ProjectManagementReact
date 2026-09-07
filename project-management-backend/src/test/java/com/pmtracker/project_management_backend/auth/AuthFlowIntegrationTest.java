@@ -83,7 +83,10 @@ class AuthFlowIntegrationTest extends IntegrationTest {
 
             // Ответ обязан быть неотличим от регистрации на свободный адрес — иначе форма
             // регистрации превращается в проверялку «есть ли у вас аккаунт вот этого человека».
-            register(EMAIL, "some-other-password")
+            // Никнейм здесь свой: чужой человек, пробующий занятый адрес, придумывает своё имя,
+            // а не повторяет чужое (совпадение никнеймов — отдельный отказ, см.
+            // UsernameIntegrationTest, и он одинаков что при занятом адресе, что при свободном).
+            register(EMAIL, "some-other-password", "someone-else")
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.message").exists());
 
@@ -491,8 +494,9 @@ class AuthFlowIntegrationTest extends IntegrationTest {
             clearMailbox();
 
             // Тот же ответ, что и на свободный адрес (1.10) — но письмо уходит другое,
-            // «аккаунт уже существует», и второй строки в users не появляется.
-            register(LOWER_CASE, PASSWORD).andExpect(status().isCreated());
+            // «аккаунт уже существует», и второй строки в users не появляется. Никнейм свой:
+            // адреса здесь различаются только регистром, и выведенный из адреса был бы тем же.
+            register(LOWER_CASE, PASSWORD, "someone-else").andExpect(status().isCreated());
             awaitSingleEmail();
 
             assertThat(countUsers(LOWER_CASE)).isEqualTo(1);
@@ -522,10 +526,15 @@ class AuthFlowIntegrationTest extends IntegrationTest {
 
     // ----------------------------------------------------------- запросы к API
 
+    /** Никнейм выводится из адреса (V28): он обязателен при регистрации и уникален. */
     private ResultActions register(String email, String password) throws Exception {
+        return register(email, password, usernameFrom(email));
+    }
+
+    private ResultActions register(String email, String password, String username) throws Exception {
         return postJson("/api/auth/register", """
-                {"email":"%s","password":"%s","lastName":"Иванов","firstName":"Иван","patronymic":"Иванович"}
-                """.formatted(email, password));
+                {"email":"%s","username":"%s","password":"%s","lastName":"Иванов","firstName":"Иван","patronymic":"Иванович"}
+                """.formatted(email, username, password));
     }
 
     private ResultActions verifyEmail(String token) throws Exception {

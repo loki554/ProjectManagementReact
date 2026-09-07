@@ -52,22 +52,22 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     List<ProjectMember> findByProjectIdWithUser(UUID projectId);
 
     /**
-     * Участники проекта по списку почтовых адресов — разбор @упоминаний в комментарии (4.5).
+     * Участники проекта по списку никнеймов — разбор @упоминаний в комментарии (4.5).
      * <p>
      * Фильтр по проекту здесь и есть проверка прав: упоминание не должно быть способом
      * прислать уведомление постороннему. Человек, которого в проекте нет, просто не найдётся
-     * — и с точки зрения автора комментария это правильно и тихо: он написал адрес, который
+     * — и с точки зрения автора комментария это правильно и тихо: он написал никнейм, который
      * ничего не значит в этом треде, ровно как опечатался бы в нём.
      * <p>
-     * Адреса приходят уже нормализованными ({@code MentionParser}), а в базе они лежат в
-     * нижнем регистре (V26) — поэтому сравнение прямое, без {@code lower()}: функция вокруг
-     * колонки увела бы запрос мимо уникального индекса по {@code users.email}.
+     * Никнеймы приходят уже нормализованными ({@code MentionParser}), а в базе они лежат в
+     * нижнем регистре (V28) — поэтому сравнение прямое, без {@code lower()}: функция вокруг
+     * колонки увела бы запрос мимо уникального индекса по {@code users.username}.
      */
     @Query("""
             select m.user from ProjectMember m
-            where m.project.id = :projectId and m.user.email in :emails
+            where m.project.id = :projectId and m.user.username in :usernames
             """)
-    List<User> findUsersByProjectIdAndEmailIn(UUID projectId, Collection<String> emails);
+    List<User> findUsersByProjectIdAndUsernameIn(UUID projectId, Collection<String> usernames);
 
     long countByProjectIdAndRole(UUID projectId, ProjectRole role);
 }

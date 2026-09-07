@@ -37,11 +37,11 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
   const deleteComment = useDeleteComment(taskId)
 
   // Участники нужны в обе стороны: автокомплиту @упоминаний — как список подсказок,
-  // показу комментариев — чтобы нарисовать на месте адреса имя. Запрос тот же самый, что
-  // у вкладки участников проекта, поэтому обычно уже в кэше.
+  // показу комментариев — чтобы отличить упоминание участника от похожего текста. Запрос
+  // тот же самый, что у вкладки участников проекта, поэтому обычно уже в кэше.
   const { data: members } = useProjectMembers(projectId)
-  const membersByEmail = useMemo(
-    () => new Map((members ?? []).map((member) => [member.email.toLowerCase(), member])),
+  const membersByUsername = useMemo(
+    () => new Map((members ?? []).map((member) => [member.username.toLowerCase(), member])),
     [members],
   )
 
@@ -153,7 +153,7 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
                   ) : (
                     <CommentBody
                       body={comment.body}
-                      membersByEmail={membersByEmail}
+                      membersByUsername={membersByUsername}
                       currentUserId={currentUser?.id}
                     />
                   )}

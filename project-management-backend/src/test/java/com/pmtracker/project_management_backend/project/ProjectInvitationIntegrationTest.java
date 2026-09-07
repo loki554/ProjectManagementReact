@@ -438,8 +438,8 @@ class ProjectInvitationIntegrationTest extends IntegrationTest {
         return mockMvc.perform(post("/api/auth/register")
                 .contentType(APPLICATION_JSON)
                 .content("""
-                        {"email":"%s","password":"%s","lastName":"Новиков","firstName":"Пётр"}"""
-                        .formatted(email, PASSWORD)));
+                        {"email":"%s","username":"%s","password":"%s","lastName":"Новиков","firstName":"Пётр"}"""
+                        .formatted(email, usernameFrom(email), PASSWORD)));
     }
 
     private ResultActions verifyEmail(String token) throws Exception {
@@ -474,6 +474,7 @@ class ProjectInvitationIntegrationTest extends IntegrationTest {
     private User user(String email) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash("$2a$10$notusedbythistestnotusedbythistestnotusedbythistestno");
         user.setLastName("Тестов");
         user.setFirstName(email.substring(0, email.indexOf('@')));

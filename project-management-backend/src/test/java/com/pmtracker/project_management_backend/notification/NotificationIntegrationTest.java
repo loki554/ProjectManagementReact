@@ -631,6 +631,7 @@ class NotificationIntegrationTest extends IntegrationTest {
     private User createUser(String email, String firstName) {
         User user = new User();
         user.setEmail(email);
+        user.setUsername(usernameFrom(email));
         user.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         user.setLastName("Тестов");
         user.setFirstName(firstName);

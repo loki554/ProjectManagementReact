@@ -7,6 +7,8 @@ import java.util.UUID;
 public record UserSummary(
         UUID id,
         String email,
+        /* Публичный идентификатор для @упоминаний (см. User.username). */
+        String username,
         String lastName,
         String firstName,
         String patronymic,
@@ -17,6 +19,7 @@ public record UserSummary(
         return new UserSummary(
                 user.getId(),
                 user.getEmail(),
+                user.getUsername(),
                 user.getLastName(),
                 user.getFirstName(),
                 user.getPatronymic(),

@@ -70,6 +70,7 @@ class OrphanedFileCleanupIntegrationTest extends IntegrationTest {
     void createProject() {
         owner = new User();
         owner.setEmail("owner@example.com");
+        owner.setUsername(usernameFrom("owner@example.com"));
         owner.setPasswordHash("$2a$10$fixture.hash.never.verified.by.these.tests......");
         owner.setLastName("Тестов");
         owner.setFirstName("Владелец");

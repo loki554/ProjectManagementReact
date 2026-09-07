@@ -10,6 +10,7 @@ import java.util.UUID;
 public record MemberResponse(
         UUID userId,
         String email,
+        String username,
         String lastName,
         String firstName,
         String patronymic,
@@ -22,6 +23,7 @@ public record MemberResponse(
         return new MemberResponse(
                 user.id(),
                 user.email(),
+                user.username(),
                 user.lastName(),
                 user.firstName(),
                 user.patronymic(),
