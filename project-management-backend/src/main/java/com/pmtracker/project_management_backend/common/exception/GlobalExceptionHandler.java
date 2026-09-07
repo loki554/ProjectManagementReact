@@ -368,6 +368,56 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("TAG_PROJECT_MISMATCH", ex.getMessage()));
     }
 
+    // ------------------------------------------------------------------- спринты (4.9)
+
+    @ExceptionHandler(SprintNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSprintNotFound(SprintNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("SPRINT_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateSprintNameException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateSprintName(DuplicateSprintNameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_SPRINT_NAME", ex.getMessage()));
+    }
+
+    // 400: спринт, который заканчивается раньше, чем начался, — это не конфликт с чужой
+    // правкой, а запрос, не имеющий смысла сам по себе.
+    @ExceptionHandler(InvalidSprintDatesException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSprintDates(InvalidSprintDatesException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("SPRINT_DATES_INVALID", ex.getMessage()));
+    }
+
+    // 409, в отличие от соседей: активный спринт в проекте уже есть, и это именно состояние
+    // на сервере, которое изменится, когда его закроют, — тот же самый запрос тогда пройдёт.
+    @ExceptionHandler(SprintAlreadyActiveException.class)
+    public ResponseEntity<ErrorResponse> handleSprintAlreadyActive(SprintAlreadyActiveException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("SPRINT_ALREADY_ACTIVE", ex.getMessage()));
+    }
+
+    // 400, а не 409: переходы односторонние (PLANNED → ACTIVE → COMPLETED), и «начать
+    // завершённый» не станет осмысленным ни через минуту, ни после перечитывания.
+    @ExceptionHandler(InvalidSprintTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSprintTransition(InvalidSprintTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("SPRINT_TRANSITION_INVALID", ex.getMessage()));
+    }
+
+    @ExceptionHandler(SprintProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleSprintProjectMismatch(SprintProjectMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("SPRINT_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
+    @ExceptionHandler(SprintCompletedException.class)
+    public ResponseEntity<ErrorResponse> handleSprintCompleted(SprintCompletedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("SPRINT_COMPLETED", ex.getMessage()));
+    }
+
     // Страховка на случай, если ограничение есть в схеме БД, но не продублировано валидацией DTO
     // (или продублировано, но с другой границей). Без этого обработчика любое нарушение
     // constraint'а — слишком длинная строка, гонка на unique-индексе email/slug — уходило в

@@ -12,11 +12,16 @@ export const BULK_KEEP = ''
 // в теле запроса от отсутствующего поля на сервере неотличим (см. BulkUpdateTasksRequest).
 export const BULK_UNASSIGN = '__unassign__'
 export const BULK_NO_TAG = '__no_tag__'
+// «Вернуть в бэклог» — вынуть выделенные задачи из спринта (4.9). Именно через массовую
+// правку страница спринтов и наполняет спринт: третьего способа менять задачу заводить
+// не пришлось.
+export const BULK_NO_SPRINT = '__no_sprint__'
 
 export const EMPTY_BULK_FORM = {
   status: BULK_KEEP,
   assignee: BULK_KEEP,
   tag: BULK_KEEP,
+  sprint: BULK_KEEP,
   dueDate: '',
   clearDueDate: false,
 }
@@ -42,6 +47,12 @@ export function buildBulkPayload(form) {
     payload.clearTag = true
   } else if (form.tag) {
     payload.tagId = form.tag
+  }
+
+  if (form.sprint === BULK_NO_SPRINT) {
+    payload.clearSprint = true
+  } else if (form.sprint) {
+    payload.sprintId = form.sprint
   }
 
   if (form.clearDueDate) {

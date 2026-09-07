@@ -6,6 +6,7 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-r
 import { z } from 'zod'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
+import { useSprints } from '../../api/sprintsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useCreateSubtask, useCreateTask, useTaskByNumber } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
@@ -33,6 +34,7 @@ function buildTaskSchema(t) {
     dueDate: z.string().optional(),
     tagId: z.string().optional(),
     category: z.string().max(100).optional(),
+    sprintId: z.string().optional(),
   })
 }
 
@@ -52,6 +54,7 @@ export function TaskCreatePage() {
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
   const { data: categories } = useCategories(projectId)
+  const { data: sprints } = useSprints(projectId)
   // Combobox оперирует именами: в задаче категория задаётся свободным вводом, и бэкенд
   // сам сопоставляет имя со справочником (создавая недостающую запись).
   const categoryNames = useMemo(() => (categories ?? []).map((category) => category.name), [categories])
@@ -90,6 +93,7 @@ export function TaskCreatePage() {
       dueDate: '',
       tagId: '',
       category: '',
+      sprintId: '',
     },
   })
 
@@ -104,6 +108,7 @@ export function TaskCreatePage() {
         dueDate: fromDatetimeLocalValue(values.dueDate),
         tagId: values.tagId || null,
         category: values.category?.trim() || null,
+        sprintId: values.sprintId || null,
       },
       { onSuccess: (created) => navigate(`/projects/${projectSlug}/tasks/${created.taskNumber}`) },
     )
@@ -193,6 +198,20 @@ export function TaskCreatePage() {
                 </select>
               </Field>
             </div>
+
+            {/* Спринт (4.9) — обычное поле задачи, как тэг. Завершённых спринтов здесь
+                нет: в закрытый заход новую задачу не планируют, и сервер такой запрос
+                всё равно отклонит (409 SPRINT_COMPLETED). */}
+            <Field label={t('tasks.detail.sprintLabel')}>
+              <select className={inputClass} {...register('sprintId')}>
+                <option value="">{t('tasks.noSprint')}</option>
+                {sprints?.filter((sprint) => sprint.status !== 'COMPLETED').map((sprint) => (
+                  <option key={sprint.id} value={sprint.id}>
+                    {sprint.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
             {/* Свободный текст с подсказками уже использованных в проекте категорий —
                 справочника категорий (в отличие от тэгов) нет, значение вводится вручную.

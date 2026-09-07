@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
+import { useSprints } from '../../api/sprintsQueries'
 import {
   useCreateSavedView,
   useDeleteSavedView,
@@ -34,6 +35,7 @@ import {
   ASSIGNEE_UNASSIGNED,
   CATEGORY_NONE,
   SORT_KEYS,
+  SPRINT_BACKLOG,
   filtersEqual,
   filtersToSavedViewPayload,
   readFilters,
@@ -100,6 +102,7 @@ export function ProjectTaskListPage() {
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
   const { data: categories } = useCategories(projectId)
+  const { data: sprints } = useSprints(projectId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
@@ -398,6 +401,21 @@ export function ProjectTaskListPage() {
             </option>
           ))}
         </select>
+        {/* Спринт (4.9) — последний в ряду фильтров: он появился позже остальных, а
+            привычка искать фильтр на прежнем месте дороже алфавитного порядка. */}
+        <select
+          value={filters.sprint}
+          onChange={(event) => setFilter({ sprint: event.target.value })}
+          className={`${inputClass} w-48 min-w-0`}
+        >
+          <option value="">{t('taskList.allSprints')}</option>
+          <option value={SPRINT_BACKLOG}>{t('sprints.backlogTitle')}</option>
+          {sprints?.map((sprint) => (
+            <option key={sprint.id} value={sprint.id}>
+              {sprint.name}
+            </option>
+          ))}
+        </select>
         {canManage && (
           <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} shrink-0 whitespace-nowrap`}>
             + {t('taskList.newTask')}
@@ -428,6 +446,7 @@ export function ProjectTaskListPage() {
           selectedCount={selectedIds.size}
           members={members}
           tags={tags}
+          sprints={sprints}
           onApply={applyBulk}
           onCancel={() => setSelectedIds(new Set())}
           isPending={bulkUpdate.isPending}

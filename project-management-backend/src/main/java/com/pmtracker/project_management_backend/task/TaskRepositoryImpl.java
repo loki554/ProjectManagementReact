@@ -36,6 +36,7 @@ class TaskRepositoryImpl implements TaskRepositoryCustom {
             left join fetch t.assignee a
             left join fetch t.tag tg
             left join fetch t.category c
+            left join fetch t.sprint sp
             """;
 
     // Тот же WHERE, но без единого join: все фильтры адресуются либо колонками самой задачи,
@@ -116,6 +117,15 @@ class TaskRepositoryImpl implements TaskRepositoryCustom {
         } else if (query.categoryId() != null) {
             where.append("\n  and t.category.id = :categoryId");
             parameters.put("categoryId", query.categoryId());
+        }
+
+        // Спринт (4.9): «бэклог» — такой же выбранный пункт фильтра, как конкретный
+        // спринт, и выразить его через sprintId нечем (null там означает «любой»).
+        if (query.noSprint()) {
+            where.append("\n  and t.sprint is null");
+        } else if (query.sprintId() != null) {
+            where.append("\n  and t.sprint.id = :sprintId");
+            parameters.put("sprintId", query.sprintId());
         }
 
         appendDueFilter(where, query.due(), parameters);

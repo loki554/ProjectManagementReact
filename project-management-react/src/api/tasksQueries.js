@@ -9,6 +9,16 @@ const taskListKey = (projectId, params) => [...tasksKey(projectId), 'list', para
 const trashKey = (projectId) => [...tasksKey(projectId), 'trash']
 const taskKey = (taskId) => ['tasks', taskId]
 const subtasksKey = (taskId) => ['tasks', taskId, 'subtasks']
+// Счётчики спринта (4.9) считаются по задачам на сервере, а не хранятся в самом спринте:
+// «сделано 3 из 7» меняется и от закрытия задачи, и от переноса её в другой спринт, и от
+// удаления. Значит, любая правка задачи протухает и список спринтов — иначе прогресс на
+// странице спринтов остаётся прежним до перезагрузки, причём молча.
+const sprintsKey = (projectId) => ['projects', projectId, 'sprints']
+
+function invalidateTasksAndSprints(queryClient, projectId) {
+  queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+  queryClient.invalidateQueries({ queryKey: sprintsKey(projectId) })
+}
 
 // Страница табличного списка. params (фильтры + сортировка + page/size) уезжают на сервер
 // как есть и входят в ключ кэша — каждая комбинация кэшируется отдельно.
@@ -49,7 +59,7 @@ export function useCreateTask(projectId) {
   return useMutation({
     mutationFn: (payload) => tasksApi.createTask(projectId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+      invalidateTasksAndSprints(queryClient, projectId)
     },
   })
 }
@@ -62,7 +72,7 @@ export function useUpdateTask(taskId) {
     mutationFn: (payload) => tasksApi.updateTask(taskId, payload),
     onSuccess: (data) => {
       queryClient.setQueryData(taskKey(taskId), data)
-      queryClient.invalidateQueries({ queryKey: tasksKey(data.projectId) })
+      invalidateTasksAndSprints(queryClient, data.projectId)
       if (data.parentTaskId) {
         queryClient.invalidateQueries({ queryKey: subtasksKey(data.parentTaskId) })
       }
@@ -84,7 +94,7 @@ export function useDeleteTask(projectId) {
     // задачу и словить 404 в консоли прямо перед уходом со страницы. Инвалидации родительских
     // списков достаточно: на удалённый id больше никто не подписывается после навигации прочь.
     onSuccess: (_data, { parentTaskId }) => {
-      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+      invalidateTasksAndSprints(queryClient, projectId)
       if (parentTaskId) {
         queryClient.invalidateQueries({ queryKey: subtasksKey(parentTaskId) })
       }
@@ -101,7 +111,7 @@ export function useBulkUpdateTasks(projectId) {
   return useMutation({
     mutationFn: (payload) => tasksApi.bulkUpdateTasks(projectId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+      invalidateTasksAndSprints(queryClient, projectId)
     },
   })
 }
@@ -168,7 +178,7 @@ export function useUpdateTaskStatus(projectId) {
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+      invalidateTasksAndSprints(queryClient, projectId)
     },
   })
 }
@@ -189,7 +199,7 @@ export function useRestoreTask(projectId) {
   return useMutation({
     mutationFn: (taskId) => tasksApi.restoreTask(taskId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+      invalidateTasksAndSprints(queryClient, projectId)
     },
   })
 }

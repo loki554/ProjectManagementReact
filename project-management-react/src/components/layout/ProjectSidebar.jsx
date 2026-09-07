@@ -4,6 +4,7 @@ import {
   ChevronsRight,
   FolderTree,
   List,
+  Rocket,
   SquareKanban,
   Tag,
   Trash2,
@@ -19,6 +20,9 @@ import { useUiStore } from '../../stores/uiStore'
 const NAV_ITEMS = [
   { to: 'tasks', icon: List, labelKey: 'projectSidebar.taskList', end: true },
   { to: 'board', icon: SquareKanban, labelKey: 'projectSidebar.kanban' },
+  // Спринты стоят третьими, сразу за двумя способами смотреть на задачи: это тоже взгляд
+  // на работу проекта, а не настройка вроде тэгов и категорий, которые живут ниже.
+  { to: 'sprints', icon: Rocket, labelKey: 'projectSidebar.sprints' },
   { to: 'settings/members', icon: Users, labelKey: 'projectSidebar.members' },
   { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },

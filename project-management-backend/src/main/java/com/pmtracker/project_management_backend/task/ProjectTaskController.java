@@ -47,7 +47,8 @@ public class ProjectTaskController {
     @GetMapping
     @Operation(summary = "Список задач проекта (страница)",
             description = "Фильтры: search (подстрока названия), status, assignedToMe либо assigneeId либо "
-                    + "unassigned, tagId, categoryId либо uncategorized, due (OVERDUE/TODAY/WEEK/NONE), "
+                    + "unassigned, tagId, categoryId либо uncategorized, sprintId либо noSprint "
+                    + "(задачи вне спринтов — бэклог), due (OVERDUE/TODAY/WEEK/NONE), "
                     + "parentId. Без parentId — только top-level задачи (parent_task_id IS NULL). "
                     + "assignedToMe — «задачи того, кто смотрит»: сохранённое представление «мои "
                     + "просроченные» уезжает по ссылке к коллеге и обязано показать ему его задачи, а не "
@@ -64,6 +65,8 @@ public class ProjectTaskController {
                                                      @RequestParam(required = false) UUID tagId,
                                                      @RequestParam(required = false) UUID categoryId,
                                                      @RequestParam(defaultValue = "false") boolean uncategorized,
+                                                     @RequestParam(required = false) UUID sprintId,
+                                                     @RequestParam(defaultValue = "false") boolean noSprint,
                                                      @RequestParam(required = false) TaskDueFilter due,
                                                      @RequestParam(required = false) UUID parentId,
                                                      @RequestParam(defaultValue = "NUMBER") TaskSortKey sort,
@@ -71,7 +74,7 @@ public class ProjectTaskController {
                                                      @RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "0") int size) {
         TaskListQuery query = new TaskListQuery(parentId, search, status, assigneeId, unassigned, assignedToMe,
-                tagId, categoryId, uncategorized, due, sort, descending);
+                tagId, categoryId, uncategorized, sprintId, noSprint, due, sort, descending);
         return ResponseEntity.ok(taskService.list(currentUser, projectId, query, page, size));
     }
 
@@ -79,7 +82,7 @@ public class ProjectTaskController {
     @Operation(summary = "Массовая правка задач",
             description = "Один статус/исполнитель/тэг/срок на весь список taskIds (не больше 200). "
                     + "Отсутствующее поле означает \"не трогать\"; чтобы снять исполнителя, тэг или срок, "
-                    + "нужен соответствующий флаг clearAssignee/clearTag/clearDueDate — присланный null "
+                    + "нужен соответствующий флаг clearAssignee/clearTag/clearDueDate/clearSprint — присланный null "
                     + "от неприсланного поля неотличим. Запрос без единого поля к правке — 400 "
                     + "BULK_UPDATE_NO_CHANGES. Всё или ничего: если хоть один id не принадлежит проекту "
                     + "или уже уехал в корзину, возвращается 404 TASK_NOT_FOUND и не меняется ничего. "

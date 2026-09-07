@@ -18,6 +18,9 @@ public record CreateTaskRequest(
         TaskUrgency urgency,
         Instant dueDate,
         UUID tagId,
-        @Size(max = 100) String category
+        @Size(max = 100) String category,
+        // Спринт, в который задачу планируют сразу при заведении (4.9). Не обязателен:
+        // задача без спринта — это бэклог.
+        UUID sprintId
 ) {
 }

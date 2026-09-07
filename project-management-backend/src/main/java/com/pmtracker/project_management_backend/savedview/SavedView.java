@@ -3,6 +3,7 @@ package com.pmtracker.project_management_backend.savedview;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.category.Category;
 import com.pmtracker.project_management_backend.project.Project;
+import com.pmtracker.project_management_backend.sprint.Sprint;
 import com.pmtracker.project_management_backend.tag.Tag;
 import com.pmtracker.project_management_backend.task.TaskDueFilter;
 import com.pmtracker.project_management_backend.task.TaskSortKey;
@@ -82,6 +83,15 @@ public class SavedView {
 
     @Column(nullable = false)
     private boolean uncategorized;
+
+    // Спринт (4.9) — с тем же флагом-парой, что у категории: «бэклог» это выбранный пункт
+    // фильтра, а не отсутствие выбора.
+    @ManyToOne
+    @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
+
+    @Column(name = "no_sprint", nullable = false)
+    private boolean noSprint;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -202,6 +212,22 @@ public class SavedView {
 
     public void setUncategorized(boolean uncategorized) {
         this.uncategorized = uncategorized;
+    }
+
+    public Sprint getSprint() {
+        return sprint;
+    }
+
+    public void setSprint(Sprint sprint) {
+        this.sprint = sprint;
+    }
+
+    public boolean isNoSprint() {
+        return noSprint;
+    }
+
+    public void setNoSprint(boolean noSprint) {
+        this.noSprint = noSprint;
     }
 
     public TaskDueFilter getDue() {

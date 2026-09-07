@@ -23,6 +23,7 @@ public interface SavedViewRepository extends JpaRepository<SavedView, UUID> {
             left join fetch v.assignee
             left join fetch v.tag
             left join fetch v.category
+            left join fetch v.sprint
             where v.project.id = :projectId and v.owner.id = :ownerId
             order by v.createdAt asc
             """)

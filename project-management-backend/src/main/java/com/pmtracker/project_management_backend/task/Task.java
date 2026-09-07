@@ -3,6 +3,7 @@ package com.pmtracker.project_management_backend.task;
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.category.Category;
 import com.pmtracker.project_management_backend.project.Project;
+import com.pmtracker.project_management_backend.sprint.Sprint;
 import com.pmtracker.project_management_backend.tag.Tag;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -93,6 +94,16 @@ public class Task {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    /**
+     * Спринт, в который задачу запланировали (4.9, V31). Необязательная ссылка: задача без
+     * спринта — это бэклог, то есть нормальное состояние большинства задач, а не пробел в
+     * данных. Одиночная, а не коллекция: задача принадлежит одному спринту, иначе она
+     * посчиталась бы в прогрессе сразу двух.
+     */
+    @ManyToOne
+    @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
 
     /**
      * Оптимистичная блокировка (3.4, V21). Hibernate сам подставляет её в WHERE каждого
@@ -239,6 +250,14 @@ public class Task {
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    public Sprint getSprint() {
+        return sprint;
+    }
+
+    public void setSprint(Sprint sprint) {
+        this.sprint = sprint;
     }
 
     public long getVersion() {

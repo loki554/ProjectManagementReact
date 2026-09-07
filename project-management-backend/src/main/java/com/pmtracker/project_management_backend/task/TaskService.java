@@ -24,6 +24,8 @@ import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectMemberRepository;
 import com.pmtracker.project_management_backend.project.ProjectRepository;
 import com.pmtracker.project_management_backend.project.ProjectRole;
+import com.pmtracker.project_management_backend.sprint.Sprint;
+import com.pmtracker.project_management_backend.sprint.SprintService;
 import com.pmtracker.project_management_backend.tag.Tag;
 import com.pmtracker.project_management_backend.tag.TagRepository;
 import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksRequest;
@@ -78,6 +80,7 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final TagRepository tagRepository;
     private final CategoryService categoryService;
+    private final SprintService sprintService;
     private final TimeLogRepository timeLogRepository;
     private final ActivityService activityService;
     private final NotificationService notificationService;
@@ -89,6 +92,7 @@ public class TaskService {
                         ProjectRepository projectRepository,
                         TagRepository tagRepository,
                         CategoryService categoryService,
+                        SprintService sprintService,
                         TimeLogRepository timeLogRepository,
                         ActivityService activityService,
                         NotificationService notificationService) {
@@ -99,6 +103,7 @@ public class TaskService {
         this.projectRepository = projectRepository;
         this.tagRepository = tagRepository;
         this.categoryService = categoryService;
+        this.sprintService = sprintService;
         this.timeLogRepository = timeLogRepository;
         this.activityService = activityService;
         this.notificationService = notificationService;
@@ -115,7 +120,7 @@ public class TaskService {
         task.setParentTask(null);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
-                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category(), request.sprintId());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -235,9 +240,10 @@ public class TaskService {
         Instant oldDueDate = task.getDueDate();
         String oldTag = task.getTag() != null ? task.getTag().getName() : null;
         String oldCategory = categoryName(task);
+        String oldSprint = sprintName(task);
 
         applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
-                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category(), request.sprintId());
         task.setStatus(request.status());
         task.setUrgency(request.urgency());
         // saveAndFlush — см. WikiService.update: ответ должен нести уже увеличенную версию.
@@ -271,6 +277,10 @@ public class TaskService {
         if (!Objects.equals(oldCategory, newCategory)) {
             recordFieldChange(task, currentUser, "task_category_changed", oldCategory, newCategory);
         }
+        String newSprint = sprintName(task);
+        if (!Objects.equals(oldSprint, newSprint)) {
+            recordFieldChange(task, currentUser, "task_sprint_changed", oldSprint, newSprint);
+        }
 
         // Дедлайн сдвинулся, исполнитель сменился или задача больше не активна — прежние
         // task_due_soon/task_overdue (если были) больше не отражают реальность; следующий
@@ -297,6 +307,11 @@ public class TaskService {
     private static String categoryName(Task task) {
         Category category = task.getCategory();
         return category != null ? category.getName() : null;
+    }
+
+    private static String sprintName(Task task) {
+        Sprint sprint = task.getSprint();
+        return sprint != null ? sprint.getName() : null;
     }
 
     private static String displayName(User user) {
@@ -407,6 +422,10 @@ public class TaskService {
         User newAssignee = request.clearAssignee() ? null : resolveAssignee(projectId, request.assigneeId());
         Tag newTag = request.clearTag() ? null : resolveTag(projectId, request.tagId());
         Instant newDueDate = request.clearDueDate() ? null : request.dueDate();
+        // Спринт разрешается один раз на весь набор, а не по задаче: значение общее, и
+        // проверять принадлежность проекту двести раз незачем. current = null означает
+        // «это смена спринта», то есть в завершённый спринт массовая правка не пустит.
+        Sprint newSprint = request.clearSprint() ? null : sprintService.resolveForTask(projectId, request.sprintId(), null);
         Map<ColumnKey, List<Task>> columns = loadAffectedColumns(projectId, tasks, request.status());
 
         // Задачи, у которых прежние "скоро истекает"/"просрочена" перестали отражать
@@ -444,6 +463,14 @@ public class TaskService {
                 task.setTag(newTag);
                 recordFieldChange(task, currentUser, "task_tag_changed", oldTag,
                         newTag != null ? newTag.getName() : null);
+                changed = true;
+            }
+
+            if (request.sprintRequested() && !sameEntity(task.getSprint(), newSprint)) {
+                String oldSprint = sprintName(task);
+                task.setSprint(newSprint);
+                recordFieldChange(task, currentUser, "task_sprint_changed", oldSprint,
+                        newSprint != null ? newSprint.getName() : null);
                 changed = true;
             }
 
@@ -532,6 +559,10 @@ public class TaskService {
         return Objects.equals(left != null ? left.getId() : null, right != null ? right.getId() : null);
     }
 
+    private static boolean sameEntity(Sprint left, Sprint right) {
+        return Objects.equals(left != null ? left.getId() : null, right != null ? right.getId() : null);
+    }
+
     /**
      * Удаление задачи (3.5) — теперь мягкое: задача уезжает в корзину проекта на 30 дней
      * вместе с подзадачами, комментариями, вложениями и залогированным временем, которые
@@ -606,7 +637,7 @@ public class TaskService {
         task.setParentTask(parent);
         task.setTaskNumber(projectRepository.reserveNextTaskNumber(projectId));
         applyCommonFields(task, task.getProject(), currentUser, request.title(), request.description(),
-                request.assigneeId(), request.dueDate(), request.tagId(), request.category());
+                request.assigneeId(), request.dueDate(), request.tagId(), request.category(), request.sprintId());
         TaskUrgency urgency = request.urgency() != null ? request.urgency() : TaskUrgency.MEDIUM;
         task.setUrgency(urgency);
         TaskStatus status = request.status() != null ? request.status() : TaskStatus.NEW;
@@ -642,7 +673,7 @@ public class TaskService {
     }
 
     private void applyCommonFields(Task task, Project project, User currentUser, String title, String description,
-                                    UUID assigneeId, Instant dueDate, UUID tagId, String category) {
+                                    UUID assigneeId, Instant dueDate, UUID tagId, String category, UUID sprintId) {
         UUID projectId = project.getId();
         task.setTitle(title);
         task.setDescription(description);
@@ -652,6 +683,11 @@ public class TaskService {
         // Категория приходит именем, а не id: в форме задачи это по-прежнему свободный ввод,
         // и незнакомое имя заводит новую запись справочника (см. CategoryService.resolveOrCreate).
         task.setCategory(categoryService.resolveOrCreate(project, currentUser, category));
+        // Спринт (4.9), наоборот, приходит id: спринт заводят на его собственной странице,
+        // это план команды, а не свойство задачи, которое исполнитель придумывает на ходу.
+        // Текущий спринт передаётся, чтобы правка задачи из уже завершённого спринта не
+        // упиралась в запрет «в завершённый спринт нельзя», см. SprintService.resolveForTask.
+        task.setSprint(sprintService.resolveForTask(projectId, sprintId, task.getSprint()));
     }
 
     private Task findTaskOrThrow(UUID taskId) {

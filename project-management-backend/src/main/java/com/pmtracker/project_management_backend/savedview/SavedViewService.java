@@ -7,12 +7,15 @@ import com.pmtracker.project_management_backend.common.exception.AssigneeNotProj
 import com.pmtracker.project_management_backend.common.exception.CategoryNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.DuplicateSavedViewNameException;
 import com.pmtracker.project_management_backend.common.exception.SavedViewNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.SprintNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.TagNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.TagProjectMismatchException;
 import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
 import com.pmtracker.project_management_backend.project.ProjectMember;
 import com.pmtracker.project_management_backend.project.ProjectMemberRepository;
+import com.pmtracker.project_management_backend.sprint.Sprint;
+import com.pmtracker.project_management_backend.sprint.SprintRepository;
 import com.pmtracker.project_management_backend.savedview.dto.SavedViewRequest;
 import com.pmtracker.project_management_backend.savedview.dto.SavedViewResponse;
 import com.pmtracker.project_management_backend.tag.Tag;
@@ -41,17 +44,20 @@ public class SavedViewService {
     private final ProjectMemberRepository projectMemberRepository;
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
+    private final SprintRepository sprintRepository;
 
     public SavedViewService(SavedViewRepository savedViewRepository,
                             ProjectAccessService projectAccessService,
                             ProjectMemberRepository projectMemberRepository,
                             TagRepository tagRepository,
-                            CategoryRepository categoryRepository) {
+                            CategoryRepository categoryRepository,
+                            SprintRepository sprintRepository) {
         this.savedViewRepository = savedViewRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
         this.tagRepository = tagRepository;
         this.categoryRepository = categoryRepository;
+        this.sprintRepository = sprintRepository;
     }
 
     @Transactional(readOnly = true)
@@ -143,6 +149,8 @@ public class SavedViewService {
         view.setTag(resolveTag(projectId, request.tagId()));
         view.setUncategorized(request.uncategorized());
         view.setCategory(request.uncategorized() ? null : resolveCategory(projectId, request.categoryId()));
+        view.setNoSprint(request.noSprint());
+        view.setSprint(request.noSprint() ? null : resolveSprint(projectId, request.sprintId()));
         view.setDue(request.due());
         view.setSort(request.sort() != null ? request.sort() : TaskSortKey.NUMBER);
         view.setDescending(request.descending());
@@ -180,6 +188,19 @@ public class SavedViewService {
             throw new CategoryNotFoundException();
         }
         return category;
+    }
+
+    private Sprint resolveSprint(UUID projectId, UUID sprintId) {
+        if (sprintId == null) {
+            return null;
+        }
+        Sprint sprint = sprintRepository.findById(sprintId).orElseThrow(SprintNotFoundException::new);
+        if (!sprint.getProject().getId().equals(projectId)) {
+            // Как и с категорией выше: для того, кто спринт не видит, «не тот проект» и
+            // «нет такого спринта» — одно и то же.
+            throw new SprintNotFoundException();
+        }
+        return sprint;
     }
 
     private static String normalizeName(String name) {

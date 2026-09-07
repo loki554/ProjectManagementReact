@@ -17,6 +17,9 @@ import { TASK_DUE_FILTERS, TASK_STATUSES } from './constants'
 export const ASSIGNEE_ME = '__me__'
 export const ASSIGNEE_UNASSIGNED = '__unassigned__'
 export const CATEGORY_NONE = '__no_category__'
+// «Бэклог» — задачи вне спринтов (4.9). Такой же сентинел, как «без категории», и по той
+// же причине: на проводе это отдельный флаг noSprint, а не пустой id.
+export const SPRINT_BACKLOG = '__backlog__'
 
 export const DEFAULT_SORT = 'NUMBER'
 
@@ -38,6 +41,7 @@ export const EMPTY_FILTERS = {
   assignee: '',
   tag: '',
   category: '',
+  sprint: '',
   due: '',
   sort: DEFAULT_SORT,
   descending: false,
@@ -65,6 +69,7 @@ const PARAM = {
   assignee: 'assignee',
   tag: 'tag',
   category: 'category',
+  sprint: 'sprint',
   due: 'due',
   sort: 'sort',
   direction: 'dir',
@@ -98,6 +103,7 @@ export function readFilters(searchParams) {
     assignee: readId(searchParams.get(PARAM.assignee), [ASSIGNEE_ME, ASSIGNEE_UNASSIGNED]),
     tag: readId(searchParams.get(PARAM.tag)),
     category: readId(searchParams.get(PARAM.category), [CATEGORY_NONE]),
+    sprint: readId(searchParams.get(PARAM.sprint), [SPRINT_BACKLOG]),
     due: readEnum(searchParams.get(PARAM.due), TASK_DUE_FILTERS),
     sort: readEnum(searchParams.get(PARAM.sort), SORT_KEYS, DEFAULT_SORT),
     descending: searchParams.get(PARAM.direction) === 'desc',
@@ -123,6 +129,7 @@ export function writeFilters(filters, page = 0) {
   if (filters.assignee) params.set(PARAM.assignee, filters.assignee)
   if (filters.tag) params.set(PARAM.tag, filters.tag)
   if (filters.category) params.set(PARAM.category, filters.category)
+  if (filters.sprint) params.set(PARAM.sprint, filters.sprint)
   if (filters.due) params.set(PARAM.due, filters.due)
   if (filters.sort !== DEFAULT_SORT) params.set(PARAM.sort, filters.sort)
   if (filters.descending) params.set(PARAM.direction, 'desc')
@@ -145,6 +152,8 @@ export function toQueryParams(filters, page, pageSize) {
   if (filters.tag) params.tagId = filters.tag
   if (filters.category === CATEGORY_NONE) params.uncategorized = true
   else if (filters.category) params.categoryId = filters.category
+  if (filters.sprint === SPRINT_BACKLOG) params.noSprint = true
+  else if (filters.sprint) params.sprintId = filters.sprint
   if (filters.due) params.due = filters.due
   return params
 }
@@ -176,6 +185,7 @@ export function savedViewToFilters(view) {
     assignee,
     tag: view.tagId ?? '',
     category: view.uncategorized ? CATEGORY_NONE : (view.categoryId ?? ''),
+    sprint: view.noSprint ? SPRINT_BACKLOG : (view.sprintId ?? ''),
     due: view.due ?? '',
     sort: view.sort ?? DEFAULT_SORT,
     descending: Boolean(view.descending),
@@ -201,6 +211,8 @@ export function filtersToSavedViewPayload(name, filters) {
     tagId: filters.tag || null,
     categoryId: filters.category && filters.category !== CATEGORY_NONE ? filters.category : null,
     uncategorized: filters.category === CATEGORY_NONE,
+    sprintId: filters.sprint && filters.sprint !== SPRINT_BACKLOG ? filters.sprint : null,
+    noSprint: filters.sprint === SPRINT_BACKLOG,
     due: filters.due || null,
     sort: filters.sort,
     descending: filters.descending,

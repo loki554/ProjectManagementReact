@@ -6,6 +6,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
+import { useSprints } from '../../api/sprintsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useDeleteTask, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
@@ -32,6 +33,7 @@ function buildTaskSchema(t) {
     dueDate: z.string().optional(),
     tagId: z.string().optional(),
     category: z.string().max(100).optional(),
+    sprintId: z.string().optional(),
   })
 }
 
@@ -53,6 +55,7 @@ export function TaskEditPage() {
   const { data: members } = useProjectMembers(projectId)
   const { data: tags } = useTags(projectId)
   const { data: categories } = useCategories(projectId)
+  const { data: sprints } = useSprints(projectId)
   // Combobox оперирует именами: в задаче категория задаётся свободным вводом, и бэкенд
   // сам сопоставляет имя со справочником (создавая недостающую запись).
   const categoryNames = useMemo(() => (categories ?? []).map((category) => category.name), [categories])
@@ -86,6 +89,7 @@ export function TaskEditPage() {
           dueDate: toDatetimeLocalValue(task.dueDate),
           tagId: task.tag?.id ?? '',
           category: task.category?.name ?? '',
+          sprintId: task.sprint?.id ?? '',
         }
       : undefined,
   })
@@ -110,6 +114,7 @@ export function TaskEditPage() {
         dueDate: fromDatetimeLocalValue(values.dueDate),
         tagId: values.tagId || null,
         category: values.category?.trim() || null,
+        sprintId: values.sprintId || null,
         // Версия задачи на момент открытия формы (3.4): сервер ответит 409
         // CONCURRENT_MODIFICATION, если её успели изменить, вместо того чтобы молча
         // затереть чужую правку.
@@ -220,6 +225,20 @@ export function TaskEditPage() {
                 </select>
               </Field>
             </div>
+
+            {/* Спринт (4.9) — обычное поле задачи, как тэг. Завершённые спринты в списке
+                есть только затем, чтобы задача, уже лежащая в таком, не теряла его при
+                первой же правке; выбрать завершённый спринт заново сервер не даст. */}
+            <Field label={t('tasks.detail.sprintLabel')}>
+              <select className={inputClass} {...register('sprintId')}>
+                <option value="">{t('tasks.noSprint')}</option>
+                {sprints?.map((sprint) => (
+                  <option key={sprint.id} value={sprint.id}>
+                    {sprint.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
             {/* Свободный текст с подсказками уже использованных в проекте категорий —
                 справочника категорий (в отличие от тэгов) нет, значение вводится вручную.

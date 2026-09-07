@@ -21,6 +21,9 @@ function buildMessageParams(item, t, formatDate) {
     case 'task_assignee_changed':
     case 'task_tag_changed':
     case 'task_category_changed':
+    // Спринт (4.9) — сюда же: «убрали из спринта» приезжает с new = null, и без
+    // подстановки «нет» строка обрывалась бы на стрелке.
+    case 'task_sprint_changed':
       return { ...p, old: p.old ?? none, new: p.new ?? none }
     case 'task_due_date_changed':
       return {
@@ -39,8 +42,9 @@ function buildMessageParams(item, t, formatDate) {
     default:
       // task_created / task_deleted / task_title_changed / member_removed /
       // time_logged / attachment_added / comment_added / wiki_updated /
-      // task_dependency_added / task_dependency_removed — payload подставляется как есть
-      // (у связей это номер и название второй задачи, переводить в них нечего).
+      // task_dependency_added / task_dependency_removed / sprint_* — payload
+      // подставляется как есть (у связей это номер и название второй задачи, у
+      // спринтов — его имя; переводить в них нечего).
       return { ...p }
   }
 }

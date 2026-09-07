@@ -2,6 +2,7 @@ package com.pmtracker.project_management_backend.task.dto;
 
 import com.pmtracker.project_management_backend.auth.dto.UserSummary;
 import com.pmtracker.project_management_backend.category.dto.CategorySummary;
+import com.pmtracker.project_management_backend.sprint.dto.SprintSummary;
 import com.pmtracker.project_management_backend.tag.dto.TagSummary;
 import com.pmtracker.project_management_backend.task.Task;
 import com.pmtracker.project_management_backend.task.TaskStatus;
@@ -29,6 +30,10 @@ public record TaskResponse(
         Instant dueDate,
         TagSummary tag,
         CategorySummary category,
+        // Спринт, в который задача запланирована (4.9); null — бэклог. Имя и статус, без
+        // дат и счётчиков: строке списка и карточке на доске нужен бейдж, а не карточка
+        // спринта (см. SprintSummary).
+        SprintSummary sprint,
         BigDecimal totalHoursSpent,
         // Сколько незакрытых блокеров у задачи (4.8). Число, а не список: списки нужны на
         // странице задачи и приезжают отдельной ручкой, а карточке на доске и строке в
@@ -58,6 +63,7 @@ public record TaskResponse(
                 task.getDueDate(),
                 task.getTag() != null ? TagSummary.from(task.getTag()) : null,
                 task.getCategory() != null ? CategorySummary.from(task.getCategory()) : null,
+                task.getSprint() != null ? SprintSummary.from(task.getSprint()) : null,
                 totalHoursSpent,
                 openBlockerCount,
                 task.getCreatedAt(),

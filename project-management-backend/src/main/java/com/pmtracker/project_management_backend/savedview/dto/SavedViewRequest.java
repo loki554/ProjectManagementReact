@@ -35,6 +35,8 @@ public record SavedViewRequest(
         UUID tagId,
         UUID categoryId,
         Boolean uncategorized,
+        UUID sprintId,
+        Boolean noSprint,
         TaskDueFilter due,
         TaskSortKey sort,
         Boolean descending
@@ -44,6 +46,7 @@ public record SavedViewRequest(
         unassigned = Boolean.TRUE.equals(unassigned);
         assignedToMe = Boolean.TRUE.equals(assignedToMe);
         uncategorized = Boolean.TRUE.equals(uncategorized);
+        noSprint = Boolean.TRUE.equals(noSprint);
         descending = Boolean.TRUE.equals(descending);
     }
 }

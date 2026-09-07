@@ -544,6 +544,26 @@ export function TaskViewPage() {
                     )}
                   </dd>
                 </div>
+                {/* Спринт (4.9) — со ссылкой на состав этого спринта в списке задач:
+                    «а что там ещё в этом заходе» — первый вопрос, который возникает,
+                    когда видишь, в какой спринт задача попала. */}
+                <div>
+                  <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                    {t('tasks.detail.sprintLabel')}
+                  </dt>
+                  <dd className="mt-1">
+                    {task.sprint ? (
+                      <Link
+                        to={`/projects/${projectSlug}/tasks?sprint=${task.sprint.id}`}
+                        className="text-purple-700 hover:underline dark:text-purple-400"
+                      >
+                        {task.sprint.name}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500">{t('tasks.noSprint')}</span>
+                    )}
+                  </dd>
+                </div>
                 <div>
                   <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('tasks.detail.urgencyLabel')}</dt>
                   <dd className="mt-1">

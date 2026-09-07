@@ -4,6 +4,7 @@ import {
   ASSIGNEE_UNASSIGNED,
   CATEGORY_NONE,
   EMPTY_FILTERS,
+  SPRINT_BACKLOG,
   PRESET_VIEWS,
   filtersEqual,
   filtersToSavedViewPayload,
@@ -18,6 +19,7 @@ import {
 const TAG_ID = '3f2504e0-4f89-11d3-9a0c-0305e82c3301'
 const CATEGORY_ID = '3f2504e0-4f89-11d3-9a0c-0305e82c3302'
 const USER_ID = '3f2504e0-4f89-11d3-9a0c-0305e82c3303'
+const SPRINT_ID = '3f2504e0-4f89-11d3-9a0c-0305e82c3304'
 
 function params(query) {
   return new URLSearchParams(query)
@@ -35,7 +37,7 @@ describe('readFilters', () => {
 
   it('читает весь набор параметров', () => {
     const result = readFilters(
-      params(`q=отчёт&status=IN_PROGRESS&assignee=${USER_ID}&tag=${TAG_ID}&category=${CATEGORY_ID}&due=WEEK&sort=DUE_DATE&dir=desc`),
+      params(`q=отчёт&status=IN_PROGRESS&assignee=${USER_ID}&tag=${TAG_ID}&category=${CATEGORY_ID}&sprint=${SPRINT_ID}&due=WEEK&sort=DUE_DATE&dir=desc`),
     )
     expect(result).toEqual({
       search: 'отчёт',
@@ -43,6 +45,7 @@ describe('readFilters', () => {
       assignee: USER_ID,
       tag: TAG_ID,
       category: CATEGORY_ID,
+      sprint: SPRINT_ID,
       due: 'WEEK',
       sort: 'DUE_DATE',
       descending: true,
@@ -53,6 +56,7 @@ describe('readFilters', () => {
     expect(readFilters(params('assignee=__me__')).assignee).toBe(ASSIGNEE_ME)
     expect(readFilters(params('assignee=__unassigned__')).assignee).toBe(ASSIGNEE_UNASSIGNED)
     expect(readFilters(params('category=__no_category__')).category).toBe(CATEGORY_NONE)
+    expect(readFilters(params('sprint=__backlog__')).sprint).toBe(SPRINT_BACKLOG)
   })
 
   // Адрес правят руками и присылают в мессенджере — мусор в нём должен означать «фильтра
@@ -108,6 +112,7 @@ describe('writeFilters', () => {
       assignee: ASSIGNEE_UNASSIGNED,
       tag: TAG_ID,
       category: CATEGORY_NONE,
+      sprint: SPRINT_ID,
       due: 'TODAY',
       sort: 'HOURS',
       descending: true,
@@ -135,12 +140,16 @@ describe('toQueryParams', () => {
     expect(toQueryParams(filters({ assignee: ASSIGNEE_ME }), 0, 50)).not.toHaveProperty('assigneeId')
     expect(toQueryParams(filters({ assignee: ASSIGNEE_UNASSIGNED }), 0, 50)).toMatchObject({ unassigned: true })
     expect(toQueryParams(filters({ category: CATEGORY_NONE }), 0, 50)).toMatchObject({ uncategorized: true })
+    // «Бэклог» (4.9) устроен так же: это выбранный пункт фильтра, а не пустой спринт.
+    expect(toQueryParams(filters({ sprint: SPRINT_BACKLOG }), 0, 50)).toMatchObject({ noSprint: true })
+    expect(toQueryParams(filters({ sprint: SPRINT_BACKLOG }), 0, 50)).not.toHaveProperty('sprintId')
   })
 
-  it('обычный исполнитель и категория едут id-шниками', () => {
-    expect(toQueryParams(filters({ assignee: USER_ID, category: CATEGORY_ID }), 0, 50)).toMatchObject({
+  it('обычный исполнитель, категория и спринт едут id-шниками', () => {
+    expect(toQueryParams(filters({ assignee: USER_ID, category: CATEGORY_ID, sprint: SPRINT_ID }), 0, 50)).toMatchObject({
       assigneeId: USER_ID,
       categoryId: CATEGORY_ID,
+      sprintId: SPRINT_ID,
     })
   })
 })
@@ -171,6 +180,8 @@ describe('сохранённые представления', () => {
       tagId: null,
       categoryId: null,
       uncategorized: false,
+      sprintId: null,
+      noSprint: false,
       due: null,
     })
   })
@@ -181,6 +192,17 @@ describe('сохранённые представления', () => {
     )
     expect(savedViewToFilters({ unassigned: true, assigneeId: USER_ID }).assignee).toBe(ASSIGNEE_UNASSIGNED)
     expect(savedViewToFilters({ uncategorized: true, categoryId: CATEGORY_ID }).category).toBe(CATEGORY_NONE)
+    expect(savedViewToFilters({ noSprint: true, sprintId: SPRINT_ID }).sprint).toBe(SPRINT_BACKLOG)
+  })
+
+  // Ради чего фильтр по спринту вообще заведён в представлениях: «мои задачи в текущем
+  // спринте» должно ложиться на кнопку и переживать перезагрузку.
+  it('спринт сохраняется в представлении и разворачивается обратно', () => {
+    const original = filters({ assignee: ASSIGNEE_ME, sprint: SPRINT_ID })
+    const payload = filtersToSavedViewPayload('Мои в спринте', original)
+    expect(payload.sprintId).toBe(SPRINT_ID)
+    expect(payload.noSprint).toBe(false)
+    expect(savedViewToFilters(payload)).toEqual(original)
   })
 
   it('представление без единого фильтра читается как пустой набор', () => {

@@ -35,6 +35,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
             left join fetch t.assignee
             left join fetch t.tag
             left join fetch t.category
+            left join fetch t.sprint
             where t.project.id = :projectId
               and t.parentTask is null
             order by t.position asc
@@ -65,12 +66,26 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
             left join fetch t.assignee
             left join fetch t.tag
             left join fetch t.category
+            left join fetch t.sprint
             where t.project.id = :projectId
               and t.id in :taskIds
             order by t.taskNumber asc
             """)
     List<Task> findAllByProjectIdAndIdIn(UUID projectId, Collection<UUID> taskIds);
 
+
+    /**
+     * Незакрытые задачи спринта — то, с чем надо что-то решить при его завершении (4.9).
+     * «Незакрытая» здесь то же самое, что и в счётчике прогресса: не DONE и не REJECTED,
+     * иначе спринт закрывался бы со «100% сделано» и хвостом отклонённых задач в довесок.
+     *
+     * <p>Задачи в корзине сюда не попадают: @SQLRestriction действует и здесь. Это верно по
+     * смыслу — удалённая задача не является невыполненным обещанием, — но означает, что
+     * восстановленная задача вернётся со ссылкой на уже завершённый спринт. Так и надо:
+     * состав завершённого спринта — это история, и переписывать её восстановление не должно.
+     */
+    @Query("select t from Task t where t.sprint.id = :sprintId and t.status not in :excludedStatuses order by t.taskNumber asc")
+    List<Task> findBySprintIdAndStatusNotIn(UUID sprintId, List<TaskStatus> excludedStatuses);
 
     @Query("select coalesce(max(t.position), -1) from Task t where t.project.id = :projectId and t.status = :status")
     int findMaxPositionForStatus(UUID projectId, TaskStatus status);

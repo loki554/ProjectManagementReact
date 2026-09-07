@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { inputClass, primaryButtonClass, secondaryButtonClass } from '../ui/FormKit'
 import {
+  BULK_NO_SPRINT,
   BULK_NO_TAG,
   BULK_UNASSIGN,
   EMPTY_BULK_FORM,
@@ -25,7 +26,7 @@ import { getLocalizedErrorMessage } from '../../lib/errorMessage'
  * последние строки списка ровно в тот момент, когда человек по этому списку и выделяет,
  * не стоит того, чтобы сэкономить строку вёрстки.
  */
-export function BulkActionsBar({ selectedCount, members, tags, onApply, onCancel, isPending, error }) {
+export function BulkActionsBar({ selectedCount, members, tags, sprints, onApply, onCancel, isPending, error }) {
   const { t } = useTranslation()
   const [form, setForm] = useState(EMPTY_BULK_FORM)
 
@@ -97,6 +98,25 @@ export function BulkActionsBar({ selectedCount, members, tags, onApply, onCancel
             {tag.name}
           </option>
         ))}
+      </select>
+
+      {/* В спринт (4.9) кладут только незакрытый: завершённый спринт состав не меняет,
+          и предлагать его в списке значило бы предлагать заведомый отказ сервера. */}
+      <select
+        aria-label={t('taskList.bulk.sprintLabel')}
+        value={form.sprint}
+        onChange={(event) => set('sprint', event.target.value)}
+        className={`${inputClass} w-48`}
+      >
+        <option value="">{t('taskList.bulk.keepSprint')}</option>
+        <option value={BULK_NO_SPRINT}>{t('taskList.bulk.noSprint')}</option>
+        {sprints
+          ?.filter((sprint) => sprint.status !== 'COMPLETED')
+          .map((sprint) => (
+            <option key={sprint.id} value={sprint.id}>
+              {sprint.name}
+            </option>
+          ))}
       </select>
 
       {/* Поле даты гаснет под галочкой «снять срок» — не потому, что иначе сломается

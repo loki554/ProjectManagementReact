@@ -15,6 +15,7 @@ import java.util.UUID;
  * @param assignedToMe   задачи текущего пользователя; имеет приоритет над unassigned и assigneeId
  * @param unassigned     только задачи без исполнителя; имеет приоритет над assigneeId
  * @param uncategorized  только задачи без категории; имеет приоритет над categoryId
+ * @param noSprint       только задачи вне спринтов (бэклог, 4.9); имеет приоритет над sprintId
  * @param due            окно дедлайна (4.7); null — без фильтра по сроку
  */
 public record TaskListQuery(
@@ -27,6 +28,8 @@ public record TaskListQuery(
         UUID tagId,
         UUID categoryId,
         boolean uncategorized,
+        UUID sprintId,
+        boolean noSprint,
         TaskDueFilter due,
         TaskSortKey sort,
         boolean descending
@@ -46,6 +49,6 @@ public record TaskListQuery(
             return this;
         }
         return new TaskListQuery(parentId, search, status, viewerId, false, false,
-                tagId, categoryId, uncategorized, due, sort, descending);
+                tagId, categoryId, uncategorized, sprintId, noSprint, due, sort, descending);
     }
 }

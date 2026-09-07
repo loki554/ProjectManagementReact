@@ -34,6 +34,7 @@ import java.util.UUID;
  * @param clearAssignee снять исполнителя; сильнее assigneeId
  * @param clearTag      снять тэг; сильнее tagId
  * @param clearDueDate  снять срок; сильнее dueDate
+ * @param clearSprint   вынуть из спринта (вернуть в бэклог); сильнее sprintId
  */
 public record BulkUpdateTasksRequest(
         // Потолок совпадает с MAX_TASK_PAGE_SIZE (TaskService): выделяют задачи на странице
@@ -52,6 +53,12 @@ public record BulkUpdateTasksRequest(
         Boolean clearTag,
         Instant dueDate,
         Boolean clearDueDate,
+        // Спринт (4.9) — та же пара «значение + флаг очистки», что у исполнителя и тэга.
+        // Именно она делает страницу спринтов дешёвой: «положить выделенные задачи в
+        // спринт» и «вынуть их обратно в бэклог» — это уже существующая массовая правка,
+        // а не третий способ менять задачу.
+        UUID sprintId,
+        Boolean clearSprint,
         // Подтверждение массового закрытия задач с незакрытыми блокерами (4.8). Флаг один
         // на весь запрос, а не на задачу: массовая правка и так «всё или ничего», и
         // подтверждать её по одной задаче значило бы вернуть те самые двадцать нажатий,
@@ -63,6 +70,7 @@ public record BulkUpdateTasksRequest(
         clearAssignee = Boolean.TRUE.equals(clearAssignee);
         clearTag = Boolean.TRUE.equals(clearTag);
         clearDueDate = Boolean.TRUE.equals(clearDueDate);
+        clearSprint = Boolean.TRUE.equals(clearSprint);
         ignoreBlockers = Boolean.TRUE.equals(ignoreBlockers);
     }
 
@@ -79,11 +87,15 @@ public record BulkUpdateTasksRequest(
         return clearDueDate || dueDate != null;
     }
 
+    public boolean sprintRequested() {
+        return clearSprint || sprintId != null;
+    }
+
     /**
      * Хоть одно поле к правке. Запрос без единого поля — не «ничего не изменилось», а
      * ошибка клиента: он просит сервер сделать неизвестно что.
      */
     public boolean hasChanges() {
-        return status != null || assigneeRequested() || tagRequested() || dueDateRequested();
+        return status != null || assigneeRequested() || tagRequested() || dueDateRequested() || sprintRequested();
     }
 }

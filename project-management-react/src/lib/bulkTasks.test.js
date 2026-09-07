@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  BULK_NO_SPRINT,
   BULK_NO_TAG,
   BULK_UNASSIGN,
   EMPTY_BULK_FORM,
@@ -37,6 +38,15 @@ describe('buildBulkPayload', () => {
     expect(payload).toEqual({ clearAssignee: true, clearTag: true })
     expect(payload).not.toHaveProperty('assigneeId')
     expect(payload).not.toHaveProperty('tagId')
+  })
+
+  // Спринт (4.9) — та же пара «значение + очистка». Через неё страница спринтов и
+  // наполняет спринт задачами из бэклога, не заводя собственной ручки.
+  it('спринт кладётся id-шником, а «в бэклог» — флагом', () => {
+    expect(buildBulkPayload(form({ sprint: 'sprint-1' }))).toEqual({ sprintId: 'sprint-1' })
+    const cleared = buildBulkPayload(form({ sprint: BULK_NO_SPRINT }))
+    expect(cleared).toEqual({ clearSprint: true })
+    expect(cleared).not.toHaveProperty('sprintId')
   })
 
   it('срок уезжает ISO-инстантом, а не строкой из datetime-local', () => {

@@ -107,8 +107,18 @@ function TaskCardBody({ task, t, locale }) {
         {task.title}
       </p>
 
-      {(task.tag || task.category || task.dueDate) && (
+      {(task.tag || task.category || task.sprint || task.dueDate) && (
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {/* Спринт (4.9) первым в ряду бейджей: на доске он отвечает на вопрос «а это
+              вообще из текущего захода?», и ответ должен читаться раньше категории. */}
+          {task.sprint && (
+            <span
+              title={t('tasks.detail.sprintLabel')}
+              className="max-w-full truncate rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950/60 dark:text-purple-300"
+            >
+              {task.sprint.name}
+            </span>
+          )}
           {task.category && (
             <span
               title={t('tasks.detail.categoryLabel')}

@@ -17,6 +17,7 @@ import { NewProjectPage } from './pages/projects/NewProjectPage'
 import { ProjectEditPage } from './pages/projects/ProjectEditPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
+import { ProjectSprintsPage } from './pages/projects/ProjectSprintsPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
@@ -126,6 +127,9 @@ function AppRoutes() {
           <Route index element={<ProjectOverviewPage />} />
           <Route path="tasks" element={<ProjectTaskListPage />} />
           <Route path="board" element={<ProjectTasksPage />} />
+          {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
+              справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
+          <Route path="sprints" element={<ProjectSprintsPage />} />
           <Route path="trash" element={<ProjectTrashPage />} />
           {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
               поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
