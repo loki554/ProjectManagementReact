@@ -147,8 +147,10 @@ function reorderTasksOptimistically(tasks, { taskId, status: newStatus, position
 export function useUpdateTaskStatus(projectId) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ taskId, status, position, expectedStatus }) =>
-      tasksApi.updateTaskStatus(taskId, { status, position, expectedStatus }),
+    // ignoreBlockers — согласие закрыть задачу с незакрытыми блокерами (4.8); в первом
+    // запросе его нет, он появляется только во втором, после подтверждения на 409.
+    mutationFn: ({ taskId, status, position, expectedStatus, ignoreBlockers }) =>
+      tasksApi.updateTaskStatus(taskId, { status, position, expectedStatus, ignoreBlockers }),
     // Точечно по ключу доски, а не по префиксу tasksKey: под тем же префиксом лежат
     // страницы табличного списка ({items, ...}) и отдельные задачи по номеру, а
     // reorderTasksOptimistically умеет только плоский массив доски.

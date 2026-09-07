@@ -263,6 +263,8 @@
     "attachment_added": "attached {{fileName}} to \"{{title}}\"",
     "comment_added": "commented on \"{{title}}\"",
     "wiki_updated": "updated the project wiki",
+    "task_dependency_added": "marked \"{{title}}\" as blocked by #{{blockerNumber}} \"{{blockerTitle}}\"",
+    "task_dependency_removed": "removed blocker #{{blockerNumber}} \"{{blockerTitle}}\" from \"{{title}}\"",
     "fields": {
       "name": "name",
       "description": "description",
@@ -445,6 +447,25 @@
       "adding": "Adding...",
       "fullForm": "Full form →"
     },
+    "dependencies": {
+      "title": "Dependencies",
+      "loading": "Loading dependencies...",
+      "blockedByTitle": "Blocked by",
+      "blockedByEmpty": "Nothing is in the way",
+      "blockedByAddLabel": "Number of the task that blocks this one",
+      "blocksTitle": "Blocks",
+      "blocksEmpty": "Blocks nothing",
+      "blocksAddLabel": "Number of the task this one blocks",
+      "numberPlaceholder": "number",
+      "add": "Link",
+      "adding": "Linking...",
+      "remove": "Remove link",
+      "openBlockerHint": "Still open",
+      "blockedBadge_one": "{{count}} open blocker",
+      "blockedBadge_other": "{{count}} open blockers",
+      "doneConfirm": "This task still has open blockers. Mark it as done anyway?",
+      "bulkDoneConfirm": "These tasks still have open blockers: {{tasks}}. Close them anyway?"
+    },
     "timeLogs": {
       "title": "Time tracking",
       "totalLabel": "Total: {{hours}}h",
@@ -620,7 +641,13 @@
     "UNKNOWN": "Something went wrong, please try again",
     "INVALID_CURRENT_PASSWORD": "The current password is incorrect",
     "INVITATION_EMAIL_MISMATCH": "This invitation was issued for a different address. Sign in with the account that received the email.",
-    "BULK_UPDATE_NO_CHANGES": "Choose what to change on the selected tasks"
+    "BULK_UPDATE_NO_CHANGES": "Choose what to change on the selected tasks",
+    "SELF_DEPENDENCY": "A task cannot block itself",
+    "DEPENDENCY_PROJECT_MISMATCH": "Only tasks from the same project can be linked",
+    "DUPLICATE_DEPENDENCY": "This link already exists",
+    "DEPENDENCY_CYCLE": "This link would close a circle of blockers — none of the tasks could be finished first",
+    "DEPENDENCY_NOT_FOUND": "Link not found — it may have been removed already",
+    "TASK_HAS_OPEN_BLOCKERS": "This task still has open blockers"
   },
   "trash": {
     "title": "Trash",

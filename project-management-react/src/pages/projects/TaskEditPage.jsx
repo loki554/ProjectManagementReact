@@ -18,6 +18,7 @@ import {
   roleIsAtLeast,
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { isOpenBlockersError } from '../../lib/taskBlockers'
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/datetimeLocal'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -89,7 +90,16 @@ export function TaskEditPage() {
       : undefined,
   })
 
-  function onSave(values) {
+  /**
+   * Сохранение формы. Второй аргумент — согласие закрыть задачу с незакрытыми блокерами
+   * (4.8): в первом запросе его нет, и если блокеры остались, сервер отвечает 409
+   * TASK_HAS_OPEN_BLOCKERS. Тогда задаётся вопрос и тот же запрос уходит повторно.
+   *
+   * Спрашивать заранее, по openBlockerCount из загруженной задачи, было бы дешевле, но
+   * форма живёт открытой сколько угодно: за это время блокер могли и закрыть, и завести.
+   * Отказ от сервера всегда про то, как обстоят дела сейчас.
+   */
+  function save(values, ignoreBlockers) {
     updateTask.mutate(
       {
         title: values.title,
@@ -104,9 +114,21 @@ export function TaskEditPage() {
         // CONCURRENT_MODIFICATION, если её успели изменить, вместо того чтобы молча
         // затереть чужую правку.
         version: task.version,
+        ignoreBlockers,
       },
-      { onSuccess: () => navigate(viewPath) },
+      {
+        onSuccess: () => navigate(viewPath),
+        onError: (error) => {
+          if (!ignoreBlockers && isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+            save(values, true)
+          }
+        },
+      },
     )
+  }
+
+  function onSave(values) {
+    save(values, false)
   }
 
   function onDelete() {

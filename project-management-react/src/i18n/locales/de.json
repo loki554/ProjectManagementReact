@@ -263,6 +263,8 @@
     "attachment_added": "hat {{fileName}} an „{{title}}“ angehängt",
     "comment_added": "hat „{{title}}“ kommentiert",
     "wiki_updated": "hat das Projekt-Wiki aktualisiert",
+    "task_dependency_added": "hat „{{title}}“ als blockiert durch #{{blockerNumber}} „{{blockerTitle}}“ markiert",
+    "task_dependency_removed": "hat den Blocker #{{blockerNumber}} „{{blockerTitle}}“ von „{{title}}“ entfernt",
     "fields": {
       "name": "Name",
       "description": "Beschreibung",
@@ -445,6 +447,25 @@
       "adding": "Wird hinzugefügt...",
       "fullForm": "Vollständiges Formular →"
     },
+    "dependencies": {
+      "title": "Abhängigkeiten",
+      "loading": "Abhängigkeiten werden geladen...",
+      "blockedByTitle": "Blockiert von",
+      "blockedByEmpty": "Nichts steht im Weg",
+      "blockedByAddLabel": "Nummer der Aufgabe, die diese blockiert",
+      "blocksTitle": "Blockiert",
+      "blocksEmpty": "Blockiert nichts",
+      "blocksAddLabel": "Nummer der Aufgabe, die diese blockiert",
+      "numberPlaceholder": "Nummer",
+      "add": "Verknüpfen",
+      "adding": "Wird verknüpft...",
+      "remove": "Verknüpfung entfernen",
+      "openBlockerHint": "Noch offen",
+      "blockedBadge_one": "{{count}} offener Blocker",
+      "blockedBadge_other": "{{count}} offene Blocker",
+      "doneConfirm": "Diese Aufgabe hat noch offene Blocker. Trotzdem als erledigt markieren?",
+      "bulkDoneConfirm": "Diese Aufgaben haben noch offene Blocker: {{tasks}}. Trotzdem schließen?"
+    },
     "timeLogs": {
       "title": "Zeiterfassung",
       "totalLabel": "Gesamt: {{hours}} Std.",
@@ -620,7 +641,13 @@
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut",
     "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch",
     "INVITATION_EMAIL_MISMATCH": "Diese Einladung wurde für eine andere Adresse ausgestellt. Melden Sie sich mit dem Konto an, das die E-Mail erhalten hat.",
-    "BULK_UPDATE_NO_CHANGES": "Wählen Sie aus, was an den ausgewählten Aufgaben geändert werden soll"
+    "BULK_UPDATE_NO_CHANGES": "Wählen Sie aus, was an den ausgewählten Aufgaben geändert werden soll",
+    "SELF_DEPENDENCY": "Eine Aufgabe kann sich nicht selbst blockieren",
+    "DEPENDENCY_PROJECT_MISMATCH": "Nur Aufgaben desselben Projekts können verknüpft werden",
+    "DUPLICATE_DEPENDENCY": "Diese Verknüpfung existiert bereits",
+    "DEPENDENCY_CYCLE": "Diese Verknüpfung würde einen Kreis von Blockern schließen — keine der Aufgaben ließe sich zuerst abschließen",
+    "DEPENDENCY_NOT_FOUND": "Verknüpfung nicht gefunden — sie wurde möglicherweise schon entfernt",
+    "TASK_HAS_OPEN_BLOCKERS": "Diese Aufgabe hat noch offene Blocker"
   },
   "trash": {
     "title": "Papierkorb",

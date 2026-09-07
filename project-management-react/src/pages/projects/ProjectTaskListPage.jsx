@@ -1,3 +1,4 @@
+import { OctagonAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -25,6 +26,7 @@ import {
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { blockedTaskNumbers, formatTaskNumbers, isOpenBlockersError } from '../../lib/taskBlockers'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import {
@@ -196,13 +198,40 @@ export function ProjectTaskListPage() {
     lastToggledIndex.current = index
   }
 
-  function applyBulk(payload) {
+  /**
+   * Массовая правка (4.6) с подтверждением закрытия заблокированных задач (4.8).
+   *
+   * Вопрос задаётся до запроса, а не по 409 с сервера, — в отличие от доски и формы
+   * задачи. Причина в том, что тут спрашивают не «точно закрываем эту?», а «точно
+   * закрываем вот эти три из двадцати?»: номера нужны в самом вопросе, и взять их можно
+   * только из таблицы на экране — тело ошибки у бэкенда одно на все случаи, {error,
+   * message}, и разбирать номера из текста сообщения было бы худшей из возможных связей
+   * между фронтендом и сервером. Список на экране мог устареть — тогда тот же отказ
+   * придёт с сервера, и он разбирается вторым, «немым» подтверждением.
+   */
+  function applyBulk(payload, ignoreBlockers = false) {
+    const taskIds = [...selectedIds]
+    if (!ignoreBlockers && payload.status === 'DONE') {
+      const blocked = blockedTaskNumbers(visibleTasks, taskIds)
+      if (blocked.length > 0) {
+        if (!window.confirm(t('tasks.dependencies.bulkDoneConfirm', { tasks: formatTaskNumbers(blocked) }))) {
+          return
+        }
+        applyBulk(payload, true)
+        return
+      }
+    }
     bulkUpdate.mutate(
-      { ...payload, taskIds: [...selectedIds] },
+      { ...payload, taskIds, ignoreBlockers },
       {
         onSuccess: (result) => {
           pushToast(t('taskList.bulk.applied', { count: result.updated }))
           setSelectedIds(new Set())
+        },
+        onError: (error) => {
+          if (!ignoreBlockers && isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+            applyBulk(payload, true)
+          }
         },
       },
     )
@@ -524,7 +553,19 @@ export function ProjectTaskListPage() {
                       </td>
                     )}
                     <td className={cellClass}>
-                      <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+                      <span className="flex items-center gap-1 whitespace-nowrap">
+                        <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+                        {/* Незакрытые блокеры (4.8) — рядом с номером, а не отдельной
+                            колонкой: колонок в таблице уже девять, а признак нужен ровно
+                            там, где глаз ищет задачу. */}
+                        {task.openBlockerCount > 0 && task.status !== 'DONE' && (
+                          <OctagonAlert
+                            role="img"
+                            className="h-4 w-4 shrink-0 text-amber-500"
+                            aria-label={t('tasks.dependencies.blockedBadge', { count: task.openBlockerCount })}
+                          />
+                        )}
+                      </span>
                     </td>
                     <td className={cellClass}>
                       <span

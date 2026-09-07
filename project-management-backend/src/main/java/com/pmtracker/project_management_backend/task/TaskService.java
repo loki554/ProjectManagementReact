@@ -15,6 +15,7 @@ import com.pmtracker.project_management_backend.common.exception.ParentTaskProje
 import com.pmtracker.project_management_backend.common.exception.TagNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.TagProjectMismatchException;
 import com.pmtracker.project_management_backend.common.exception.TaskNotFoundException;
+import com.pmtracker.project_management_backend.common.exception.TaskHasOpenBlockersException;
 import com.pmtracker.project_management_backend.common.exception.TaskStatusConflictException;
 import com.pmtracker.project_management_backend.notification.NotificationService;
 import com.pmtracker.project_management_backend.project.Project;
@@ -71,6 +72,7 @@ public class TaskService {
     static final Duration TRASH_RETENTION = Duration.ofDays(30);
 
     private final TaskRepository taskRepository;
+    private final TaskDependencyRepository taskDependencyRepository;
     private final ProjectAccessService projectAccessService;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectRepository projectRepository;
@@ -81,6 +83,7 @@ public class TaskService {
     private final NotificationService notificationService;
 
     public TaskService(TaskRepository taskRepository,
+                        TaskDependencyRepository taskDependencyRepository,
                         ProjectAccessService projectAccessService,
                         ProjectMemberRepository projectMemberRepository,
                         ProjectRepository projectRepository,
@@ -90,6 +93,7 @@ public class TaskService {
                         ActivityService activityService,
                         NotificationService notificationService) {
         this.taskRepository = taskRepository;
+        this.taskDependencyRepository = taskDependencyRepository;
         this.projectAccessService = projectAccessService;
         this.projectMemberRepository = projectMemberRepository;
         this.projectRepository = projectRepository;
@@ -122,7 +126,9 @@ public class TaskService {
         activityService.record(project, currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
+        // 0 блокеров без запроса: связи (4.8) заводятся отдельной ручкой уже после
+        // создания, у только что созданной задачи их быть неоткуда.
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0);
     }
 
     /**
@@ -180,9 +186,13 @@ public class TaskService {
     }
 
     private List<TaskResponse> toResponses(List<Task> tasks) {
-        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(tasks.stream().map(Task::getId).toList());
+        List<UUID> taskIds = tasks.stream().map(Task::getId).toList();
+        Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(taskIds);
+        Map<UUID, Integer> blockersByTask = loadOpenBlockerCounts(taskIds);
         return tasks.stream()
-                .map(t -> TaskResponse.from(t, hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO)))
+                .map(t -> TaskResponse.from(t,
+                        hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO),
+                        blockersByTask.getOrDefault(t.getId(), 0)))
                 .toList();
     }
 
@@ -190,7 +200,7 @@ public class TaskService {
     public TaskResponse getById(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
         projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
     }
 
     // Для читаемых URL (/projects/{slug}/tasks/{taskNumber}, см. taskNumber в Task.java) —
@@ -202,7 +212,7 @@ public class TaskService {
         projectAccessService.requireMembership(projectId, currentUser);
         Task task = taskRepository.findByProjectIdAndTaskNumber(projectId, taskNumber)
                 .orElseThrow(TaskNotFoundException::new);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), openBlockerCount(task.getId()));
     }
 
     @Transactional
@@ -212,6 +222,9 @@ public class TaskService {
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
         projectAccessService.requireRole(role, ProjectRole.MEMBER);
         requireCurrentVersion(request.version(), task.getVersion());
+        // До первой правки: отказ обязан не оставить после себя ни изменённых полей, ни
+        // событий в ленте — ровно как проверка версии строкой выше.
+        requireBlockersClosed(task, request.status(), request.ignoreBlockers());
 
         // Снапшот "до" — после applyCommonFields по одному событию на каждое реально
         // изменившееся поле (описание сознательно не в ленте: диффы длинного текста шумят).
@@ -267,7 +280,7 @@ public class TaskService {
             notificationService.clearDueDateAlerts(task.getId());
         }
 
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
     }
 
     // Instant в payload сериализуем строками заранее (см. task_due_date_changed), а null'ы
@@ -301,6 +314,7 @@ public class TaskService {
         if (oldStatus != request.expectedStatus()) {
             throw new TaskStatusConflictException();
         }
+        requireBlockersClosed(task, request.status(), request.ignoreBlockers());
 
         UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
         TaskStatus newStatus = request.status();
@@ -334,7 +348,7 @@ public class TaskService {
             }
         }
 
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
     }
 
     private void renumber(List<Task> orderedColumn) {
@@ -388,6 +402,7 @@ public class TaskService {
         if (tasks.size() != requestedIds.size()) {
             throw new TaskNotFoundException();
         }
+        requireBlockersClosedForAll(tasks, request.status(), request.ignoreBlockers());
 
         User newAssignee = request.clearAssignee() ? null : resolveAssignee(projectId, request.assigneeId());
         Tag newTag = request.clearTag() ? null : resolveTag(projectId, request.tagId());
@@ -568,7 +583,7 @@ public class TaskService {
                 Map.of("taskNumber", deleted.getTaskNumber(), "title", deleted.getTitle()));
 
         Task task = findTaskOrThrow(taskId);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
     }
 
     @Transactional(readOnly = true)
@@ -602,7 +617,7 @@ public class TaskService {
         activityService.record(parent.getProject(), currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()));
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0);
     }
 
     private static final int MY_ACTIVE_TASKS_PAGE_SIZE = 8;
@@ -665,6 +680,78 @@ public class TaskService {
             throw new TagProjectMismatchException();
         }
         return tag;
+    }
+
+    // ---------------------------------------------- зависимости между задачами (4.8)
+
+    /**
+     * Предупреждение при закрытии задачи, у которой ещё открыты блокеры.
+     *
+     * <p>Проверяется только переход <b>в</b> DONE: задача, уже стоящая в этом статусе,
+     * перетаскивается внутри своей колонки и правится по описанию сколько угодно — отказ
+     * там означал бы, что закрытую задачу с блокером нельзя больше вообще тронуть.
+     *
+     * <p>REJECTED сюда не входит намеренно, хотя формально это тоже «закрыта». «Отклонена»
+     * означает, что работу решили не делать, и незакрытый блокер этому не противоречит:
+     * задача не выполнена — от неё отказались, и требовать сначала доделать то, что ей
+     * мешало, было бы прямо наоборот.
+     *
+     * <p>Запрет мягкий: {@code ignoreBlockers} проводит ту же правку без вопросов. Смысл в
+     * том, чтобы показать препятствие тому, кто его не видит, а не спорить с тем, кто видит.
+     */
+    private void requireBlockersClosed(Task task, TaskStatus newStatus, boolean ignoreBlockers) {
+        if (ignoreBlockers || newStatus != TaskStatus.DONE || task.getStatus() == TaskStatus.DONE) {
+            return;
+        }
+        List<Task> openBlockers = taskDependencyRepository.findOpenBlockers(task.getId(), INACTIVE_STATUSES);
+        if (!openBlockers.isEmpty()) {
+            throw TaskHasOpenBlockersException.blockedBy(
+                    openBlockers.stream().map(Task::getTaskNumber).sorted().toList());
+        }
+    }
+
+    /**
+     * То же для массовой правки — одним запросом на весь набор вместо запроса на задачу.
+     * В сообщении перечисляются номера самих заблокированных задач, а не их блокеров: на
+     * двадцати задачах список чужих блокеров нечитаем, а вопрос, на который человек здесь
+     * отвечает, — «точно закрываем вот эти?».
+     */
+    private void requireBlockersClosedForAll(List<Task> tasks, TaskStatus newStatus, boolean ignoreBlockers) {
+        if (ignoreBlockers || newStatus != TaskStatus.DONE) {
+            return;
+        }
+        List<UUID> closing = tasks.stream()
+                .filter(task -> task.getStatus() != TaskStatus.DONE)
+                .map(Task::getId)
+                .toList();
+        Map<UUID, Integer> blocked = loadOpenBlockerCounts(closing);
+        if (blocked.isEmpty()) {
+            return;
+        }
+        throw TaskHasOpenBlockersException.blockedTasks(tasks.stream()
+                .filter(task -> blocked.containsKey(task.getId()))
+                .map(Task::getTaskNumber)
+                .sorted()
+                .toList());
+    }
+
+    /** Незакрытые блокеры одной задачи — для ответов, отдающих её поштучно. */
+    private int openBlockerCount(UUID taskId) {
+        return loadOpenBlockerCounts(List.of(taskId)).getOrDefault(taskId, 0);
+    }
+
+    /**
+     * Батч-подсчёт незакрытых блокеров, парный к loadHoursTotals: один запрос на страницу
+     * списка. Задачи без блокеров в результат не попадают вовсе — отсутствие ключа и есть
+     * ноль, и добавлять их в карту значило бы гонять по проводу колонку из нулей.
+     */
+    private Map<UUID, Integer> loadOpenBlockerCounts(List<UUID> taskIds) {
+        if (taskIds.isEmpty()) {
+            return Map.of();
+        }
+        return taskDependencyRepository.countOpenBlockers(taskIds, INACTIVE_STATUSES).stream()
+                .collect(Collectors.toMap(TaskDependencyRepository.OpenBlockerCount::getTaskId,
+                        count -> (int) count.getOpenCount()));
     }
 
     private Map<UUID, BigDecimal> loadHoursTotals(List<UUID> taskIds) {

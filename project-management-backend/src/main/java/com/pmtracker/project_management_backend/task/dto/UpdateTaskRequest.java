@@ -23,6 +23,16 @@ public record UpdateTaskRequest(
         // Версия, которую клиент видел при загрузке формы (3.4). Обязательна: сделать её
         // необязательной значило бы, что защита от затирания чужих правок отключается
         // молчаливым забыванием параметра.
-        @NotNull Long version
+        @NotNull Long version,
+        // «Да, я знаю про незакрытые блокеры, всё равно закрывай» (4.8). Не присланный флаг
+        // означает «не знаю» — то есть первый же перевод в DONE у заблокированной задачи
+        // вернёт 409 TASK_HAS_OPEN_BLOCKERS. Boolean, а не boolean, по той же причине, что и
+        // флаги очистки в массовой правке: Jackson подставляет в отсутствующий компонент
+        // record'а null, и в примитив он не лезет.
+        Boolean ignoreBlockers
 ) {
+
+    public UpdateTaskRequest {
+        ignoreBlockers = Boolean.TRUE.equals(ignoreBlockers);
+    }
 }

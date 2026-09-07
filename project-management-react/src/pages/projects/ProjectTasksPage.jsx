@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { CalendarClock, Clock3 } from 'lucide-react'
+import { CalendarClock, Clock3, OctagonAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +30,7 @@ import {
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
+import { isOpenBlockersError } from '../../lib/taskBlockers'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import { useAuthStore } from '../../stores/authStore'
@@ -80,6 +81,16 @@ function TaskCardBody({ task, t, locale }) {
     <>
       <div className="flex items-start gap-2">
         <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
+        {/* Незакрытые блокеры (4.8) — одной иконкой без числа: на карточке шириной в
+            колонку важно только «эту трогать рано», сколько именно и каких — вопрос уже
+            к странице задачи. У закрытой задачи не показывается: там это история. */}
+        {task.openBlockerCount > 0 && task.status !== 'DONE' && (
+          <OctagonAlert
+            role="img"
+            className="h-4 w-4 shrink-0 text-amber-500"
+            aria-label={t('tasks.dependencies.blockedBadge', { count: task.openBlockerCount })}
+          />
+        )}
         {task.urgency !== 'MEDIUM' && (
           <span
             className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${taskUrgencyBadgeClass(task.urgency)}`}
@@ -267,6 +278,27 @@ export function ProjectTasksPage() {
     setActiveTaskId(event.active.id)
   }
 
+  /**
+   * Перенос карточки в DONE у задачи с незакрытыми блокерами (4.8) сначала отклоняется
+   * сервером (409 TASK_HAS_OPEN_BLOCKERS), и только после согласия человека повторяется
+   * с ignoreBlockers.
+   *
+   * Вопрос задаётся по ответу сервера, а не по openBlockerCount из кэша, хотя тот под
+   * рукой: доска у двоих открытых пользователей расходится до перезагрузки (4.16), и
+   * блокер, закрытый минуту назад коллегой, спрашивал бы разрешения на пустом месте —
+   * а закрытый час назад в другой вкладке не спросил бы вовсе. Иконка на карточке живёт
+   * по кэшу и ошибается безобидно; отказ — по серверу и не ошибается вовсе.
+   */
+  function moveTask(target) {
+    updateTaskStatus.mutate(target, {
+      onError: (error) => {
+        if (isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+          updateTaskStatus.mutate({ ...target, ignoreBlockers: true })
+        }
+      },
+    })
+  }
+
   function handleDragEnd(event) {
     setActiveTaskId(null)
     const draggedTask = (tasks ?? []).find((task) => task.id === event.active.id)
@@ -277,7 +309,7 @@ export function ProjectTasksPage() {
     if (!target) {
       return
     }
-    updateTaskStatus.mutate(target)
+    moveTask(target)
   }
 
   function handleDragCancel() {

@@ -51,13 +51,19 @@ public record BulkUpdateTasksRequest(
         UUID tagId,
         Boolean clearTag,
         Instant dueDate,
-        Boolean clearDueDate
+        Boolean clearDueDate,
+        // Подтверждение массового закрытия задач с незакрытыми блокерами (4.8). Флаг один
+        // на весь запрос, а не на задачу: массовая правка и так «всё или ничего», и
+        // подтверждать её по одной задаче значило бы вернуть те самые двадцать нажатий,
+        // ради устранения которых она заведена.
+        Boolean ignoreBlockers
 ) {
 
     public BulkUpdateTasksRequest {
         clearAssignee = Boolean.TRUE.equals(clearAssignee);
         clearTag = Boolean.TRUE.equals(clearTag);
         clearDueDate = Boolean.TRUE.equals(clearDueDate);
+        ignoreBlockers = Boolean.TRUE.equals(ignoreBlockers);
     }
 
     /** Запрошена ли смена исполнителя вообще (в том числе на «никого»). */

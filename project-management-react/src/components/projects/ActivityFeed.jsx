@@ -38,8 +38,9 @@ function buildMessageParams(item, t, formatDate) {
       }
     default:
       // task_created / task_deleted / task_title_changed / member_removed /
-      // time_logged / attachment_added / comment_added / wiki_updated —
-      // payload подставляется как есть.
+      // time_logged / attachment_added / comment_added / wiki_updated /
+      // task_dependency_added / task_dependency_removed — payload подставляется как есть
+      // (у связей это номер и название второй задачи, переводить в них нечего).
       return { ...p }
   }
 }

@@ -30,13 +30,18 @@ public record TaskResponse(
         TagSummary tag,
         CategorySummary category,
         BigDecimal totalHoursSpent,
+        // Сколько незакрытых блокеров у задачи (4.8). Число, а не список: списки нужны на
+        // странице задачи и приезжают отдельной ручкой, а карточке на доске и строке в
+        // таблице хватает признака «заблокирована» — им же обходится и предупреждение при
+        // переводе в DONE. Считается батчем на весь список, см. TaskService.loadOpenBlockerCounts.
+        int openBlockerCount,
         Instant createdAt,
         Instant updatedAt,
         // Версия для оптимистичной блокировки (3.4): клиент возвращает её в PATCH и
         // получает 409, если задачу успели изменить, пока форма была открыта.
         long version
 ) {
-    public static TaskResponse from(Task task, BigDecimal totalHoursSpent) {
+    public static TaskResponse from(Task task, BigDecimal totalHoursSpent, int openBlockerCount) {
         return new TaskResponse(
                 task.getId(),
                 task.getProject().getId(),
@@ -54,6 +59,7 @@ public record TaskResponse(
                 task.getTag() != null ? TagSummary.from(task.getTag()) : null,
                 task.getCategory() != null ? CategorySummary.from(task.getCategory()) : null,
                 totalHoursSpent,
+                openBlockerCount,
                 task.getCreatedAt(),
                 task.getUpdatedAt(),
                 task.getVersion()

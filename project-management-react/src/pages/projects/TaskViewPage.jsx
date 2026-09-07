@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
+import { OctagonAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -16,6 +17,7 @@ import { AttachmentThumbnail } from '../../components/attachments/AttachmentThum
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { ActivityFeed } from '../../components/projects/ActivityFeed'
 import { TaskCommentsSection } from '../../components/tasks/TaskCommentsSection'
+import { TaskDependenciesSection } from '../../components/tasks/TaskDependenciesSection'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import {
@@ -287,6 +289,16 @@ export function TaskViewPage() {
                 )}
               </div>
 
+              {/* Сразу под подзадачами: обе карточки отвечают на вопрос «что связано с этой
+                  задачей», только состав («из чего она состоит») и очерёдность («что должно
+                  случиться раньше») — разные ответы, и путать их не надо. */}
+              <TaskDependenciesSection
+                taskId={taskId}
+                projectId={projectId}
+                projectSlug={projectSlug}
+                canManage={canManage}
+              />
+
               <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{t('tasks.attachments.title')}</h2>
 
@@ -486,6 +498,16 @@ export function TaskViewPage() {
               >
                 {t(`tasks.status.${task.status}`)}
               </div>
+
+              {/* Признак «закрывать рано» стоит рядом со статусом, а не только в панели
+                  зависимостей ниже: решение о статусе принимают здесь, а до панели ещё
+                  надо доскроллить. */}
+              {task.openBlockerCount > 0 && task.status !== 'DONE' && (
+                <div className="flex items-center justify-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-center text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                  <OctagonAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {t('tasks.dependencies.blockedBadge', { count: task.openBlockerCount })}
+                </div>
+              )}
 
               {canManage && (
                 <Link

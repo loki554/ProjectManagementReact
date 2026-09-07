@@ -184,6 +184,53 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("DUPLICATE_SAVED_VIEW_NAME", ex.getMessage()));
     }
 
+    // ---------------------------------------------- зависимости между задачами (4.8)
+
+    @ExceptionHandler(SelfTaskDependencyException.class)
+    public ResponseEntity<ErrorResponse> handleSelfDependency(SelfTaskDependencyException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("SELF_DEPENDENCY", ex.getMessage()));
+    }
+
+    @ExceptionHandler(TaskDependencyProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleDependencyProjectMismatch(TaskDependencyProjectMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("DEPENDENCY_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateTaskDependencyException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateDependency(DuplicateTaskDependencyException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_DEPENDENCY", ex.getMessage()));
+    }
+
+    // 400, а не 409: конфликта с чужой правкой здесь нет, есть запрос, который сам по себе
+    // не имеет смысла — кольцо блокеров нельзя разрешить ни повтором, ни перечитыванием.
+    @ExceptionHandler(TaskDependencyCycleException.class)
+    public ResponseEntity<ErrorResponse> handleDependencyCycle(TaskDependencyCycleException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("DEPENDENCY_CYCLE", ex.getMessage()));
+    }
+
+    @ExceptionHandler(TaskDependencyNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDependencyNotFound(TaskDependencyNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("DEPENDENCY_NOT_FOUND", ex.getMessage()));
+    }
+
+    /**
+     * Задачу закрывают, а её блокеры ещё открыты (4.8). 409 — как и остальные «остановись и
+     * посмотри» этого API (конфликт версий, чужая перестановка на доске): состояние на
+     * сервере не то, из которого клиент исходил, и следующий шаг за человеком. От тех двух
+     * отличается тем, что здесь повтор помогает — но повтор осознанный, с
+     * {@code ignoreBlockers: true}, а не автоматический.
+     */
+    @ExceptionHandler(TaskHasOpenBlockersException.class)
+    public ResponseEntity<ErrorResponse> handleOpenBlockers(TaskHasOpenBlockersException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("TASK_HAS_OPEN_BLOCKERS", ex.getMessage()));
+    }
+
     @ExceptionHandler(TaskStatusConflictException.class)
     public ResponseEntity<ErrorResponse> handleTaskStatusConflict(TaskStatusConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

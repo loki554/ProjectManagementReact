@@ -263,6 +263,8 @@
     "attachment_added": "прикрепил(а) файл {{fileName}} к задаче «{{title}}»",
     "comment_added": "прокомментировал(а) задачу «{{title}}»",
     "wiki_updated": "обновил(а) вики проекта",
+    "task_dependency_added": "отметил(а), что задачу «{{title}}» блокирует #{{blockerNumber}} «{{blockerTitle}}»",
+    "task_dependency_removed": "убрал(а) блокер #{{blockerNumber}} «{{blockerTitle}}» у задачи «{{title}}»",
     "fields": {
       "name": "название",
       "description": "описание",
@@ -449,6 +451,27 @@
       "adding": "Добавляем...",
       "fullForm": "Полная форма →"
     },
+    "dependencies": {
+      "title": "Зависимости",
+      "loading": "Загрузка зависимостей...",
+      "blockedByTitle": "Блокируют эту задачу",
+      "blockedByEmpty": "Ничто не мешает",
+      "blockedByAddLabel": "Номер задачи, которая блокирует эту",
+      "blocksTitle": "Эта задача блокирует",
+      "blocksEmpty": "Никого не блокирует",
+      "blocksAddLabel": "Номер задачи, которую блокирует эта",
+      "numberPlaceholder": "номер",
+      "add": "Связать",
+      "adding": "Связываем...",
+      "remove": "Убрать связь",
+      "openBlockerHint": "Ещё не закрыта",
+      "blockedBadge_one": "Не закрыт {{count}} блокер",
+      "blockedBadge_few": "Не закрыто {{count}} блокера",
+      "blockedBadge_many": "Не закрыто {{count}} блокеров",
+      "blockedBadge_other": "Не закрыто {{count}} блокеров",
+      "doneConfirm": "У задачи остались незакрытые блокеры. Всё равно перевести её в «Выполнено»?",
+      "bulkDoneConfirm": "У этих задач остались незакрытые блокеры: {{tasks}}. Всё равно закрыть?"
+    },
     "timeLogs": {
       "title": "Учёт времени",
       "totalLabel": "Итого: {{hours}} ч",
@@ -630,7 +653,13 @@
     "UNKNOWN": "Что-то пошло не так, попробуйте ещё раз",
     "INVALID_CURRENT_PASSWORD": "Текущий пароль указан неверно",
     "INVITATION_EMAIL_MISMATCH": "Это приглашение выписано на другой адрес. Войдите под тем аккаунтом, на который пришло письмо.",
-    "BULK_UPDATE_NO_CHANGES": "Выберите, что изменить у выделенных задач"
+    "BULK_UPDATE_NO_CHANGES": "Выберите, что изменить у выделенных задач",
+    "SELF_DEPENDENCY": "Задача не может блокировать сама себя",
+    "DEPENDENCY_PROJECT_MISMATCH": "Связать можно только задачи одного проекта",
+    "DUPLICATE_DEPENDENCY": "Такая связь уже есть",
+    "DEPENDENCY_CYCLE": "Такая связь замкнёт круг блокеров — ни одну из задач нельзя будет закрыть первой",
+    "DEPENDENCY_NOT_FOUND": "Связь не найдена — возможно, её уже убрали",
+    "TASK_HAS_OPEN_BLOCKERS": "У задачи остались незакрытые блокеры"
   },
   "trash": {
     "title": "Корзина",
