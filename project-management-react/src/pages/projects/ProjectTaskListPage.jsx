@@ -189,7 +189,7 @@ export function ProjectTaskListPage() {
 
   return (
     <div className="flex h-full flex-col gap-3 px-4 py-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-3">
         <input
           type="search"
           value={search}
@@ -247,14 +247,14 @@ export function ProjectTaskListPage() {
             </option>
           ))}
         </select>
-        <span className="ml-auto text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-          {t('taskList.total', { count: data?.totalItems ?? 0 })}
-        </span>
         {canManage && (
           <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} whitespace-nowrap`}>
             + {t('taskList.newTask')}
           </Link>
         )}
+        <span className="ml-auto text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+          {t('taskList.total', { count: data?.totalItems ?? 0 })}
+        </span>
       </div>
 
       {canManage && selectedIds.size > 0 && (
@@ -451,7 +451,7 @@ export function ProjectTaskListPage() {
                     </td>
                     <td className={cellClass}>
                       {task.category ? (
-                        <span className="block max-w-[12rem] truncate text-gray-600 dark:text-gray-400">
+                        <span className="block max-w-48 truncate text-gray-600 dark:text-gray-400">
                           {task.category.name}
                         </span>
                       ) : (
