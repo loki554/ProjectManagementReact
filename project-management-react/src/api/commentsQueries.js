@@ -27,6 +27,18 @@ export function useCreateComment(taskId, projectId) {
   })
 }
 
+// mutate принимает { commentId, body }. Ленту активности инвалидировать не нужно, в
+// отличие от создания: правка комментария в неё не пишется (см. TaskCommentService.update).
+export function useUpdateComment(taskId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ commentId, body }) => commentsApi.updateComment(commentId, { body }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentsKeyPrefix(taskId) })
+    },
+  })
+}
+
 // taskId фиксируется на хуке (тот же скоуп, что useCreateComment); mutate принимает
 // id удаляемого комментария.
 export function useDeleteComment(taskId) {

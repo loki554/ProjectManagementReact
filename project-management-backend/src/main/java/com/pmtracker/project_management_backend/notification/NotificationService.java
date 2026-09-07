@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.UUID;
 
 /**
  * Уведомления пользователя (колокольчик в хедере). Событийные типы (task_assigned,
- * task_comment) пишутся напрямую из TaskService/TaskCommentService, в той же транзакции,
+ * task_comment, task_mention) пишутся напрямую из TaskService/TaskCommentService, в той же транзакции,
  * что и само действие — тот же приём, что ActivityService.record (см. её комментарий).
  * Типы task_due_soon/task_overdue не событийные, а вычисляемые по расписанию — их
  * создаёт NotificationScheduler.
@@ -43,6 +44,7 @@ public class NotificationService {
 
     public static final String TYPE_TASK_ASSIGNED = "task_assigned";
     public static final String TYPE_TASK_COMMENT = "task_comment";
+    public static final String TYPE_TASK_MENTION = "task_mention";
     public static final String TYPE_TASK_DUE_SOON = "task_due_soon";
     public static final String TYPE_TASK_OVERDUE = "task_overdue";
 
@@ -70,10 +72,23 @@ public class NotificationService {
         create(recipient, actor, TYPE_TASK_ASSIGNED, task, basePayload(task));
     }
 
+    /**
+     * Новый комментарий: упомянутые (4.5) плюс постановщик с исполнителем.
+     *
+     * @param mentioned участники проекта, упомянутые в тексте; список уже проверен на
+     *                  членство в проекте (см. {@code TaskCommentService.resolveMentions})
+     */
     @Transactional
-    public void notifyTaskComment(Task task, User actor, String commentBody) {
+    public void notifyTaskComment(Task task, User actor, String commentBody, Collection<User> mentioned) {
         Map<String, Object> payload = basePayload(task);
         payload.put("commentExcerpt", excerpt(commentBody));
+
+        // Упоминание сильнее «прокомментировали вашу задачу» и потому раздаётся первым:
+        // человеку, которого позвали по имени, должно прийти именно «вас упомянули», даже
+        // если он же и постановщик. Двух уведомлений об одном комментарии не бывает —
+        // notifiedUserIds общий на оба круга.
+        Set<UUID> notifiedUserIds = new HashSet<>();
+        notifyMentioned(task, actor, payload, mentioned, notifiedUserIds);
 
         // Постановщик и исполнитель уведомляются оба, но: не сам автор комментария,
         // и не дважды одному человеку, если он и постановщик, и исполнитель одновременно.
@@ -82,12 +97,40 @@ public class NotificationService {
         // NPE на null-элементе — то есть любой комментарий к неназначенной задаче (а это
         // состояние по умолчанию для только что созданной) возвращал 500 вместо 201. Проверка
         // recipient == null ниже как раз и написана в расчёте на отсутствующего исполнителя.
-        Set<UUID> notifiedUserIds = new HashSet<>();
         for (User recipient : Arrays.asList(task.getCreatedBy(), task.getAssignee())) {
             if (recipient == null || recipient.getId().equals(actor.getId()) || !notifiedUserIds.add(recipient.getId())) {
                 continue;
             }
             create(recipient, actor, TYPE_TASK_COMMENT, task, payload);
+        }
+    }
+
+    /**
+     * Правка комментария (4.4): уведомляются только те, кого добавили в текст этой правкой.
+     * Ни постановщик, ни исполнитель повторно не уведомляются — комментарий тот же самый,
+     * и «прокомментировал вашу задачу» они уже получили, когда он появился.
+     */
+    @Transactional
+    public void notifyCommentMentions(Task task, User actor, String commentBody, Collection<User> mentioned) {
+        if (mentioned.isEmpty()) {
+            return;
+        }
+        Map<String, Object> payload = basePayload(task);
+        payload.put("commentExcerpt", excerpt(commentBody));
+        notifyMentioned(task, actor, payload, mentioned, new HashSet<>());
+    }
+
+    /**
+     * Упомянуть себя — не событие: человек, написавший «@я», и так знает, что он это
+     * написал. Проверка та же, что у самоназначения, и по той же причине.
+     */
+    private void notifyMentioned(Task task, User actor, Map<String, Object> payload,
+                                 Collection<User> mentioned, Set<UUID> notifiedUserIds) {
+        for (User recipient : mentioned) {
+            if (recipient.getId().equals(actor.getId()) || !notifiedUserIds.add(recipient.getId())) {
+                continue;
+            }
+            create(recipient, actor, TYPE_TASK_MENTION, task, payload);
         }
     }
 

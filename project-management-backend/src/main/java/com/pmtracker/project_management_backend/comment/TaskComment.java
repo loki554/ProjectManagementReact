@@ -31,11 +31,20 @@ public class TaskComment {
     @JoinColumn(name = "author_id", nullable = false, updatable = false)
     private User author;
 
-    @Column(name = "body", nullable = false, updatable = false)
+    @Column(name = "body", nullable = false)
     private String body;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    /**
+     * Отметка правки (4.4). null — «не редактировали»: интерфейс показывает пометку
+     * «изменено» ровно тогда, когда значение есть. Ставится вручную в
+     * {@code TaskCommentService.update}, а не через {@code @PreUpdate}: срабатывать она
+     * должна на смену текста, а не на любое изменение строки.
+     */
+    @Column(name = "edited_at")
+    private Instant editedAt;
 
     @PrePersist
     void onCreate() {
@@ -72,5 +81,13 @@ public class TaskComment {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getEditedAt() {
+        return editedAt;
+    }
+
+    public void setEditedAt(Instant editedAt) {
+        this.editedAt = editedAt;
     }
 }

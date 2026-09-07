@@ -48,6 +48,14 @@ public class NotificationSettings {
     @Column(name = "task_comment", nullable = false)
     private boolean taskComment = true;
 
+    /**
+     * Упоминания (4.5) — свой флаг, а не часть {@code taskComment}: «в треде моей задачи
+     * опять пишут» и «меня позвали по имени» это разные события, и выключить первое,
+     * оставив второе, — самая осмысленная настройка из возможных здесь.
+     */
+    @Column(name = "task_mention", nullable = false)
+    private boolean taskMention = true;
+
     @Column(name = "task_due_soon", nullable = false)
     private boolean taskDueSoon = true;
 
@@ -73,6 +81,7 @@ public class NotificationSettings {
         return switch (type) {
             case NotificationService.TYPE_TASK_ASSIGNED -> taskAssigned;
             case NotificationService.TYPE_TASK_COMMENT -> taskComment;
+            case NotificationService.TYPE_TASK_MENTION -> taskMention;
             case NotificationService.TYPE_TASK_DUE_SOON -> taskDueSoon;
             case NotificationService.TYPE_TASK_OVERDUE -> taskOverdue;
             default -> true;
@@ -117,6 +126,14 @@ public class NotificationSettings {
 
     public void setTaskComment(boolean taskComment) {
         this.taskComment = taskComment;
+    }
+
+    public boolean isTaskMention() {
+        return taskMention;
+    }
+
+    public void setTaskMention(boolean taskMention) {
+        this.taskMention = taskMention;
     }
 
     public boolean isTaskDueSoon() {

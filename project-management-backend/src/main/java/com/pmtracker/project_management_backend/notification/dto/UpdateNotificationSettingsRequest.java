@@ -18,6 +18,7 @@ public record UpdateNotificationSettingsRequest(
         @NotNull NotificationDeliveryMode mode,
         @NotNull Boolean taskAssigned,
         @NotNull Boolean taskComment,
+        @NotNull Boolean taskMention,
         @NotNull Boolean taskDueSoon,
         @NotNull Boolean taskOverdue
 ) {

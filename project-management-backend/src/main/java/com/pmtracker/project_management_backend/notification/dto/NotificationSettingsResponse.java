@@ -13,6 +13,7 @@ public record NotificationSettingsResponse(
         NotificationDeliveryMode mode,
         boolean taskAssigned,
         boolean taskComment,
+        boolean taskMention,
         boolean taskDueSoon,
         boolean taskOverdue
 ) {
@@ -22,6 +23,7 @@ public record NotificationSettingsResponse(
                 settings.getMode(),
                 settings.isTaskAssigned(),
                 settings.isTaskComment(),
+                settings.isTaskMention(),
                 settings.isTaskDueSoon(),
                 settings.isTaskOverdue());
     }

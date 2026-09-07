@@ -42,6 +42,7 @@
     "types": {
       "task_assigned": "назначил(а) вам задачу «{{title}}»",
       "task_comment": "прокомментировал(а) задачу «{{title}}»: «{{commentExcerpt}}»",
+      "task_mention": "упомянул(а) вас в задаче «{{title}}»: «{{commentExcerpt}}»",
       "task_due_soon": "Срок задачи «{{title}}» скоро истекает",
       "task_overdue": "Срок задачи «{{title}}» истёк"
     }
@@ -434,9 +435,17 @@
       "adding": "Отправляем...",
       "delete": "Удалить",
       "deleteConfirm": "Удалить этот комментарий?",
+      "edit": "Изменить",
+      "save": "Сохранить",
+      "saving": "Сохраняем...",
+      "cancelEdit": "Отмена",
+      "edited": "(изменено)",
+      "editedAt": "Изменено {{date}}",
       "sortLabel": "Сортировка комментариев",
       "sortNewest": "Сначала новые",
-      "sortOldest": "Сначала старые"
+      "sortOldest": "Сначала старые",
+      "mentionHint": "Наберите @, чтобы упомянуть участника проекта — ему придёт уведомление",
+      "mentionListLabel": "Участники проекта"
     }
   },
   "home": {
@@ -507,6 +516,7 @@
       "typeLabels": {
         "taskAssigned": "Мне назначили задачу",
         "taskComment": "Комментарий к моей задаче",
+        "taskMention": "Меня упомянули в комментарии",
         "taskDueSoon": "Скоро истекает срок",
         "taskOverdue": "Срок истёк"
       },
@@ -544,6 +554,7 @@
     "COMMENT_NOT_FOUND": "Комментарий не найден",
     "NOTIFICATION_NOT_FOUND": "Уведомление не найдено",
     "NOT_COMMENT_OWNER": "Удалить комментарий может только его автор или администратор проекта",
+    "NOT_COMMENT_AUTHOR": "Изменить комментарий может только его автор",
     "TAG_NOT_FOUND": "Тэг не найден",
     "DUPLICATE_TAG_NAME": "Тэг с таким названием уже существует в этом проекте",
     "CATEGORY_NOT_FOUND": "Категория не найдена",

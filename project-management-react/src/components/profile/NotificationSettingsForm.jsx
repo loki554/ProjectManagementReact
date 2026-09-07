@@ -4,18 +4,20 @@ import { useNotificationSettings, useUpdateNotificationSettings } from '../../ap
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { submitButtonClass } from '../ui/FormKit'
 
-// Те же четыре типа, что у колокольчика (NotificationBell) и у бэкенда
+// Те же пять типов, что у колокольчика (NotificationBell) и у бэкенда
 // (NotificationService.TYPE_*). Ключ поля совпадает с полем ответа API, поэтому список
 // одновременно и порядок в форме, и способ собрать тело запроса.
-const TYPE_FIELDS = ['taskAssigned', 'taskComment', 'taskDueSoon', 'taskOverdue']
+// taskMention стоит сразу за taskComment: это соседние по смыслу вещи, и разница между
+// ними («в треде пишут» против «меня позвали») читается только рядом.
+const TYPE_FIELDS = ['taskAssigned', 'taskComment', 'taskMention', 'taskDueSoon', 'taskOverdue']
 
 const MODES = ['INSTANT', 'DAILY_DIGEST']
 
 /**
  * Настройки email-уведомлений в профиле (4.3).
  *
- * Форма локальная, а не «переключил — сохранилось»: у неё шесть связанных полей, и
- * автосохранение каждого означало бы шесть запросов на одно осмысленное изменение и
+ * Форма локальная, а не «переключил — сохранилось»: у неё семь связанных полей, и
+ * автосохранение каждого означало бы семь запросов на одно осмысленное изменение и
  * промежуточные состояния, которых человек не выбирал.
  *
  * Отдельная секция, а не поля в форме профиля выше, по той же причине, что и смена

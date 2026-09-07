@@ -42,6 +42,7 @@
     "types": {
       "task_assigned": "hat Ihnen die Aufgabe \"{{title}}\" zugewiesen",
       "task_comment": "hat die Aufgabe \"{{title}}\" kommentiert: „{{commentExcerpt}}“",
+      "task_mention": "hat Sie in der Aufgabe \"{{title}}\" erwähnt: „{{commentExcerpt}}“",
       "task_due_soon": "Die Frist für Aufgabe \"{{title}}\" läuft bald ab",
       "task_overdue": "Die Frist für Aufgabe \"{{title}}\" ist abgelaufen"
     }
@@ -430,9 +431,17 @@
       "adding": "Wird gesendet...",
       "delete": "Löschen",
       "deleteConfirm": "Diesen Kommentar löschen?",
+      "edit": "Bearbeiten",
+      "save": "Speichern",
+      "saving": "Wird gespeichert...",
+      "cancelEdit": "Abbrechen",
+      "edited": "(bearbeitet)",
+      "editedAt": "Bearbeitet am {{date}}",
       "sortLabel": "Sortierung der Kommentare",
       "sortNewest": "Neueste zuerst",
-      "sortOldest": "Älteste zuerst"
+      "sortOldest": "Älteste zuerst",
+      "mentionHint": "Tippen Sie @, um ein Projektmitglied zu erwähnen — es erhält eine Benachrichtigung",
+      "mentionListLabel": "Projektmitglieder"
     }
   },
   "home": {
@@ -499,6 +508,7 @@
       "typeLabels": {
         "taskAssigned": "Mir wurde eine Aufgabe zugewiesen",
         "taskComment": "Kommentar zu meiner Aufgabe",
+        "taskMention": "Ich werde in einem Kommentar erwähnt",
         "taskDueSoon": "Frist läuft bald ab",
         "taskOverdue": "Frist ist abgelaufen"
       },
@@ -536,6 +546,7 @@
     "COMMENT_NOT_FOUND": "Kommentar nicht gefunden",
     "NOTIFICATION_NOT_FOUND": "Benachrichtigung nicht gefunden",
     "NOT_COMMENT_OWNER": "Nur die verfassende Person oder ein Projekt-Administrator kann diesen Kommentar löschen",
+    "NOT_COMMENT_AUTHOR": "Nur die verfassende Person kann diesen Kommentar bearbeiten",
     "TAG_NOT_FOUND": "Tag nicht gefunden",
     "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",
     "CATEGORY_NOT_FOUND": "Kategorie nicht gefunden",

@@ -56,6 +56,7 @@ import java.util.stream.Stream;
 import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.ALLOWED;
 import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.INSUFFICIENT_ROLE;
 import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.NOT_ATTACHMENT_OWNER;
+import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.NOT_COMMENT_AUTHOR;
 import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.NOT_COMMENT_OWNER;
 import static com.pmtracker.project_management_backend.project.ProjectPermissionMatrixTest.Access.NOT_TIME_LOG_OWNER;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,6 +97,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
         ALLOWED(null),
         INSUFFICIENT_ROLE("INSUFFICIENT_ROLE"),
         NOT_COMMENT_OWNER("NOT_COMMENT_OWNER"),
+        NOT_COMMENT_AUTHOR("NOT_COMMENT_AUTHOR"),
         NOT_TIME_LOG_OWNER("NOT_TIME_LOG_OWNER"),
         NOT_ATTACHMENT_OWNER("NOT_ATTACHMENT_OWNER");
 
@@ -283,6 +285,16 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             // ---- либо модераторские ADMIN/OWNER. Все три сделаны по одному образцу.        ----
             endpoint("DELETE /comments/{id} (чужой)",            f -> delete("/api/comments/" + f.commentId),
                     ALLOWED, ALLOWED, NOT_COMMENT_OWNER, INSUFFICIENT_ROLE),
+
+            // ---- Правка чужого комментария (4.4) — единственная строка таблицы, где        ----
+            // ---- модераторство не помогает: удалить чужой текст OWNER/ADMIN могут, а       ----
+            // ---- переписать его под чужой подписью — нет. Отсюда и свой код ошибки:        ----
+            // ---- NOT_COMMENT_AUTHOR вместо NOT_COMMENT_OWNER.                              ----
+            endpoint("PATCH  /comments/{id} (чужой)",            f -> patch("/api/comments/" + f.commentId)
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"body":"переписанный чужой текст"}"""),
+                    NOT_COMMENT_AUTHOR, NOT_COMMENT_AUTHOR, NOT_COMMENT_AUTHOR, INSUFFICIENT_ROLE),
             endpoint("DELETE /time-logs/{id} (чужой)",           f -> delete("/api/time-logs/" + f.timeLogId),
                     ALLOWED, ALLOWED, NOT_TIME_LOG_OWNER, INSUFFICIENT_ROLE),
             endpoint("DELETE /attachments/{id} (чужой)",         f -> delete("/api/attachments/" + f.attachmentId),
@@ -360,7 +372,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Test
     @DisplayName("в таблице учтены все эндпоинты проекта")
     void matrixCoversEveryProjectEndpoint() {
-        assertThat(ENDPOINTS).hasSize(48);
+        assertThat(ENDPOINTS).hasSize(49);
         assertThat(ENDPOINTS).extracting(Endpoint::name).doesNotHaveDuplicates();
     }
 

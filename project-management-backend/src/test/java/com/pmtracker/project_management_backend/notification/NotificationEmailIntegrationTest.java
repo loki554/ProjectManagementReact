@@ -136,6 +136,53 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
             assertThat(bodyOf(message)).contains("прокомментировал(а) задачу «Задача с обсуждением»: «Тут вопрос»");
         }
 
+        /**
+         * Письмо про @упоминание (4.5) отличается от письма про комментарий и темой, и
+         * строчкой события: получателя позвали лично, и по теме в списке писем это должно
+         * быть видно, не открывая.
+         */
+        @Test
+        @DisplayName("упоминание — письмо с собственной темой «Вас упомянули»")
+        void aMentionSendsItsOwnEmail() throws Exception {
+            UUID taskId = createTask("Задача с обсуждением", assignee);
+            awaitSingleEmail();
+            clearMailbox();
+
+            comment(taskId, authorAuth, "@assignee@example.com глянь, пожалуйста")
+                    .andExpect(status().isCreated());
+
+            MimeMessage message = awaitSingleEmail();
+            assertThat(recipientOf(message)).isEqualTo("assignee@example.com");
+            assertThat(subjectOf(message)).contains("Вас упомянули в задаче «Задача с обсуждением»");
+            assertThat(bodyOf(message))
+                    .contains("Тестов Автор упомянул(а) вас в задаче «Задача с обсуждением»")
+                    .contains("http://localhost:5173/projects/mail-project/tasks/1");
+        }
+
+        /**
+         * Отдельный флаг настроек у упоминаний нужен ровно ради этого: «в треде моей задачи
+         * опять пишут» человек выключает часто, а «меня позвали по имени» — почти никогда,
+         * и одним переключателем эти два случая делить нельзя.
+         */
+        @Test
+        @DisplayName("выключенные письма о комментариях не выключают письма об упоминаниях")
+        void turningOffCommentEmailsKeepsMentionEmails() throws Exception {
+            settings(assignee, s -> {
+                s.setTaskAssigned(false);
+                s.setTaskComment(false);
+            });
+            UUID taskId = createTask("Задача с обсуждением", assignee);
+            assertNoEmailSent();
+
+            comment(taskId, authorAuth, "просто комментарий").andExpect(status().isCreated());
+            assertNoEmailSent();
+
+            comment(taskId, authorAuth, "@assignee@example.com а вот это важно")
+                    .andExpect(status().isCreated());
+
+            assertThat(subjectOf(awaitSingleEmail())).contains("Вас упомянули");
+        }
+
         @Test
         @DisplayName("назначение на себя писем не порождает — уведомления тоже нет")
         void selfAssignmentSendsNothing() throws Exception {
@@ -350,6 +397,7 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
                     .andExpect(jsonPath("$.mode").value("INSTANT"))
                     .andExpect(jsonPath("$.taskAssigned").value(true))
                     .andExpect(jsonPath("$.taskComment").value(true))
+                    .andExpect(jsonPath("$.taskMention").value(true))
                     .andExpect(jsonPath("$.taskDueSoon").value(true))
                     .andExpect(jsonPath("$.taskOverdue").value(true));
 
@@ -361,7 +409,7 @@ class NotificationEmailIntegrationTest extends IntegrationTest {
         void savedSettingsAreAppliedToDelivery() throws Exception {
             updateSettings(assigneeAuth, """
                     {"emailEnabled":true,"mode":"DAILY_DIGEST","taskAssigned":false,
-                     "taskComment":true,"taskDueSoon":true,"taskOverdue":true}""")
+                     "taskComment":true,"taskMention":true,"taskDueSoon":true,"taskOverdue":true}""")
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.mode").value("DAILY_DIGEST"))
                     .andExpect(jsonPath("$.taskAssigned").value(false));

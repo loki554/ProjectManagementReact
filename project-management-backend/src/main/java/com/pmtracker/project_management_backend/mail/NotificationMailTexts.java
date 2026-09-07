@@ -43,6 +43,10 @@ final class NotificationMailTexts {
         return switch (item.type()) {
             case NotificationService.TYPE_TASK_ASSIGNED -> "Вам назначена задача «" + title + "» — Task Tracker";
             case NotificationService.TYPE_TASK_COMMENT -> "Новый комментарий к задаче «" + title + "» — Task Tracker";
+            // Тема отличается от «нового комментария» намеренно: письмо про упоминание —
+            // это обращение лично к получателю, и по теме в списке писем это должно быть
+            // видно, не открывая (см. 4.5).
+            case NotificationService.TYPE_TASK_MENTION -> "Вас упомянули в задаче «" + title + "» — Task Tracker";
             case NotificationService.TYPE_TASK_DUE_SOON -> "Скоро истекает срок задачи «" + title + "» — Task Tracker";
             case NotificationService.TYPE_TASK_OVERDUE -> "Просрочена задача «" + title + "» — Task Tracker";
             // Новый тип уведомления доходит до почты и без правки этого файла — нейтральной
@@ -69,6 +73,9 @@ final class NotificationMailTexts {
                     actor + " назначил(а) вам задачу «" + title + "»";
             case NotificationService.TYPE_TASK_COMMENT ->
                     actor + " прокомментировал(а) задачу «" + title + "»: «"
+                            + orEmpty(item.stringValue("commentExcerpt")) + "»";
+            case NotificationService.TYPE_TASK_MENTION ->
+                    actor + " упомянул(а) вас в задаче «" + title + "»: «"
                             + orEmpty(item.stringValue("commentExcerpt")) + "»";
             case NotificationService.TYPE_TASK_DUE_SOON ->
                     "Скоро истекает срок задачи «" + title + "»" + dueDateSuffix(item);

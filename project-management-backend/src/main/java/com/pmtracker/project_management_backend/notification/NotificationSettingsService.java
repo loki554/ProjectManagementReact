@@ -52,6 +52,7 @@ public class NotificationSettingsService {
         settings.setMode(request.mode());
         settings.setTaskAssigned(request.taskAssigned());
         settings.setTaskComment(request.taskComment());
+        settings.setTaskMention(request.taskMention());
         settings.setTaskDueSoon(request.taskDueSoon());
         settings.setTaskOverdue(request.taskOverdue());
         settingsRepository.save(settings);

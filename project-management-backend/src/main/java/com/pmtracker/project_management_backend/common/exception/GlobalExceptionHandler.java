@@ -250,6 +250,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("NOT_COMMENT_OWNER", ex.getMessage()));
     }
 
+    @ExceptionHandler(NotCommentAuthorException.class)
+    public ResponseEntity<ErrorResponse> handleNotCommentAuthor(NotCommentAuthorException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("NOT_COMMENT_AUTHOR", ex.getMessage()));
+    }
+
     @ExceptionHandler(NotificationNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotificationNotFound(NotificationNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

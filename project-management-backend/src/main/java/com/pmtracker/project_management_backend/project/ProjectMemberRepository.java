@@ -1,8 +1,10 @@
 package com.pmtracker.project_management_backend.project;
 
+import com.pmtracker.project_management_backend.auth.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +50,24 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
             order by m.joinedAt asc
             """)
     List<ProjectMember> findByProjectIdWithUser(UUID projectId);
+
+    /**
+     * Участники проекта по списку почтовых адресов — разбор @упоминаний в комментарии (4.5).
+     * <p>
+     * Фильтр по проекту здесь и есть проверка прав: упоминание не должно быть способом
+     * прислать уведомление постороннему. Человек, которого в проекте нет, просто не найдётся
+     * — и с точки зрения автора комментария это правильно и тихо: он написал адрес, который
+     * ничего не значит в этом треде, ровно как опечатался бы в нём.
+     * <p>
+     * Адреса приходят уже нормализованными ({@code MentionParser}), а в базе они лежат в
+     * нижнем регистре (V26) — поэтому сравнение прямое, без {@code lower()}: функция вокруг
+     * колонки увела бы запрос мимо уникального индекса по {@code users.email}.
+     */
+    @Query("""
+            select m.user from ProjectMember m
+            where m.project.id = :projectId and m.user.email in :emails
+            """)
+    List<User> findUsersByProjectIdAndEmailIn(UUID projectId, Collection<String> emails);
 
     long countByProjectIdAndRole(UUID projectId, ProjectRole role);
 }
