@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useTasks } from '../../api/tasksQueries'
+import { useBulkUpdateTasks, useTasks } from '../../api/tasksQueries'
+import { BulkActionsBar } from '../../components/tasks/BulkActionsBar'
 import { Pagination } from '../../components/ui/Pagination'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
@@ -20,6 +21,7 @@ import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { useAuthStore } from '../../stores/authStore'
+import { useToastStore } from '../../stores/toastStore'
 
 const UNASSIGNED = '__unassigned__'
 // "Без категории" в фильтре — свой сентинел, который заведомо не совпадёт с реальным
@@ -124,6 +126,63 @@ export function ProjectTaskListPage() {
   const { data, isLoading, isError, error } = useTasks(projectId, params)
   const visibleTasks = data?.items ?? []
 
+  // Массовые операции (4.6). Выделение живёт ровно столько, сколько на экране та же
+  // страница тех же задач: смена фильтра, сортировки или номера страницы меняет params,
+  // а вместе с ними и состав таблицы. Переносить выделение через это — значит однажды
+  // применить правку к задачам, которых человек уже не видит.
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const lastToggledIndex = useRef(null)
+  const bulkUpdate = useBulkUpdateTasks(projectId)
+  const pushToast = useToastStore((state) => state.pushToast)
+
+  useEffect(() => {
+    setSelectedIds(new Set())
+    lastToggledIndex.current = null
+  }, [params])
+
+  const allVisibleSelected =
+    visibleTasks.length > 0 && visibleTasks.every((task) => selectedIds.has(task.id))
+  const someVisibleSelected = visibleTasks.some((task) => selectedIds.has(task.id))
+
+  function toggleAllVisible() {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(visibleTasks.map((task) => task.id)))
+    lastToggledIndex.current = null
+  }
+
+  // Shift+клик выделяет диапазон от предыдущей отмеченной строки — на пятидесяти задачах
+  // это разница между двумя кликами и пятьюдесятью, ради которой пункт и заведён.
+  // Обработчик висит на click, а не на change: shiftKey есть только у события мыши.
+  function toggleTask(index, event) {
+    const anchor =
+      event.shiftKey && lastToggledIndex.current !== null ? lastToggledIndex.current : index
+    const [from, to] = anchor <= index ? [anchor, index] : [index, anchor]
+    const select = !selectedIds.has(visibleTasks[index].id)
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      for (let i = from; i <= to; i++) {
+        if (select) {
+          next.add(visibleTasks[i].id)
+        } else {
+          next.delete(visibleTasks[i].id)
+        }
+      }
+      return next
+    })
+    lastToggledIndex.current = index
+  }
+
+  function applyBulk(payload) {
+    bulkUpdate.mutate(
+      { ...payload, taskIds: [...selectedIds] },
+      {
+        onSuccess: (result) => {
+          pushToast(t('taskList.bulk.applied', { count: result.updated }))
+          setSelectedIds(new Set())
+        },
+      },
+    )
+  }
+
   function toggleSort(key) {
     setSort((prev) => (prev.key === key ? { key, dir: -prev.dir } : { key, dir: 1 }))
   }
@@ -198,6 +257,18 @@ export function ProjectTaskListPage() {
         )}
       </div>
 
+      {canManage && selectedIds.size > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedIds.size}
+          members={members}
+          tags={tags}
+          onApply={applyBulk}
+          onCancel={() => setSelectedIds(new Set())}
+          isPending={bulkUpdate.isPending}
+          error={bulkUpdate.error}
+        />
+      )}
+
       {/* isLoading, а не isFetching: с keepPreviousData таблица остаётся на экране, пока
           грузится следующая страница, и подменять её на «Загрузка...» на каждый шаг
           пагинации значило бы вернуть то самое мигание, ради которого она включена. */}
@@ -213,6 +284,7 @@ export function ProjectTaskListPage() {
               не обрезается. */}
           <table className="w-full min-w-260 table-fixed text-sm">
             <colgroup>
+              {canManage && <col className="w-10" />}
               <col className="w-14" />
               <col />
               <col className="w-32" />
@@ -224,6 +296,28 @@ export function ProjectTaskListPage() {
             </colgroup>
             <thead className="sticky top-0 z-10">
               <tr>
+                {canManage && (
+                  <th
+                    scope="col"
+                    className="border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900"
+                  >
+                    {/* indeterminate («выделена часть строк») нельзя выставить разметкой —
+                        это свойство DOM-узла, а не атрибут, поэтому ref. */}
+                    <input
+                      type="checkbox"
+                      aria-label={t('taskList.bulk.selectAll')}
+                      checked={allVisibleSelected}
+                      readOnly
+                      ref={(node) => {
+                        if (node) {
+                          node.indeterminate = someVisibleSelected && !allVisibleSelected
+                        }
+                      }}
+                      onClick={toggleAllVisible}
+                      className="h-4 w-4 accent-purple-600"
+                    />
+                  </th>
+                )}
                 <SortableHeader colKey={SORT.NUMBER} sort={sort} onSort={toggleSort}>
                   №
                 </SortableHeader>
@@ -256,22 +350,42 @@ export function ProjectTaskListPage() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/60">
               {visibleTasks.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                  <td colSpan={canManage ? 10 : 9} className="px-3 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
                     {t('taskList.empty')}
                   </td>
                 </tr>
               )}
-              {visibleTasks.map((task) => {
+              {visibleTasks.map((task, index) => {
                 const overdue = isTaskOverdue(task)
                 const hours = formatHours(task.totalHoursSpent)
+                const selected = selectedIds.has(task.id)
                 return (
                   <tr
                     key={task.id}
                     onClick={() => navigate(`/projects/${projectSlug}/tasks/${task.taskNumber}`)}
                     // Чередование фона строк — на широкой таблице глаз не теряет строку
-                    // между колонкой «Название» и колонкой «Часы».
-                    className="cursor-pointer even:bg-gray-50/70 hover:bg-purple-50 dark:even:bg-gray-900/30 dark:hover:bg-purple-950/30"
+                    // между колонкой «Название» и колонкой «Часы». Выделенная строка
+                    // перебивает чередование: выделение должно читаться в любой позиции.
+                    className={`cursor-pointer ${
+                      selected
+                        ? 'bg-purple-100 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-950/60'
+                        : 'even:bg-gray-50/70 hover:bg-purple-50 dark:even:bg-gray-900/30 dark:hover:bg-purple-950/30'
+                    }`}
                   >
+                    {canManage && (
+                      // Клик по галочке не должен открывать задачу: выделение и переход
+                      // живут в одной строке, поэтому всплытие гасится на ячейке.
+                      <td className={cellClass} onClick={(event) => event.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={t('taskList.bulk.selectRow', { number: task.taskNumber })}
+                          checked={selected}
+                          readOnly
+                          onClick={(event) => toggleTask(index, event)}
+                          className="h-4 w-4 accent-purple-600"
+                        />
+                      </td>
+                    )}
                     <td className={cellClass}>
                       <span className={TASK_NUMBER_BADGE_CLASS}>#{task.taskNumber}</span>
                     </td>

@@ -161,6 +161,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("INVALID_TARGET_POSITION", ex.getMessage()));
     }
 
+    // Массовая правка без единого поля к правке (4.6). Отдельный код, а не общий
+    // VALIDATION_ERROR: это единственное состояние формы, из которого пользователю понятно,
+    // что делать дальше («выберите, что менять»), и текст для него хочется свой.
+    @ExceptionHandler(NoBulkChangesRequestedException.class)
+    public ResponseEntity<ErrorResponse> handleNoBulkChanges(NoBulkChangesRequestedException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("BULK_UPDATE_NO_CHANGES", ex.getMessage()));
+    }
+
     @ExceptionHandler(TaskStatusConflictException.class)
     public ResponseEntity<ErrorResponse> handleTaskStatusConflict(TaskStatusConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

@@ -172,7 +172,26 @@
     "allCategories": "All categories",
     "empty": "Nothing found",
     "newTask": "New task",
-    "total": "Tasks: {{count}}"
+    "total": "Tasks: {{count}}",
+    "bulk": {
+      "selected": "Selected: {{count}}",
+      "selectAll": "Select all tasks on this page",
+      "selectRow": "Select task #{{number}}",
+      "statusLabel": "New status",
+      "assigneeLabel": "New assignee",
+      "tagLabel": "New tag",
+      "dueDateLabel": "New due date",
+      "keepStatus": "Status — keep as is",
+      "keepAssignee": "Assignee — keep as is",
+      "keepTag": "Tag — keep as is",
+      "unassign": "Remove assignee",
+      "noTag": "Remove tag",
+      "clearDueDate": "Clear due date",
+      "apply": "Apply",
+      "applying": "Applying...",
+      "cancel": "Clear selection",
+      "applied": "Tasks updated: {{count}}"
+    }
   },
   "wiki": {
     "title": "Wiki",
@@ -566,7 +585,8 @@
     "INTERNAL_ERROR": "Something went wrong on the server, please try again",
     "UNKNOWN": "Something went wrong, please try again",
     "INVALID_CURRENT_PASSWORD": "The current password is incorrect",
-    "INVITATION_EMAIL_MISMATCH": "This invitation was issued for a different address. Sign in with the account that received the email."
+    "INVITATION_EMAIL_MISMATCH": "This invitation was issued for a different address. Sign in with the account that received the email.",
+    "BULK_UPDATE_NO_CHANGES": "Choose what to change on the selected tasks"
   },
   "trash": {
     "title": "Trash",

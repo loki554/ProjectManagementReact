@@ -92,6 +92,20 @@ export function useDeleteTask(projectId) {
   })
 }
 
+// Массовая правка (4.6). Optimistic update здесь сознательно нет, в отличие от канбана:
+// изменившиеся поля входят в фильтры и сортировку списка, поэтому после правки страница
+// меняет и состав, и порядок, и предсказать её на клиенте нельзя — «оптимистично»
+// показанный результат разошёлся бы с ответом сервера на первом же активном фильтре.
+export function useBulkUpdateTasks(projectId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload) => tasksApi.bulkUpdateTasks(projectId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tasksKey(projectId) })
+    },
+  })
+}
+
 // Клиентское зеркало backend-алгоритма пересчёта position (TaskService.updateStatus, 5.1.2):
 // та же "колонка" — top-level задачи одного статуса — перенумеровывается 0..n-1 после
 // вставки перемещённой задачи на targetIndex. Работает над плоским кэшированным списком

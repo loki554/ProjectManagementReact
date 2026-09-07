@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +42,34 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
     List<Task> findBoardTasks(UUID projectId);
 
     List<Task> findByParentTaskIdOrderByPositionAsc(UUID parentTaskId);
+
+    /**
+     * Выделенные задачи для массовой правки (4.6). Фильтр по проекту стоит в самом запросе,
+     * а не проверяется потом по загруженным задачам: id приходят от клиента списком, и
+     * «загрузить, а потом посмотреть, чьи они» — это ровно та форма, в которой чужая задача
+     * однажды и проедет. Задача из другого проекта просто не найдётся, а разницу «нет такой»
+     * и «есть, но не ваша» вызывающий код и не должен показывать наружу.
+     *
+     * <p>Мягко удалённые (3.5) сюда не попадают: @SQLRestriction действует и здесь, поэтому
+     * задача, уехавшая в корзину, пока список висел открытым, читается как несуществующая.
+     *
+     * <p>join fetch — те же связи, что разворачивает правка: исполнитель и тэг сравниваются
+     * со старыми значениями, проект и категория уходят в ленту активности. Без них Hibernate
+     * взял бы их отдельным запросом на каждую из двухсот задач.
+     */
+    @Query("""
+            select t from Task t
+            join fetch t.project
+            join fetch t.createdBy
+            left join fetch t.parentTask
+            left join fetch t.assignee
+            left join fetch t.tag
+            left join fetch t.category
+            where t.project.id = :projectId
+              and t.id in :taskIds
+            order by t.taskNumber asc
+            """)
+    List<Task> findAllByProjectIdAndIdIn(UUID projectId, Collection<UUID> taskIds);
 
 
     @Query("select coalesce(max(t.position), -1) from Task t where t.project.id = :projectId and t.status = :status")

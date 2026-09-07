@@ -172,7 +172,26 @@
     "allCategories": "Alle Kategorien",
     "empty": "Nichts gefunden",
     "newTask": "Neue Aufgabe",
-    "total": "Aufgaben: {{count}}"
+    "total": "Aufgaben: {{count}}",
+    "bulk": {
+      "selected": "Ausgewählt: {{count}}",
+      "selectAll": "Alle Aufgaben auf dieser Seite auswählen",
+      "selectRow": "Aufgabe Nr. {{number}} auswählen",
+      "statusLabel": "Neuer Status",
+      "assigneeLabel": "Neuer Bearbeiter",
+      "tagLabel": "Neues Tag",
+      "dueDateLabel": "Neue Frist",
+      "keepStatus": "Status — unverändert",
+      "keepAssignee": "Bearbeiter — unverändert",
+      "keepTag": "Tag — unverändert",
+      "unassign": "Bearbeiter entfernen",
+      "noTag": "Tag entfernen",
+      "clearDueDate": "Frist entfernen",
+      "apply": "Anwenden",
+      "applying": "Wird angewendet...",
+      "cancel": "Auswahl aufheben",
+      "applied": "Aktualisierte Aufgaben: {{count}}"
+    }
   },
   "wiki": {
     "title": "Wiki",
@@ -566,7 +585,8 @@
     "INTERNAL_ERROR": "Auf dem Server ist etwas schiefgelaufen, bitte versuchen Sie es erneut",
     "UNKNOWN": "Etwas ist schiefgelaufen, bitte versuchen Sie es erneut",
     "INVALID_CURRENT_PASSWORD": "Das aktuelle Passwort ist falsch",
-    "INVITATION_EMAIL_MISMATCH": "Diese Einladung wurde für eine andere Adresse ausgestellt. Melden Sie sich mit dem Konto an, das die E-Mail erhalten hat."
+    "INVITATION_EMAIL_MISMATCH": "Diese Einladung wurde für eine andere Adresse ausgestellt. Melden Sie sich mit dem Konto an, das die E-Mail erhalten hat.",
+    "BULK_UPDATE_NO_CHANGES": "Wählen Sie aus, was an den ausgewählten Aufgaben geändert werden soll"
   },
   "trash": {
     "title": "Papierkorb",

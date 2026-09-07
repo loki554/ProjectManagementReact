@@ -2,6 +2,8 @@ package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
+import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksRequest;
+import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksResponse;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
 import com.pmtracker.project_management_backend.task.dto.TrashedTaskResponse;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,6 +68,23 @@ public class ProjectTaskController {
         TaskListQuery query = new TaskListQuery(parentId, search, status, assigneeId, unassigned,
                 tagId, categoryId, uncategorized, sort, descending);
         return ResponseEntity.ok(taskService.list(currentUser, projectId, query, page, size));
+    }
+
+    @PatchMapping("/bulk")
+    @Operation(summary = "Массовая правка задач",
+            description = "Один статус/исполнитель/тэг/срок на весь список taskIds (не больше 200). "
+                    + "Отсутствующее поле означает \"не трогать\"; чтобы снять исполнителя, тэг или срок, "
+                    + "нужен соответствующий флаг clearAssignee/clearTag/clearDueDate — присланный null "
+                    + "от неприсланного поля неотличим. Запрос без единого поля к правке — 400 "
+                    + "BULK_UPDATE_NO_CHANGES. Всё или ничего: если хоть один id не принадлежит проекту "
+                    + "или уже уехал в корзину, возвращается 404 TASK_NOT_FOUND и не меняется ничего. "
+                    + "Смена статуса пересчитывает position так же, как перетаскивание карточки: задачи "
+                    + "дописываются в хвост целевой колонки. OWNER/ADMIN/MEMBER, не VIEWER. "
+                    + "В ответе — сколько задач реально изменилось")
+    public ResponseEntity<BulkUpdateTasksResponse> bulkUpdate(@AuthenticationPrincipal User currentUser,
+                                                                @PathVariable UUID projectId,
+                                                                @Valid @RequestBody BulkUpdateTasksRequest request) {
+        return ResponseEntity.ok(taskService.bulkUpdate(currentUser, projectId, request));
     }
 
     @GetMapping("/board")

@@ -215,6 +215,15 @@ public class NotificationService {
         notificationRepository.deleteDueDateAlerts(taskId);
     }
 
+    /** То же для набора задач сразу (массовая правка, 4.6). */
+    @Transactional
+    public void clearDueDateAlerts(Collection<UUID> taskIds) {
+        if (taskIds.isEmpty()) {
+            return;
+        }
+        notificationRepository.deleteDueDateAlertsForTasks(taskIds);
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<NotificationResponse> list(User currentUser, int page) {
         var pageRequest = PageRequest.of(Math.max(page, 0), PAGE_SIZE);

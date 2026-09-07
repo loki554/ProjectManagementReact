@@ -34,6 +34,14 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     void deleteDueDateAlerts(UUID taskId);
 
     /**
+     * То же самое для массовой правки (4.6) — одним DELETE вместо двухсот: смена срока или
+     * исполнителя разом обесценивает старые напоминания у всего выделения.
+     */
+    @Modifying
+    @Query("delete from Notification n where n.task.id in :taskIds and n.type in ('task_due_soon', 'task_overdue')")
+    void deleteDueDateAlertsForTasks(Collection<UUID> taskIds);
+
+    /**
      * Что собрать в вечернюю сводку (4.3, {@code NotificationDigestJob}): уведомления
      * перечисленных получателей, по которым письма ещё не было.
      *

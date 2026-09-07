@@ -8,6 +8,7 @@ import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.common.exception.AssigneeNotProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.ConcurrentModificationConflictException;
 import com.pmtracker.project_management_backend.common.exception.InvalidTargetPositionException;
+import com.pmtracker.project_management_backend.common.exception.NoBulkChangesRequestedException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskDeletedException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskNotFoundException;
 import com.pmtracker.project_management_backend.common.exception.ParentTaskProjectMismatchException;
@@ -24,6 +25,8 @@ import com.pmtracker.project_management_backend.project.ProjectRepository;
 import com.pmtracker.project_management_backend.project.ProjectRole;
 import com.pmtracker.project_management_backend.tag.Tag;
 import com.pmtracker.project_management_backend.tag.TagRepository;
+import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksRequest;
+import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksResponse;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
 import com.pmtracker.project_management_backend.task.dto.MyActiveTaskResponse;
 import com.pmtracker.project_management_backend.task.dto.TaskResponse;
@@ -42,10 +45,12 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -333,6 +338,180 @@ public class TaskService {
         for (int i = 0; i < orderedColumn.size(); i++) {
             orderedColumn.get(i).setPosition(i);
         }
+    }
+
+    // ------------------------------------------------------------ массовые операции (4.6)
+
+    /**
+     * Массовая правка выделенных задач: один статус/исполнитель/тэг/срок на весь набор.
+     * Двадцать кликов по форме задачи превращаются в одно действие — и, что важнее, в одну
+     * транзакцию: либо новый статус получили все двадцать задач, либо ни одна.
+     *
+     * <p><b>Неизвестный id отменяет весь запрос</b> (404 TASK_NOT_FOUND), а не пропускается
+     * молча. Пропуск выглядит дружелюбнее ровно до первого случая, когда человек видит
+     * «обновлено 17», думает, что это про его двадцать, и не узнаёт, какие три не поехали
+     * и почему. Отказ целиком — единственный исход, который читается однозначно: список
+     * устарел, перечитайте и повторите. Сюда же попадает и задача, уехавшая в корзину, пока
+     * список висел открытым (см. findAllByProjectIdAndIdIn), и чужая задача из другого
+     * проекта — разницы между ними ответ не делает.
+     *
+     * <p><b>Уведомления и лента — по одному событию на задачу</b>, теми же типами, что и
+     * одиночная правка. Отдельного «изменено массово» в ленте нет намеренно: лента задачи
+     * отвечает на вопрос «что с ней происходило», и событие, спрятанное в сводку по проекту,
+     * из карточки задачи просто исчезло бы. Цена — двадцать писем тому, на кого разом
+     * назначили двадцать задач; но столько же их пришло бы и от двадцати одиночных правок,
+     * а способ получать реже у адресата уже есть — режим дайджеста в настройках (4.3).
+     * Потолок выделения (200, см. BulkUpdateTasksRequest) заодно ограничивает и это число.
+     *
+     * <p>Порядок внутри метода не случаен: все запросы — резолв исполнителя с тэгом и
+     * загрузка канбан-колонок — сделаны до первой правки. JPQL-запрос сбрасывает в БД
+     * накопленные изменения перед выполнением, и колонка, прочитанная после смены статуса
+     * хотя бы одной задачи, вернула бы уже переехавшую задачу в новом составе.
+     */
+    @Transactional
+    public BulkUpdateTasksResponse bulkUpdate(User currentUser, UUID projectId, BulkUpdateTasksRequest request) {
+        projectAccessService.findProjectOrThrow(projectId);
+        ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
+        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+
+        if (!request.hasChanges()) {
+            throw new NoBulkChangesRequestedException();
+        }
+
+        // distinct до сравнения размеров: дубль в выделении — не повод отвечать 404,
+        // сервер и так применит правку к задаче один раз.
+        List<UUID> requestedIds = request.taskIds().stream().distinct().toList();
+        List<Task> tasks = taskRepository.findAllByProjectIdAndIdIn(projectId, requestedIds);
+        if (tasks.size() != requestedIds.size()) {
+            throw new TaskNotFoundException();
+        }
+
+        User newAssignee = request.clearAssignee() ? null : resolveAssignee(projectId, request.assigneeId());
+        Tag newTag = request.clearTag() ? null : resolveTag(projectId, request.tagId());
+        Instant newDueDate = request.clearDueDate() ? null : request.dueDate();
+        Map<ColumnKey, List<Task>> columns = loadAffectedColumns(projectId, tasks, request.status());
+
+        // Задачи, у которых прежние "скоро истекает"/"просрочена" перестали отражать
+        // реальность — по тем же трём поводам, что и в update(): сдвинулся срок, сменился
+        // исполнитель, задача закрылась. Собираем в набор и чистим одним DELETE в конце.
+        Set<UUID> staleAlertTaskIds = new HashSet<>();
+        List<Task> movedToNewStatus = new ArrayList<>();
+        int updated = 0;
+
+        for (Task task : tasks) {
+            boolean changed = false;
+
+            if (request.status() != null && task.getStatus() != request.status()) {
+                TaskStatus oldStatus = task.getStatus();
+                task.setStatus(request.status());
+                movedToNewStatus.add(task);
+                recordFieldChange(task, currentUser, "task_status_changed", oldStatus.name(), request.status().name());
+                if (INACTIVE_STATUSES.contains(request.status())) {
+                    staleAlertTaskIds.add(task.getId());
+                }
+                changed = true;
+            }
+
+            if (request.assigneeRequested() && !sameEntity(task.getAssignee(), newAssignee)) {
+                String oldAssignee = displayName(task.getAssignee());
+                task.setAssignee(newAssignee);
+                recordFieldChange(task, currentUser, "task_assignee_changed", oldAssignee, displayName(newAssignee));
+                notificationService.notifyTaskAssigned(task, currentUser, newAssignee);
+                staleAlertTaskIds.add(task.getId());
+                changed = true;
+            }
+
+            if (request.tagRequested() && !sameEntity(task.getTag(), newTag)) {
+                String oldTag = task.getTag() != null ? task.getTag().getName() : null;
+                task.setTag(newTag);
+                recordFieldChange(task, currentUser, "task_tag_changed", oldTag,
+                        newTag != null ? newTag.getName() : null);
+                changed = true;
+            }
+
+            if (request.dueDateRequested() && !Objects.equals(task.getDueDate(), newDueDate)) {
+                Instant oldDueDate = task.getDueDate();
+                task.setDueDate(newDueDate);
+                recordFieldChange(task, currentUser, "task_due_date_changed",
+                        oldDueDate != null ? oldDueDate.toString() : null,
+                        newDueDate != null ? newDueDate.toString() : null);
+                staleAlertTaskIds.add(task.getId());
+                changed = true;
+            }
+
+            if (changed) {
+                updated++;
+            }
+        }
+
+        restackColumns(columns, movedToNewStatus, request.status());
+        notificationService.clearDueDateAlerts(staleAlertTaskIds);
+
+        return new BulkUpdateTasksResponse(updated);
+    }
+
+    /**
+     * Канбан-колонка — тот же скоуп, что у перетаскивания карточки: (родитель, статус) в
+     * пределах проекта, см. TaskRepository.findSiblingsByStatus. Родитель может быть null
+     * (top-level задача), поэтому именно record с nullable-полем, а не строковый ключ.
+     */
+    private record ColumnKey(UUID parentId, TaskStatus status) {
+    }
+
+    /**
+     * Заранее вычитывает все колонки, которых коснётся смена статуса: покидаемые (по одной
+     * на каждый встреченный старый статус в пределах родителя) и целевую. Задача, у которой
+     * запрошенный статус уже стоит, не переезжает и колонок не задевает.
+     */
+    private Map<ColumnKey, List<Task>> loadAffectedColumns(UUID projectId, List<Task> tasks, TaskStatus newStatus) {
+        if (newStatus == null) {
+            return Map.of();
+        }
+        Map<ColumnKey, List<Task>> columns = new LinkedHashMap<>();
+        for (Task task : tasks) {
+            if (task.getStatus() == newStatus) {
+                continue;
+            }
+            UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
+            for (TaskStatus status : List.of(task.getStatus(), newStatus)) {
+                columns.computeIfAbsent(new ColumnKey(parentId, status), key ->
+                        new ArrayList<>(taskRepository.findSiblingsByStatus(projectId, key.status(), key.parentId())));
+            }
+        }
+        return columns;
+    }
+
+    /**
+     * Пересчёт position после массовой смены статуса: переехавшие задачи вынимаются из
+     * покидаемых колонок и дописываются в хвост целевой, после чего каждая затронутая
+     * колонка перенумеровывается 0..n-1 — ровно как после одиночного перетаскивания.
+     *
+     * <p>В хвост, а не в начало: массовая правка — это «убрать разобранное с глаз», и
+     * вклиниваться в начало чужой колонки, где сверху лежит то, чем занимаются сейчас, она
+     * не должна. Порядок переехавших между собой — по номеру задачи (в нём их отдал
+     * findAllByProjectIdAndIdIn): порядок выделения на клиенте зависит от того, в каком
+     * направлении человек ставил галочки, и переносить его в общую доску незачем.
+     */
+    private void restackColumns(Map<ColumnKey, List<Task>> columns, List<Task> moved, TaskStatus newStatus) {
+        if (moved.isEmpty()) {
+            return;
+        }
+        Set<UUID> movedIds = moved.stream().map(Task::getId).collect(Collectors.toSet());
+        columns.values().forEach(column -> column.removeIf(t -> movedIds.contains(t.getId())));
+        for (Task task : moved) {
+            UUID parentId = task.getParentTask() != null ? task.getParentTask().getId() : null;
+            columns.get(new ColumnKey(parentId, newStatus)).add(task);
+        }
+        columns.values().forEach(this::renumber);
+    }
+
+    /** Сравнение "то же самое или другое" для необязательных ссылок задачи (исполнитель, тэг). */
+    private static boolean sameEntity(User left, User right) {
+        return Objects.equals(left != null ? left.getId() : null, right != null ? right.getId() : null);
+    }
+
+    private static boolean sameEntity(Tag left, Tag right) {
+        return Objects.equals(left != null ? left.getId() : null, right != null ? right.getId() : null);
     }
 
     /**

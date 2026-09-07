@@ -28,6 +28,13 @@ export function updateTask(taskId, payload) {
   return apiClient.patch(`/tasks/${taskId}`, payload).then((res) => res.data)
 }
 
+// Массовая правка выделенных задач (4.6). PATCH по коллекции, а не по одной задаче:
+// список id — часть тела, и правка либо применяется ко всему списку, либо не применяется
+// вовсе. В ответе {updated} — сколько задач реально изменилось.
+export function bulkUpdateTasks(projectId, payload) {
+  return apiClient.patch(`/projects/${projectId}/tasks/bulk`, payload).then((res) => res.data)
+}
+
 export function updateTaskStatus(taskId, payload) {
   return apiClient.patch(`/tasks/${taskId}/status`, payload).then((res) => res.data)
 }
