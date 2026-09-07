@@ -144,7 +144,10 @@ public class TaskService {
         }
 
         Pageable pageable = PageRequest.of(Math.max(page, 0), clampPageSize(size));
-        Page<Task> result = taskRepository.search(projectId, query, pageable);
+        // «Мои задачи» превращаются в фильтр по конкретному исполнителю здесь и только здесь:
+        // текущий пользователь известен на этом уровне, а репозиторий получает обычный
+        // assigneeId (см. TaskListQuery.resolveViewer).
+        Page<Task> result = taskRepository.search(projectId, query.resolveViewer(currentUser.getId()), pageable);
         return PageResponse.from(new PageImpl<>(toResponses(result.getContent()), pageable, result.getTotalElements()));
     }
 
@@ -603,7 +606,7 @@ public class TaskService {
     }
 
     private static final int MY_ACTIVE_TASKS_PAGE_SIZE = 8;
-    private static final List<TaskStatus> INACTIVE_STATUSES = List.of(TaskStatus.DONE, TaskStatus.REJECTED);
+    private static final List<TaskStatus> INACTIVE_STATUSES = TaskStatus.INACTIVE;
     // Задачи с дедлайном внутри этого окна (включая уже просроченные) поднимаются в списке
     // "моих активных задач" выше вообще всего, независимо от urgency — см. findActiveByAssignee.
     // Совпадает с порогом на фронтенде, при котором карточка подсвечивается красным

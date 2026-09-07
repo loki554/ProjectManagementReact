@@ -168,8 +168,16 @@
     "searchPlaceholder": "Nach Titel suchen...",
     "allStatuses": "Alle Status",
     "allAssignees": "Alle Bearbeiter",
+    "assignedToMe": "Mir zugewiesen",
     "allTags": "Alle Tags",
     "allCategories": "Alle Kategorien",
+    "allDueDates": "Beliebige Frist",
+    "due": {
+      "OVERDUE": "Überfällig",
+      "TODAY": "Heute fällig",
+      "WEEK": "Diese Woche fällig",
+      "NONE": "Ohne Frist"
+    },
     "empty": "Nichts gefunden",
     "newTask": "Neue Aufgabe",
     "total": "Aufgaben: {{count}}",
@@ -191,6 +199,30 @@
       "applying": "Wird angewendet...",
       "cancel": "Auswahl aufheben",
       "applied": "Aktualisierte Aufgaben: {{count}}"
+    },
+    "views": {
+      "all": "Alle Aufgaben",
+      "presets": {
+        "myTasks": "Meine Aufgaben",
+        "myOverdue": "Meine überfälligen",
+        "unassigned": "Ohne Zuständigen",
+        "dueThisWeek": "Diese Woche fällig"
+      },
+      "save": "Ansicht speichern",
+      "confirmSave": "Speichern",
+      "saving": "Wird gespeichert...",
+      "cancel": "Abbrechen",
+      "nameLabel": "Name der Ansicht",
+      "namePlaceholder": "Zum Beispiel: meine überfälligen",
+      "update": "„{{name}}“ aktualisieren",
+      "delete": "Ansicht „{{name}}“ löschen",
+      "saved": "Ansicht „{{name}}“ gespeichert",
+      "updated": "Ansicht „{{name}}“ aktualisiert",
+      "deleted": "Ansicht „{{name}}“ gelöscht",
+      "copyLink": "Link kopieren",
+      "copyLinkHint": "Link zu dieser gefilterten Liste kopieren",
+      "linkCopied": "Link kopiert",
+      "copyLinkUnavailable": "Kopieren fehlgeschlagen — der vollständige Link steht in der Adressleiste"
     }
   },
   "wiki": {
@@ -577,6 +609,8 @@
     "DUPLICATE_TAG_NAME": "Ein Tag mit diesem Namen existiert bereits in diesem Projekt",
     "CATEGORY_NOT_FOUND": "Kategorie nicht gefunden",
     "DUPLICATE_CATEGORY_NAME": "Eine Kategorie mit diesem Namen existiert bereits in diesem Projekt",
+    "SAVED_VIEW_NOT_FOUND": "Ansicht nicht gefunden",
+    "DUPLICATE_SAVED_VIEW_NAME": "Eine Ansicht mit diesem Namen existiert bereits in diesem Projekt",
     "TAG_PROJECT_MISMATCH": "Dieser Tag gehört zu einem anderen Projekt",
     "DATA_CONFLICT": "Die Daten stehen im Konflikt mit bereits gespeicherten Daten, bitte Seite aktualisieren und erneut versuchen",
     "TOO_MANY_REQUESTS": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",

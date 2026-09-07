@@ -33,7 +33,7 @@ import java.util.List;
 public class NotificationScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationScheduler.class);
-    private static final List<TaskStatus> INACTIVE_STATUSES = List.of(TaskStatus.DONE, TaskStatus.REJECTED);
+    private static final List<TaskStatus> INACTIVE_STATUSES = TaskStatus.INACTIVE;
     private static final Duration DUE_SOON_WINDOW = Duration.ofDays(3);
     // Период и стартовая задержка сканирования вынесены в свойства с прежними значениями
     // по умолчанию (15 минут / 1 минута) — в конфигурации их никто не переопределяет, кроме

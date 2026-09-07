@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
+import {
+  useCreateSavedView,
+  useDeleteSavedView,
+  useSavedViews,
+  useUpdateSavedView,
+} from '../../api/savedViewsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useBulkUpdateTasks, useTasks } from '../../api/tasksQueries'
 import { BulkActionsBar } from '../../components/tasks/BulkActionsBar'
+import { SavedViewsBar } from '../../components/tasks/SavedViewsBar'
 import { Pagination } from '../../components/ui/Pagination'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import {
+  TASK_DUE_FILTERS,
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
   roleIsAtLeast,
@@ -19,14 +27,22 @@ import {
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
+import {
+  ASSIGNEE_ME,
+  ASSIGNEE_UNASSIGNED,
+  CATEGORY_NONE,
+  SORT_KEYS,
+  filtersEqual,
+  filtersToSavedViewPayload,
+  readFilters,
+  readPage,
+  savedViewToFilters,
+  toQueryParams,
+  writeFilters,
+} from '../../lib/taskFilters'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { useAuthStore } from '../../stores/authStore'
 import { useToastStore } from '../../stores/toastStore'
-
-const UNASSIGNED = '__unassigned__'
-// "Без категории" в фильтре — свой сентинел, который заведомо не совпадёт с реальным
-// id категории (ср. UNASSIGNED).
-const NO_CATEGORY = '__no_category__'
 
 const PAGE_SIZE = 50
 
@@ -34,17 +50,11 @@ const PAGE_SIZE = 50
 // считаются в БД (3.3). Клиентские компараторы, стоявшие здесь раньше, работали по
 // загруженному массиву и с постраничной выдачей давали бы отсортированную страницу
 // вместо первой страницы отсортированного списка.
-const SORT = {
-  NUMBER: 'NUMBER',
-  TITLE: 'TITLE',
-  STATUS: 'STATUS',
-  ASSIGNEE: 'ASSIGNEE',
-  URGENCY: 'URGENCY',
-  DUE_DATE: 'DUE_DATE',
-  TAG: 'TAG',
-  CATEGORY: 'CATEGORY',
-  HOURS: 'HOURS',
-}
+//
+// Именованный доступ к тому же списку, по которому разбирается адресная строка
+// (SORT_KEYS): второй перечень здесь означал бы ключ, по которому таблица сортирует, а
+// ссылка на неё — уже нет.
+const SORT = Object.fromEntries(SORT_KEYS.map((key) => [key, key]))
 
 const cellClass = 'px-3 py-2 align-middle'
 
@@ -92,36 +102,51 @@ export function ProjectTaskListPage() {
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [assigneeFilter, setAssigneeFilter] = useState('')
-  const [tagFilter, setTagFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [sort, setSort] = useState({ key: SORT.NUMBER, dir: 1 })
-  const [page, setPage] = useState(0)
+  // Фильтры, сортировка и номер страницы живут в адресной строке (5.5, 4.7), а не в
+  // useState: отфильтрованный список должен переживать перезагрузку и уезжать коллеге
+  // ссылкой — именно из этого состоит «шаринг» сохранённых представлений.
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Ключ — строка адреса: URLSearchParams при каждом рендере новый объект, и мемоизация
+  // по нему самому не мемоизировала бы ничего.
+  const searchParamsKey = searchParams.toString()
+  const filters = useMemo(() => readFilters(searchParams), [searchParamsKey])
+  const page = readPage(searchParams)
+  const sort = useMemo(() => ({ key: filters.sort, dir: filters.descending ? -1 : 1 }), [filters])
 
-  // Ввод в поиске уходит на сервер, поэтому не на каждый символ.
-  const debouncedSearch = useDebouncedValue(search.trim())
+  // Адрес переписывается через replace, а не push. Иначе каждый выбранный фильтр — шаг
+  // истории, и «назад» из списка означало бы не «вернуться откуда пришёл», а пройти обратно
+  // всю возню с фильтрами. Ссылкой при этом делятся адресом, а не историей, и он всегда
+  // актуален; возврат на список из открытой задачи тоже приводит к последнему состоянию.
+  function applyFilters(next, nextPage = 0) {
+    setSearchParams(writeFilters(next, nextPage), { replace: true })
+  }
 
-  // Любая смена фильтра или порядка меняет и состав списка: остаться на седьмой странице
-  // выдачи, в которой теперь две, значит увидеть пустую таблицу вместо результата.
+  // Смена одного фильтра человеком: страница сбрасывается на первую (остаться на седьмой
+  // странице выдачи, в которой теперь две, значит увидеть пустую таблицу вместо
+  // результата), а привязка к открытому представлению сохраняется — на ней держится
+  // кнопка «Обновить».
+  function setFilter(patch) {
+    applyFilters({ ...filters, ...patch })
+  }
+
+  // Ввод в поиске уходит на сервер, поэтому не на каждый символ — и в адрес тоже: писать
+  // в историю по символу означало бы полсотни записей на одно слово.
+  const [searchInput, setSearchInput] = useState(filters.search)
+  const debouncedSearch = useDebouncedValue(searchInput.trim())
+
   useEffect(() => {
-    setPage(0)
-  }, [debouncedSearch, statusFilter, assigneeFilter, tagFilter, categoryFilter, sort])
+    if (debouncedSearch !== filters.search) {
+      setFilter({ search: debouncedSearch })
+    }
+  }, [debouncedSearch])
 
-  const params = useMemo(() => {
-    const query = { sort: sort.key, descending: sort.dir === -1, page, size: PAGE_SIZE }
-    if (debouncedSearch) query.search = debouncedSearch
-    if (statusFilter) query.status = statusFilter
-    // "Без исполнителя"/"без категории" — отдельные флаги, а не значение id: пустой id на
-    // сервере означает "фильтр не задан", и выразить им "поле пустое" нечем.
-    if (assigneeFilter === UNASSIGNED) query.unassigned = true
-    else if (assigneeFilter) query.assigneeId = assigneeFilter
-    if (tagFilter) query.tagId = tagFilter
-    if (categoryFilter === NO_CATEGORY) query.uncategorized = true
-    else if (categoryFilter) query.categoryId = categoryFilter
-    return query
-  }, [debouncedSearch, statusFilter, assigneeFilter, tagFilter, categoryFilter, sort, page])
+  // Обратная сторона: источник истины — адрес, поэтому фильтры, приехавшие снаружи (кнопка
+  // представления, ссылка от коллеги, «назад» браузера), подхватываются полем ввода.
+  useEffect(() => {
+    setSearchInput(filters.search)
+  }, [filters.search])
+
+  const params = useMemo(() => toQueryParams(filters, page, PAGE_SIZE), [searchParamsKey])
 
   const { data, isLoading, isError, error } = useTasks(projectId, params)
   const visibleTasks = data?.items ?? []
@@ -184,23 +209,104 @@ export function ProjectTaskListPage() {
   }
 
   function toggleSort(key) {
-    setSort((prev) => (prev.key === key ? { key, dir: -prev.dir } : { key, dir: 1 }))
+    setFilter(
+      key === filters.sort
+        ? { descending: !filters.descending }
+        : { sort: key, descending: false },
+    )
+  }
+
+  // ---------------------------------------------------------------- представления (4.7)
+
+  const { data: savedViewsData } = useSavedViews(projectId)
+  const createView = useCreateSavedView(projectId)
+  const updateView = useUpdateSavedView(projectId)
+  const deleteView = useDeleteSavedView(projectId)
+  const [appliedViewId, setAppliedViewId] = useState(null)
+
+  // Панель не должна знать про формат ответа сервера: она сравнивает наборы фильтров и
+  // показывает имена, поэтому DTO разворачивается в фильтры здесь.
+  const savedViews = useMemo(
+    () => savedViewsData?.map((view) => ({ id: view.id, name: view.name, filters: savedViewToFilters(view) })) ?? [],
+    [savedViewsData],
+  )
+  const appliedView = savedViews.find((view) => view.id === appliedViewId) ?? null
+
+  // Представление, совпавшее с тем, что сейчас в адресе, считается открытым — иначе после
+  // перезагрузки страницы (или перехода по присланной ссылке) кнопка «Обновить» не
+  // появилась бы, хотя представление на экране подсвечено активным.
+  useEffect(() => {
+    const matched = savedViews.find((view) => filtersEqual(filters, view.filters))
+    if (matched && matched.id !== appliedViewId) {
+      setAppliedViewId(matched.id)
+    }
+  }, [savedViews, filters])
+
+  function applyView(nextFilters, viewId) {
+    applyFilters(nextFilters)
+    setSearchInput(nextFilters.search)
+    setAppliedViewId(viewId)
+  }
+
+  function handleSaveView(name, done) {
+    createView.mutate(filtersToSavedViewPayload(name, filters), {
+      onSuccess: (view) => {
+        setAppliedViewId(view.id)
+        pushToast(t('taskList.views.saved', { name: view.name }))
+        done()
+      },
+    })
+  }
+
+  function handleUpdateView(view) {
+    updateView.mutate(
+      { viewId: view.id, ...filtersToSavedViewPayload(view.name, filters) },
+      { onSuccess: () => pushToast(t('taskList.views.updated', { name: view.name })) },
+    )
+  }
+
+  function handleDeleteView(view) {
+    deleteView.mutate(view.id, {
+      onSuccess: () => {
+        setAppliedViewId((current) => (current === view.id ? null : current))
+        pushToast(t('taskList.views.deleted', { name: view.name }))
+      },
+    })
+  }
+
+  // Ссылка на список — это его адрес целиком: фильтры в нём уже есть, копировать нужно
+  // ровно то, что видно в адресной строке. Кнопка существует потому, что «скопируйте из
+  // адресной строки» — это ровно тот шаг, на котором люди перестают делиться ссылками.
+  function handleCopyLink() {
+    // clipboard недоступен в небезопасном контексте (http на не-localhost); показать в
+    // этом случае «скопируйте вручную» честнее, чем промолчать.
+    if (!navigator.clipboard) {
+      pushToast(t('taskList.views.copyLinkUnavailable'))
+      return
+    }
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => pushToast(t('taskList.views.linkCopied')))
+      .catch(() => pushToast(t('taskList.views.copyLinkUnavailable')))
   }
 
   return (
     <div className="flex h-full flex-col gap-3 px-4 py-4">
+      {/* Без flex-wrap: у полей из FormKit ширина w-full, и перенос строк раскладывает
+          панель фильтров в вертикальный столбец во весь экран. В одну строку они делят
+          её между собой, как делили и до появления шестого фильтра. */}
       <div className="flex items-center gap-3">
         <input
           type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
           placeholder={t('taskList.searchPlaceholder')}
-          className={`${inputClass} w-64`}
+          className={`${inputClass} w-64 min-w-0`}
         />
         <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          className={`${inputClass} w-44`}
+          value={filters.status}
+          onChange={(event) => setFilter({ status: event.target.value })}
+          className={`${inputClass} w-44 min-w-0`}
         >
           <option value="">{t('taskList.allStatuses')}</option>
           {TASK_STATUSES.map((status) => (
@@ -210,12 +316,16 @@ export function ProjectTaskListPage() {
           ))}
         </select>
         <select
-          value={assigneeFilter}
-          onChange={(event) => setAssigneeFilter(event.target.value)}
-          className={`${inputClass} w-52`}
+          value={filters.assignee}
+          onChange={(event) => setFilter({ assignee: event.target.value })}
+          className={`${inputClass} w-52 min-w-0`}
         >
           <option value="">{t('taskList.allAssignees')}</option>
-          <option value={UNASSIGNED}>{t('tasks.unassigned')}</option>
+          {/* «Мои» стоит отдельным пунктом над списком участников, а не выбором себя в нём:
+              в сохранённом представлении это разные вещи — «задачи Иванова» остаются
+              задачами Иванова у всех, а «мои» у каждого свои (см. taskFilters). */}
+          <option value={ASSIGNEE_ME}>{t('taskList.assignedToMe')}</option>
+          <option value={ASSIGNEE_UNASSIGNED}>{t('tasks.unassigned')}</option>
           {members?.map((member) => (
             <option key={member.userId} value={member.userId}>
               {member.lastName} {member.firstName}
@@ -223,9 +333,21 @@ export function ProjectTaskListPage() {
           ))}
         </select>
         <select
-          value={tagFilter}
-          onChange={(event) => setTagFilter(event.target.value)}
-          className={`${inputClass} w-44`}
+          value={filters.due}
+          onChange={(event) => setFilter({ due: event.target.value })}
+          className={`${inputClass} w-44 min-w-0`}
+        >
+          <option value="">{t('taskList.allDueDates')}</option>
+          {TASK_DUE_FILTERS.map((due) => (
+            <option key={due} value={due}>
+              {t(`taskList.due.${due}`)}
+            </option>
+          ))}
+        </select>
+        <select
+          value={filters.tag}
+          onChange={(event) => setFilter({ tag: event.target.value })}
+          className={`${inputClass} w-44 min-w-0`}
         >
           <option value="">{t('taskList.allTags')}</option>
           {tags?.map((tag) => (
@@ -235,12 +357,12 @@ export function ProjectTaskListPage() {
           ))}
         </select>
         <select
-          value={categoryFilter}
-          onChange={(event) => setCategoryFilter(event.target.value)}
-          className={`${inputClass} w-52`}
+          value={filters.category}
+          onChange={(event) => setFilter({ category: event.target.value })}
+          className={`${inputClass} w-52 min-w-0`}
         >
           <option value="">{t('taskList.allCategories')}</option>
-          <option value={NO_CATEGORY}>{t('tasks.noCategory')}</option>
+          <option value={CATEGORY_NONE}>{t('tasks.noCategory')}</option>
           {categories?.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -248,14 +370,29 @@ export function ProjectTaskListPage() {
           ))}
         </select>
         {canManage && (
-          <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} whitespace-nowrap`}>
+          <Link to={`/projects/${projectSlug}/tasks/new`} className={`${primaryButtonClass} shrink-0 whitespace-nowrap`}>
             + {t('taskList.newTask')}
           </Link>
         )}
-        <span className="ml-auto text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        <span className="ml-auto shrink-0 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
           {t('taskList.total', { count: data?.totalItems ?? 0 })}
         </span>
       </div>
+
+      {/* Панель представлений — под фильтрами, а не над ними: она их применяет, и читается
+          это сверху вниз («вот фильтры — вот наборы фильтров, сохранённые под именем»). */}
+      <SavedViewsBar
+        filters={filters}
+        savedViews={savedViews}
+        appliedView={appliedView}
+        onApply={applyView}
+        onSave={handleSaveView}
+        onUpdate={handleUpdateView}
+        onDelete={handleDeleteView}
+        onCopyLink={handleCopyLink}
+        isSaving={createView.isPending}
+        error={createView.error ?? updateView.error ?? deleteView.error}
+      />
 
       {canManage && selectedIds.size > 0 && (
         <BulkActionsBar
@@ -474,7 +611,11 @@ export function ProjectTaskListPage() {
       )}
 
       {!isLoading && !isError && (
-        <Pagination page={data?.page ?? 0} totalPages={data?.totalPages ?? 0} onPageChange={setPage} />
+        <Pagination
+          page={data?.page ?? 0}
+          totalPages={data?.totalPages ?? 0}
+          onPageChange={(nextPage) => applyFilters(filters, nextPage)}
+        />
       )}
     </div>
   )

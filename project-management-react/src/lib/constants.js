@@ -10,6 +10,12 @@ export function roleIsAtLeast(role, required) {
 // (task/TaskStatus.java). Порядок = порядок колонок будущего канбана (Phase 5).
 export const TASK_STATUSES = ['NEW', 'IN_PROGRESS', 'PAUSED', 'FEEDBACK', 'DONE', 'REJECTED']
 
+// Окна фильтра по сроку — зеркало TaskDueFilter (task/TaskDueFilter.java, 4.7). Окна
+// вложенные: просроченное входит и в TODAY, и в WEEK. Порядок — от самого узкого к самому
+// широкому, «без срока» стоит последним, потому что это утверждение о пустом поле, а не
+// об очередном отрезке времени.
+export const TASK_DUE_FILTERS = ['OVERDUE', 'TODAY', 'WEEK', 'NONE']
+
 const TASK_STATUS_BADGE_CLASSES = {
   NEW: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
   IN_PROGRESS: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',

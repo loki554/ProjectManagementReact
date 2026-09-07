@@ -168,8 +168,16 @@
     "searchPlaceholder": "Search by title...",
     "allStatuses": "All statuses",
     "allAssignees": "All assignees",
+    "assignedToMe": "Assigned to me",
     "allTags": "All tags",
     "allCategories": "All categories",
+    "allDueDates": "Any due date",
+    "due": {
+      "OVERDUE": "Overdue",
+      "TODAY": "Due today",
+      "WEEK": "Due this week",
+      "NONE": "No due date"
+    },
     "empty": "Nothing found",
     "newTask": "New task",
     "total": "Tasks: {{count}}",
@@ -191,6 +199,30 @@
       "applying": "Applying...",
       "cancel": "Clear selection",
       "applied": "Tasks updated: {{count}}"
+    },
+    "views": {
+      "all": "All tasks",
+      "presets": {
+        "myTasks": "My tasks",
+        "myOverdue": "My overdue",
+        "unassigned": "Unassigned",
+        "dueThisWeek": "Due this week"
+      },
+      "save": "Save view",
+      "confirmSave": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "nameLabel": "View name",
+      "namePlaceholder": "For example, my overdue",
+      "update": "Update “{{name}}”",
+      "delete": "Delete view “{{name}}”",
+      "saved": "View “{{name}}” saved",
+      "updated": "View “{{name}}” updated",
+      "deleted": "View “{{name}}” deleted",
+      "copyLink": "Copy link",
+      "copyLinkHint": "Copy a link to this filtered list",
+      "linkCopied": "Link copied",
+      "copyLinkUnavailable": "Could not copy — the whole link is in the address bar"
     }
   },
   "wiki": {
@@ -577,6 +609,8 @@
     "DUPLICATE_TAG_NAME": "A tag with this name already exists in this project",
     "CATEGORY_NOT_FOUND": "Category not found",
     "DUPLICATE_CATEGORY_NAME": "A category with this name already exists in this project",
+    "SAVED_VIEW_NOT_FOUND": "Saved view not found",
+    "DUPLICATE_SAVED_VIEW_NAME": "A view with this name already exists in this project",
     "TAG_PROJECT_MISMATCH": "This tag belongs to a different project",
     "DATA_CONFLICT": "The data conflicts with what is already saved, refresh the page and try again",
     "TOO_MANY_REQUESTS": "Too many attempts. Please try again later.",

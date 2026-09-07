@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -117,7 +118,31 @@ class TaskRepositoryImpl implements TaskRepositoryCustom {
             parameters.put("categoryId", query.categoryId());
         }
 
+        appendDueFilter(where, query.due(), parameters);
+
         return where.toString();
+    }
+
+    /**
+     * Окно дедлайна (4.7). Граница считается здесь, а не приезжает в запросе: «сейчас» — это
+     * момент выполнения, и брать его с клиента значило бы, что список зависит от часов на
+     * чужой машине.
+     *
+     * <p>Статусный хвост навешивается на все окна, кроме {@code NONE} — почему именно так,
+     * написано в {@link TaskDueFilter}.
+     */
+    private static void appendDueFilter(StringBuilder where, TaskDueFilter due, Map<String, Object> parameters) {
+        if (due == null) {
+            return;
+        }
+        if (due == TaskDueFilter.NONE) {
+            where.append("\n  and t.dueDate is null");
+            return;
+        }
+        where.append("\n  and t.dueDate is not null and t.dueDate < :dueBefore")
+                .append("\n  and t.status not in :dueActiveExcluded");
+        parameters.put("dueBefore", Instant.now().plus(due.window()));
+        parameters.put("dueActiveExcluded", TaskStatus.INACTIVE);
     }
 
     /**

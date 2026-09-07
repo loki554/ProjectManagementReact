@@ -224,6 +224,39 @@ class TaskListIntegrationTest extends IntegrationTest {
             assertThat(titles("uncategorized=true")).containsExactly("Без категории");
         }
 
+        /**
+         * «Мои задачи» (4.7) приезжают флагом, а не готовым id: сохранённое представление
+         * «мои просроченные» уезжает по ссылке коллеге и обязано показать ему его задачи.
+         * Проверяется это именно тем, что один и тот же запрос двум людям отвечает разным.
+         */
+        @Test
+        @DisplayName("assignedToMe — задачи того, кто спрашивает, а не автора запроса")
+        void filtersByTheViewer() throws Exception {
+            task("Владельца").assignee(owner).save();
+            task("Участника").assignee(member).save();
+            task("Ничья").save();
+
+            assertThat(titles("assignedToMe=true")).containsExactly("Владельца");
+
+            String memberHeader = "Bearer " + jwtService.generateAccessToken(member);
+            MvcResult asMember = mockMvc.perform(get("/api/projects/" + project.getId() + "/tasks?assignedToMe=true")
+                            .header(AUTHORIZATION, memberHeader))
+                    .andExpect(status().isOk())
+                    .andReturn();
+            assertThat(asMember.getResponse().getContentAsString()).contains("Участника").doesNotContain("Владельца");
+        }
+
+        @Test
+        @DisplayName("assignedToMe сильнее unassigned и assigneeId")
+        void theViewerFilterWinsOverTheOthers() throws Exception {
+            task("Владельца").assignee(owner).save();
+            task("Участника").assignee(member).save();
+            task("Ничья").save();
+
+            assertThat(titles("assignedToMe=true&unassigned=true&assigneeId=" + member.getId()))
+                    .containsExactly("Владельца");
+        }
+
         @Test
         @DisplayName("фильтры складываются между собой")
         void combinesFilters() throws Exception {
@@ -266,6 +299,84 @@ class TaskListIntegrationTest extends IntegrationTest {
             mockMvc.perform(list("parentId=" + foreign.getId()))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error").value("PARENT_TASK_PROJECT_MISMATCH"));
+        }
+    }
+
+    // ------------------------------------------------------------------ фильтр по сроку
+
+    /**
+     * Окна дедлайна (4.7): ради них и заведён фильтр — «мои просроченные» и «горит на этой
+     * неделе» без него не выражаются никак. Проверяется здесь ровно то, что не видно из
+     * кода: что окна вложены (просроченное входит в недельное), что закрытая задача из них
+     * выпадает, и что «без срока» — это про пустое поле, а не про очередной отрезок.
+     */
+    @Nested
+    @DisplayName("фильтр по сроку")
+    class DueWindows {
+
+        private final Instant now = Instant.now();
+
+        @Test
+        @DisplayName("OVERDUE — только те, у кого срок уже прошёл")
+        void selectsOverdue() throws Exception {
+            task("Вчера").dueDate(now.minus(1, ChronoUnit.DAYS)).save();
+            task("Завтра").dueDate(now.plus(1, ChronoUnit.DAYS)).save();
+            task("Без срока").save();
+
+            assertThat(titles("due=OVERDUE")).containsExactly("Вчера");
+        }
+
+        @Test
+        @DisplayName("окна вложены: просроченное горит и сегодня, и на этой неделе")
+        void windowsIncludeWhatIsAlreadyOverdue() throws Exception {
+            task("Вчера").dueDate(now.minus(1, ChronoUnit.DAYS)).save();
+            task("Через час").dueDate(now.plus(1, ChronoUnit.HOURS)).save();
+            task("Через три дня").dueDate(now.plus(3, ChronoUnit.DAYS)).save();
+            task("Через месяц").dueDate(now.plus(30, ChronoUnit.DAYS)).save();
+
+            assertThat(titles("due=TODAY")).containsExactly("Вчера", "Через час");
+            assertThat(titles("due=WEEK")).containsExactly("Вчера", "Через час", "Через три дня");
+        }
+
+        /**
+         * У выполненной задачи просроченный срок — это история, а не проблема: по тому же
+         * списку статусов не шлются напоминания и не краснеет дата в таблице.
+         */
+        @Test
+        @DisplayName("выполненные и отклонённые не горят")
+        void ignoresClosedTasks() throws Exception {
+            task("Активная").status(IN_PROGRESS).dueDate(now.minus(1, ChronoUnit.DAYS)).save();
+            task("Выполненная").status(DONE).dueDate(now.minus(1, ChronoUnit.DAYS)).save();
+            task("Отклонённая").status(REJECTED).dueDate(now.minus(1, ChronoUnit.DAYS)).save();
+
+            assertThat(titles("due=OVERDUE")).containsExactly("Активная");
+            assertThat(titles("due=WEEK")).containsExactly("Активная");
+        }
+
+        @Test
+        @DisplayName("NONE — задачи без срока, независимо от статуса")
+        void selectsTasksWithoutADueDate() throws Exception {
+            task("Без срока").save();
+            task("Закрытая без срока").status(DONE).save();
+            task("Со сроком").dueDate(now.plus(1, ChronoUnit.DAYS)).save();
+
+            assertThat(titles("due=NONE")).containsExactly("Без срока", "Закрытая без срока");
+        }
+
+        @Test
+        @DisplayName("«мои просроченные» — это два фильтра, а не отдельный режим")
+        void combinesWithTheViewerFilter() throws Exception {
+            task("Моя просроченная").assignee(owner).dueDate(now.minus(2, ChronoUnit.DAYS)).save();
+            task("Чужая просроченная").assignee(member).dueDate(now.minus(2, ChronoUnit.DAYS)).save();
+            task("Моя будущая").assignee(owner).dueDate(now.plus(2, ChronoUnit.DAYS)).save();
+
+            assertThat(titles("assignedToMe=true&due=OVERDUE")).containsExactly("Моя просроченная");
+        }
+
+        @Test
+        @DisplayName("неизвестное окно — 400, а не молча выключенный фильтр")
+        void rejectsAnUnknownWindow() throws Exception {
+            mockMvc.perform(list("due=YESTERDAY")).andExpect(status().isBadRequest());
         }
     }
 

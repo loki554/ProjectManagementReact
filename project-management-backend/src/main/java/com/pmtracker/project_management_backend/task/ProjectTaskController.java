@@ -46,9 +46,12 @@ public class ProjectTaskController {
 
     @GetMapping
     @Operation(summary = "Список задач проекта (страница)",
-            description = "Фильтры: search (подстрока названия), status, assigneeId либо unassigned, tagId, "
-                    + "categoryId либо uncategorized, parentId. Без parentId — только top-level задачи "
-                    + "(parent_task_id IS NULL). Сортировка: sort (ключ) + direction; page начинается с 0, "
+            description = "Фильтры: search (подстрока названия), status, assignedToMe либо assigneeId либо "
+                    + "unassigned, tagId, categoryId либо uncategorized, due (OVERDUE/TODAY/WEEK/NONE), "
+                    + "parentId. Без parentId — только top-level задачи (parent_task_id IS NULL). "
+                    + "assignedToMe — «задачи того, кто смотрит»: сохранённое представление «мои "
+                    + "просроченные» уезжает по ссылке к коллеге и обязано показать ему его задачи, а не "
+                    + "задачи автора ссылки. Сортировка: sort (ключ) + direction; page начинается с 0, "
                     + "size по умолчанию 50 и не больше 200. Доске нужен полный набор задач — для неё "
                     + "отдельный /board")
     public ResponseEntity<PageResponse<TaskResponse>> list(@AuthenticationPrincipal User currentUser,
@@ -57,16 +60,18 @@ public class ProjectTaskController {
                                                      @RequestParam(required = false) TaskStatus status,
                                                      @RequestParam(required = false) UUID assigneeId,
                                                      @RequestParam(defaultValue = "false") boolean unassigned,
+                                                     @RequestParam(defaultValue = "false") boolean assignedToMe,
                                                      @RequestParam(required = false) UUID tagId,
                                                      @RequestParam(required = false) UUID categoryId,
                                                      @RequestParam(defaultValue = "false") boolean uncategorized,
+                                                     @RequestParam(required = false) TaskDueFilter due,
                                                      @RequestParam(required = false) UUID parentId,
                                                      @RequestParam(defaultValue = "NUMBER") TaskSortKey sort,
                                                      @RequestParam(defaultValue = "false") boolean descending,
                                                      @RequestParam(defaultValue = "0") int page,
                                                      @RequestParam(defaultValue = "0") int size) {
-        TaskListQuery query = new TaskListQuery(parentId, search, status, assigneeId, unassigned,
-                tagId, categoryId, uncategorized, sort, descending);
+        TaskListQuery query = new TaskListQuery(parentId, search, status, assigneeId, unassigned, assignedToMe,
+                tagId, categoryId, uncategorized, due, sort, descending);
         return ResponseEntity.ok(taskService.list(currentUser, projectId, query, page, size));
     }
 

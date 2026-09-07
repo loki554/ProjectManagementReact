@@ -170,6 +170,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("BULK_UPDATE_NO_CHANGES", ex.getMessage()));
     }
 
+    // Сохранённое представление (4.7). Чужое представление сюда приходит тем же исключением,
+    // что и несуществующее, — и это намеренно: см. SavedViewService.findOwnOrThrow.
+    @ExceptionHandler(SavedViewNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSavedViewNotFound(SavedViewNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("SAVED_VIEW_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateSavedViewNameException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateSavedViewName(DuplicateSavedViewNameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_SAVED_VIEW_NAME", ex.getMessage()));
+    }
+
     @ExceptionHandler(TaskStatusConflictException.class)
     public ResponseEntity<ErrorResponse> handleTaskStatusConflict(TaskStatusConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
