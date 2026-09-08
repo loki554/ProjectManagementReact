@@ -7,15 +7,9 @@ import { downloadTimeReportCsv } from '../../api/reportsApi'
 import { useTimeReport } from '../../api/reportsQueries'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
 import { TASK_NUMBER_BADGE_CLASS } from '../../lib/constants'
-import { downloadBlob } from '../../lib/downloadBlob'
+import { saveDownloadedFile } from '../../lib/downloadBlob'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import {
-  barPercent,
-  currentMonthRange,
-  filenameFromContentDisposition,
-  formatReportHours,
-  toIsoDate,
-} from '../../lib/reports'
+import { barPercent, currentMonthRange, formatReportHours, toIsoDate } from '../../lib/reports'
 import { useToastStore } from '../../stores/toastStore'
 
 // Сколько задач показывает таблица «на что ушло». Не пагинация, а потолок: отчёт отвечает
@@ -80,8 +74,7 @@ export function ProjectTimeReportPage() {
   async function onDownloadCsv() {
     setDownloading(true)
     try {
-      const { blob, contentDisposition } = await downloadTimeReportCsv(projectId, filters)
-      downloadBlob(blob, filenameFromContentDisposition(contentDisposition, `time-report-${projectSlug}.csv`))
+      saveDownloadedFile(await downloadTimeReportCsv(projectId, filters), `time-report-${projectSlug}.csv`)
     } catch (downloadError) {
       pushToast(getLocalizedErrorMessage(downloadError, t), 'error')
     } finally {

@@ -1,6 +1,7 @@
 import {
   BookOpen,
   ChartColumn,
+  Download,
   ChevronsLeft,
   ChevronsRight,
   Clock,
@@ -34,6 +35,10 @@ const NAV_ITEMS = [
   { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
   { to: 'settings/categories', icon: FolderTree, labelKey: 'projectSidebar.categories' },
+  // Выгрузка (4.12) стоит внизу, рядом с корзиной, и не среди рабочих экранов выше: за
+  // ней приходят редко и по отдельному поводу — забрать архив или свести задачи в
+  // таблице, — а не в ходе обычной работы над задачами.
+  { to: 'export', icon: Download, labelKey: 'projectSidebar.export' },
   { to: 'trash', icon: Trash2, labelKey: 'projectSidebar.trash' },
 ]
 

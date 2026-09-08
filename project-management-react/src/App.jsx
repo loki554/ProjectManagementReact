@@ -16,6 +16,7 @@ import { ProjectLayout } from './components/layout/ProjectLayout'
 import { NewProjectPage } from './pages/projects/NewProjectPage'
 import { ProjectDashboardPage } from './pages/projects/ProjectDashboardPage'
 import { ProjectEditPage } from './pages/projects/ProjectEditPage'
+import { ProjectExportPage } from './pages/projects/ProjectExportPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectSprintsPage } from './pages/projects/ProjectSprintsPage'
@@ -137,6 +138,10 @@ function AppRoutes() {
               вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
           <Route path="dashboard" element={<ProjectDashboardPage />} />
           <Route path="reports/time" element={<ProjectTimeReportPage />} />
+          {/* Выгрузка (4.12) — тоже рабочий экран, но редкий: за ней приходят раз в
+              квартал, когда нужен архив или сводная таблица, поэтому в сайдбаре она
+              стоит внизу, рядом с корзиной. */}
+          <Route path="export" element={<ProjectExportPage />} />
           <Route path="trash" element={<ProjectTrashPage />} />
           {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
               поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут

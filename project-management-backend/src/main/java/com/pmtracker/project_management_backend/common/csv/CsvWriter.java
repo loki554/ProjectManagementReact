@@ -1,9 +1,13 @@
-package com.pmtracker.project_management_backend.report;
+package com.pmtracker.project_management_backend.common.csv;
 
 import java.util.List;
 
 /**
- * Сборка CSV по RFC 4180 (4.10).
+ * Сборка CSV по RFC 4180.
+ *
+ * <p>Лежит в common, а не рядом с отчётом, где появилась (4.10): выгрузок стало две —
+ * записи времени и задачи проекта (4.12), — и правила экранирования у них обязаны быть
+ * одни. Разъехавшись, они дали бы файл, который в одном месте гасит формулы, а в другом нет.
  *
  * <p><b>Разделитель — запятая, кодировка — UTF-8 с BOM.</b> Пара не самая очевидная, и обе
  * половины выбраны сознательно. Запятая — потому что это и есть CSV: так файл прочитают
@@ -22,7 +26,7 @@ import java.util.List;
  * — так что защита здесь не теоретическая. Опасные ячейки предваряются апострофом: он
  * гасит формулу и не виден при чтении файла глазами.
  */
-final class CsvWriter {
+public final class CsvWriter {
 
     /**
      * Признак кодировки для Excel. Явная escape-последовательность, а не символ в исходнике:
@@ -41,11 +45,12 @@ final class CsvWriter {
     }
 
     /**
-     * Собирает таблицу целиком. Строки в памяти, а не потоком: выгрузка ограничена периодом
-     * (не больше года, см. TimeReportService), и превратить её в StreamingResponseBody стоит
-     * тогда, когда этого потолка перестанет хватать, — а не заранее.
+     * Собирает таблицу целиком. Строки в памяти, а не потоком: объёмы здесь проектные —
+     * записи времени за период не длиннее года (TimeReportService) и задачи одного проекта
+     * (ExportService), то есть тысячи строк, а не миллионы. Превратить это в
+     * StreamingResponseBody стоит тогда, когда перестанет хватать, — а не заранее.
      */
-    static String write(List<String> header, List<List<String>> rows) {
+    public static String write(List<String> header, List<List<String>> rows) {
         StringBuilder csv = new StringBuilder(BOM);
         appendRow(csv, header);
         for (List<String> row : rows) {

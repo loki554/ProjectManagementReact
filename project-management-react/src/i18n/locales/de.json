@@ -157,6 +157,7 @@
     "wiki": "Wiki",
     "tags": "Tags",
     "categories": "Kategorien",
+    "export": "Export",
     "trash": "Papierkorb",
     "collapse": "Einklappen",
     "expand": "Ausklappen"
@@ -495,6 +496,20 @@
     "entries_other": "{{count}} Einträge",
     "moreTasks_one": "und {{count}} weitere Aufgabe",
     "moreTasks_other": "und {{count}} weitere Aufgaben"
+  },
+  "export": {
+    "title": "Datenexport",
+    "hint": "Aufgaben und Wiki des Projekts als Datei mitnehmen — ins Archiv, in eine Tabelle oder in ein anderes Werkzeug.",
+    "tasksCsv": "Aufgaben — CSV",
+    "tasksCsvHint": "Eine Tabelle für Excel, Google Sheets und Pivots: eine Zeile pro Aufgabe.",
+    "tasksJson": "Aufgaben — JSON",
+    "tasksJsonHint": "Dieselben Daten mit Struktur und Typen — für Skripte und Umzüge.",
+    "wikiMarkdown": "Wiki — Markdown",
+    "wikiMarkdownHint": "Die Wiki-Seite unverändert, mit demselben Text wie im Editor.",
+    "wikiEmpty": "Das Wiki ist noch leer — es gibt nichts zu exportieren.",
+    "download": "Herunterladen",
+    "downloading": "Datei wird vorbereitet...",
+    "scopeNote": "Exportiert wird das gesamte Projekt samt Teilaufgaben; Aufgaben im Papierkorb bleiben aussen vor."
   },
   "tasks": {
     "title": "Aufgaben von „{{project}}“",

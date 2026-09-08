@@ -157,6 +157,7 @@
     "wiki": "Wiki",
     "tags": "Tags",
     "categories": "Categories",
+    "export": "Export",
     "trash": "Trash",
     "collapse": "Collapse",
     "expand": "Expand"
@@ -495,6 +496,20 @@
     "entries_other": "{{count}} entries",
     "moreTasks_one": "and {{count}} more task",
     "moreTasks_other": "and {{count}} more tasks"
+  },
+  "export": {
+    "title": "Data export",
+    "hint": "Take the project tasks and wiki as a file — for an archive, a spreadsheet or another tool.",
+    "tasksCsv": "Tasks — CSV",
+    "tasksCsvHint": "A table for Excel, Google Sheets and pivots: one row per task.",
+    "tasksJson": "Tasks — JSON",
+    "tasksJsonHint": "The same data with structure and types — for scripts and migration.",
+    "wikiMarkdown": "Wiki — Markdown",
+    "wikiMarkdownHint": "The wiki page as is, the same text you see in the editor.",
+    "wikiEmpty": "The wiki is still empty — nothing to export.",
+    "download": "Download",
+    "downloading": "Preparing file...",
+    "scopeNote": "The whole project is exported, subtasks included; tasks in the trash are left out."
   },
   "tasks": {
     "title": "Tasks in \"{{project}}\"",
