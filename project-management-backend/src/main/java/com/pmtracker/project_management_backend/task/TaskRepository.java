@@ -162,6 +162,78 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
             """)
     List<Task> findActiveWithDueDateBefore(List<TaskStatus> excludedStatuses, Instant cutoff);
 
+    // ------------------------------------------------------------ дашборд проекта (4.11)
+
+    /**
+     * Распределение задач по статусам — левая половина дашборда. Статусы, в которых задач
+     * нет, сюда не попадают: их подставляет DashboardService, потому что показать надо все
+     * шесть колонок, включая пустые (пустой REJECTED — это тоже ответ).
+     *
+     * <p>Задачи в корзине не считаются: @SQLRestriction действует и здесь, и это ровно то
+     * поведение, которого ждёшь от дашборда — доска, список и счётчик спринта удалённых
+     * задач тоже не показывают.
+     */
+    @Query("select t.status as status, count(t.id) as taskCount from Task t where t.project.id = :projectId group by t.status")
+    List<StatusCount> countByStatus(UUID projectId);
+
+    /**
+     * Распределение по исполнителям: сколько на человеке всего и сколько из этого ещё не
+     * закрыто. Два числа, а не одно, потому что вопрос к этой части дашборда всегда
+     * двойной — «кто перегружен сейчас» и «кто сколько вынес за всё время», и первое без
+     * второго читается несправедливо.
+     *
+     * <p>left join, а не join: задачи без исполнителя обязаны попасть в ответ отдельной
+     * строкой с userId = null. «Не назначено» — самая важная строка этого графика: она
+     * показывает, сколько работы вообще ни на ком не висит.
+     */
+    @Query("""
+            select a.id as userId,
+                   count(t.id) as totalCount,
+                   sum(case when t.status in :closedStatuses then 0 else 1 end) as openCount
+            from Task t
+            left join t.assignee a
+            where t.project.id = :projectId
+            group by a.id
+            """)
+    List<AssigneeLoad> countByAssignee(UUID projectId, List<TaskStatus> closedStatuses);
+
+    /**
+     * Задачи проекта тремя полями — стартовая точка для восстановления истории статусов
+     * (burndown и «среднее время в статусе», см. DashboardService). Нужны ровно id, текущий
+     * статус и момент создания: момент создания — начало первого отрезка жизни задачи, а
+     * текущий статус — то, чем этот ряд заканчивается у задачи, которую вообще ни разу не
+     * переводили.
+     */
+    @Query("select t.id as id, t.status as status, t.createdAt as createdAt from Task t where t.project.id = :projectId")
+    List<TaskTimelineRow> findTimelineByProjectId(UUID projectId);
+
+    /** То же самое, но составом одного спринта — исходный набор для его burndown. */
+    @Query("select t.id as id, t.status as status, t.createdAt as createdAt from Task t where t.sprint.id = :sprintId")
+    List<TaskTimelineRow> findTimelineBySprintId(UUID sprintId);
+
+    interface StatusCount {
+        TaskStatus getStatus();
+
+        long getTaskCount();
+    }
+
+    interface AssigneeLoad {
+        /** null — строка «не назначено». */
+        UUID getUserId();
+
+        long getTotalCount();
+
+        long getOpenCount();
+    }
+
+    interface TaskTimelineRow {
+        UUID getId();
+
+        TaskStatus getStatus();
+
+        Instant getCreatedAt();
+    }
+
     // ----------------------------------------------------------- мягкое удаление (3.5)
     //
     // Всё, что ниже, написано нативным SQL сознательно: Task помечена

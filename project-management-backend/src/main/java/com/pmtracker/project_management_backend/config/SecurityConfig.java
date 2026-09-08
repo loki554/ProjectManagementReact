@@ -99,7 +99,13 @@ public class SecurityConfig {
         // Браузер по умолчанию не даёт JS читать никакие заголовки ответа, кроме нескольких
         // «безопасных», — без этой строки фронтенд не увидит Retry-After у ответа 429
         // (см. AuthRateLimitFilter) и не сможет сказать пользователю, когда пробовать снова.
-        config.setExposedHeaders(List.of("Retry-After"));
+        //
+        // Content-Disposition — из той же серии: файл, который отдаёт CSV-выгрузка отчёта
+        // (4.10), приходит в JS как blob, и имя ему выбирает уже фронтенд. Без этой строки
+        // имя, которое сервер аккуратно собрал из слага проекта и границ периода, до
+        // браузера просто не доезжает, и остаётся либо выдумывать его заново на клиенте,
+        // либо сохранять файлы с именем вида «download».
+        config.setExposedHeaders(List.of("Retry-After", "Content-Disposition"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

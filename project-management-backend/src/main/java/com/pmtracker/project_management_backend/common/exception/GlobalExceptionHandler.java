@@ -390,6 +390,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("SPRINT_DATES_INVALID", ex.getMessage()));
     }
 
+    // 400: отчёт с началом позже конца или периодом длиннее года (4.10). Сообщение уезжает
+    // наружу как есть — оно говорит, какая именно из двух границ нарушена, и обе безобидны:
+    // ни одна не рассказывает ничего о содержимом проекта.
+    @ExceptionHandler(InvalidReportRangeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidReportRange(InvalidReportRangeException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("REPORT_RANGE_INVALID", ex.getMessage()));
+    }
+
     // 409, в отличие от соседей: активный спринт в проекте уже есть, и это именно состояние
     // на сервере, которое изменится, когда его закроют, — тот же самый запрос тогда пройдёт.
     @ExceptionHandler(SprintAlreadyActiveException.class)

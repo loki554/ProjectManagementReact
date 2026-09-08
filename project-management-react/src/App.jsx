@@ -14,10 +14,12 @@ import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
 import { ProjectLayout } from './components/layout/ProjectLayout'
 import { NewProjectPage } from './pages/projects/NewProjectPage'
+import { ProjectDashboardPage } from './pages/projects/ProjectDashboardPage'
 import { ProjectEditPage } from './pages/projects/ProjectEditPage'
 import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
 import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
 import { ProjectSprintsPage } from './pages/projects/ProjectSprintsPage'
+import { ProjectTimeReportPage } from './pages/projects/ProjectTimeReportPage'
 import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
@@ -130,6 +132,11 @@ function AppRoutes() {
           {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
               справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
           <Route path="sprints" element={<ProjectSprintsPage />} />
+          {/* Дашборд (4.11) и отчёт по времени (4.10) — тоже рабочие экраны, а не
+              настройки: оба только читают то, что трекер уже собрал, и оба отвечают на
+              вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
+          <Route path="dashboard" element={<ProjectDashboardPage />} />
+          <Route path="reports/time" element={<ProjectTimeReportPage />} />
           <Route path="trash" element={<ProjectTrashPage />} />
           {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
               поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут

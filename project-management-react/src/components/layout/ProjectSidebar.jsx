@@ -1,7 +1,9 @@
 import {
   BookOpen,
+  ChartColumn,
   ChevronsLeft,
   ChevronsRight,
+  Clock,
   FolderTree,
   List,
   Rocket,
@@ -23,6 +25,11 @@ const NAV_ITEMS = [
   // Спринты стоят третьими, сразу за двумя способами смотреть на задачи: это тоже взгляд
   // на работу проекта, а не настройка вроде тэгов и категорий, которые живут ниже.
   { to: 'sprints', icon: Rocket, labelKey: 'projectSidebar.sprints' },
+  // Дашборд (4.11) и отчёт по времени (4.10) стоят следом за спринтами и по той же
+  // причине: это взгляд на работу проекта, а не его настройка. Отчёт ниже дашборда —
+  // за часами ходят реже, чем за «как у нас дела».
+  { to: 'dashboard', icon: ChartColumn, labelKey: 'projectSidebar.dashboard' },
+  { to: 'reports/time', icon: Clock, labelKey: 'projectSidebar.timeReport' },
   { to: 'settings/members', icon: Users, labelKey: 'projectSidebar.members' },
   { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
