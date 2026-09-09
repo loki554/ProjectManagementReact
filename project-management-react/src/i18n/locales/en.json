@@ -4,6 +4,19 @@
     "name": "PM Tracker",
     "sessionExpired": "Your session has expired, please sign in again"
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "This page crashed while rendering. Your data is safe — try again, and if it keeps happening, reload the page.",
+    "retry": "Try again",
+    "reload": "Reload page",
+    "goHome": "Go to projects",
+    "details": "Technical details",
+    "sectionTitle": "This part of the page failed to load",
+    "boardTitle": "The board failed to render",
+    "boardHint": "The rest of the page still works. Try again, or open the task list instead.",
+    "editorFallback": "The Markdown editor failed to start — here is a plain text box, formatting still works.",
+    "rendererFallback": "Failed to render Markdown — showing the raw text."
+  },
   "header": {
     "profile": "Profile",
     "logout": "Log out",

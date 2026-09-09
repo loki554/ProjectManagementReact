@@ -1,6 +1,8 @@
 import ReactMarkdown from 'react-markdown'
+import { useTranslation } from 'react-i18next'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
+import { ErrorBoundary } from '../errors/ErrorBoundary'
 
 // rehype-sanitize обязателен — описание задачи это произвольный MD от пользователей
 // проекта, без санитайза это открытый XSS-вектор (см. §2 плана).
@@ -20,15 +22,42 @@ const markdownClass =
   '[&_table]:mb-2 [&_table]:border-collapse [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-50 [&_th]:px-2 [&_th]:py-1 [&_th]:text-left dark:[&_th]:border-gray-600 dark:[&_th]:bg-gray-700 ' +
   '[&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1 dark:[&_td]:border-gray-600'
 
-export function MarkdownRenderer({ children }) {
-  if (!children) {
-    return null
-  }
+function Rendered({ children }) {
   return (
     <div className={markdownClass}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
         {children}
       </ReactMarkdown>
     </div>
+  )
+}
+
+// Запасной вариант — исходный текст как есть. Разметка потеряна, содержание — нет, а
+// именно содержание читать и пришли. Вставляется текстом в <pre>, то есть санитайз здесь ни
+// при чём: реакт экранирует его сам, как и любой другой текст.
+function RawText({ children }) {
+  const { t } = useTranslation()
+  return (
+    <div>
+      <p className="mb-1 text-xs text-amber-700 dark:text-amber-400">{t('errorBoundary.rendererFallback')}</p>
+      <pre className="overflow-x-auto text-sm whitespace-pre-wrap text-gray-800 dark:text-gray-200">{children}</pre>
+    </div>
+  )
+}
+
+/**
+ * Граница внутри компонента, как и у редактора, и по той же причине — но ставки здесь
+ * выше: рендерер стоит в списках и лентах (комментарии, описания, вики), и без границы один
+ * кривой комментарий уронил бы всю страницу задачи вместе со всеми остальными. resetKeys по
+ * самому тексту: отредактированный комментарий — уже другой вход, и пробовать его стоит.
+ */
+export function MarkdownRenderer({ children }) {
+  if (!children) {
+    return null
+  }
+  return (
+    <ErrorBoundary name="markdown-renderer" resetKeys={[children]} fallback={() => <RawText>{children}</RawText>}>
+      <Rendered>{children}</Rendered>
+    </ErrorBoundary>
   )
 }

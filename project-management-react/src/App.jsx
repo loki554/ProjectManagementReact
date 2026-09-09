@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { ErrorBoundary } from './components/errors/ErrorBoundary'
+import { AppErrorScreen } from './components/errors/ErrorFallback'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { InvitePage } from './pages/InvitePage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -77,99 +79,110 @@ function AppRoutes() {
   return (
     <>
       {!hasOwnHeader && <LanguageSwitcher />}
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* Не под ProtectedRoute: по этой ссылке приходят из письма, и чаще всего — ещё
-            не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
-            (см. InvitePage). */}
-        <Route path="/invite" element={<InvitePage />} />
-        {/* Тоже не под ProtectedRoute: по этой ссылке приходят из письма-уведомления, и
-            требовать входа ради «перестаньте мне писать» — верный способ получить вместо
-            отписки жалобу на спам (см. UnsubscribePage). */}
-        <Route path="/unsubscribe" element={<UnsubscribePage />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute>
-              <ProjectsListPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Выдача поиска — свой роут, а не оверлей: состояние поиска целиком лежит в
-            query-параметрах, чтобы ссылкой можно было поделиться (см. SearchPage). */}
-        <Route
-          path="/search"
-          element={
-            <ProtectedRoute>
-              <SearchPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/new"
-          element={
-            <ProtectedRoute>
-              <NewProjectPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Все страницы внутри проекта живут во вложенных роутах под общим
-            ProjectLayout (хедер + сайдбар), их URL-ы не изменились. */}
-        <Route
-          path="/projects/:projectSlug"
-          element={
-            <ProtectedRoute>
-              <ProjectLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<ProjectOverviewPage />} />
-          <Route path="tasks" element={<ProjectTaskListPage />} />
-          <Route path="board" element={<ProjectTasksPage />} />
-          {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
-              справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
-          <Route path="sprints" element={<ProjectSprintsPage />} />
-          {/* Дашборд (4.11) и отчёт по времени (4.10) — тоже рабочие экраны, а не
-              настройки: оба только читают то, что трекер уже собрал, и оба отвечают на
-              вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
-          <Route path="dashboard" element={<ProjectDashboardPage />} />
-          <Route path="reports/time" element={<ProjectTimeReportPage />} />
-          {/* Выгрузка (4.12) — тоже рабочий экран, но редкий: за ней приходят раз в
-              квартал, когда нужен архив или сводная таблица, поэтому в сайдбаре она
-              стоит внизу, рядом с корзиной. */}
-          <Route path="export" element={<ProjectExportPage />} />
-          <Route path="trash" element={<ProjectTrashPage />} />
-          {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
-              поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
-              с ?parent=<taskNumber>. */}
-          <Route path="tasks/new" element={<TaskCreatePage />} />
-          <Route path="tasks/:taskNumber" element={<TaskViewPage />} />
-          <Route path="tasks/:taskNumber/edit" element={<TaskEditPage />} />
-          <Route path="wiki" element={<ProjectWikiPage />} />
-          <Route path="settings/members" element={<ProjectMembersPage />} />
-          <Route path="settings/tags" element={<ProjectTagsPage />} />
-          <Route path="settings/categories" element={<ProjectCategoriesPage />} />
-          {/* Шаблоны задач (4.13) — в настройках, рядом с тэгами и категориями: это
-              справочник проекта, а не рабочий экран. Пользуются им не отсюда, а из формы
-              заведения задачи, где шаблон и выбирают. */}
-          <Route path="settings/templates" element={<ProjectTaskTemplatesPage />} />
-          <Route path="settings/edit" element={<ProjectEditPage />} />
-        </Route>
-        <Route path="/" element={<Navigate to="/projects" replace />} />
-        <Route path="*" element={<Navigate to="/projects" replace />} />
-      </Routes>
+      {/* Маршрутная граница: ошибка рендера одной страницы гасит страницу, а не вкладку.
+          resetKeys по location.key, а не по pathname: ключ уникален для каждой записи истории,
+          поэтому и «назад» на тот же адрес считается новой попыткой. Сама граница — внутри
+          BrowserRouter и выше <Routes>: сам location.key берётся из роутера, да и пережить
+          падение роутер обязан — иначе уходить со сломанной страницы было бы некуда. */}
+      <ErrorBoundary
+        name="route"
+        resetKeys={[location.key]}
+        fallback={({ error, reset }) => <AppErrorScreen error={error} onRetry={reset} />}
+      >
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* Не под ProtectedRoute: по этой ссылке приходят из письма, и чаще всего — ещё
+              не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
+              (см. InvitePage). */}
+          <Route path="/invite" element={<InvitePage />} />
+          {/* Тоже не под ProtectedRoute: по этой ссылке приходят из письма-уведомления, и
+              требовать входа ради «перестаньте мне писать» — верный способ получить вместо
+              отписки жалобу на спам (см. UnsubscribePage). */}
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsListPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Выдача поиска — свой роут, а не оверлей: состояние поиска целиком лежит в
+              query-параметрах, чтобы ссылкой можно было поделиться (см. SearchPage). */}
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <SearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/new"
+            element={
+              <ProtectedRoute>
+                <NewProjectPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Все страницы внутри проекта живут во вложенных роутах под общим
+              ProjectLayout (хедер + сайдбар), их URL-ы не изменились. */}
+          <Route
+            path="/projects/:projectSlug"
+            element={
+              <ProtectedRoute>
+                <ProjectLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<ProjectOverviewPage />} />
+            <Route path="tasks" element={<ProjectTaskListPage />} />
+            <Route path="board" element={<ProjectTasksPage />} />
+            {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
+                справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
+            <Route path="sprints" element={<ProjectSprintsPage />} />
+            {/* Дашборд (4.11) и отчёт по времени (4.10) — тоже рабочие экраны, а не
+                настройки: оба только читают то, что трекер уже собрал, и оба отвечают на
+                вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
+            <Route path="dashboard" element={<ProjectDashboardPage />} />
+            <Route path="reports/time" element={<ProjectTimeReportPage />} />
+            {/* Выгрузка (4.12) — тоже рабочий экран, но редкий: за ней приходят раз в
+                квартал, когда нужен архив или сводная таблица, поэтому в сайдбаре она
+                стоит внизу, рядом с корзиной. */}
+            <Route path="export" element={<ProjectExportPage />} />
+            <Route path="trash" element={<ProjectTrashPage />} />
+            {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
+                поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
+                с ?parent=<taskNumber>. */}
+            <Route path="tasks/new" element={<TaskCreatePage />} />
+            <Route path="tasks/:taskNumber" element={<TaskViewPage />} />
+            <Route path="tasks/:taskNumber/edit" element={<TaskEditPage />} />
+            <Route path="wiki" element={<ProjectWikiPage />} />
+            <Route path="settings/members" element={<ProjectMembersPage />} />
+            <Route path="settings/tags" element={<ProjectTagsPage />} />
+            <Route path="settings/categories" element={<ProjectCategoriesPage />} />
+            {/* Шаблоны задач (4.13) — в настройках, рядом с тэгами и категориями: это
+                справочник проекта, а не рабочий экран. Пользуются им не отсюда, а из формы
+                заведения задачи, где шаблон и выбирают. */}
+            <Route path="settings/templates" element={<ProjectTaskTemplatesPage />} />
+            <Route path="settings/edit" element={<ProjectEditPage />} />
+          </Route>
+          <Route path="/" element={<Navigate to="/projects" replace />} />
+          <Route path="*" element={<Navigate to="/projects" replace />} />
+        </Routes>
+      </ErrorBoundary>
     </>
   )
 }

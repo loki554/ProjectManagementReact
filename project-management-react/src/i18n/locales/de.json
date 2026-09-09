@@ -4,6 +4,19 @@
     "name": "PM Tracker",
     "sessionExpired": "Ihre Sitzung ist abgelaufen, bitte melden Sie sich erneut an"
   },
+  "errorBoundary": {
+    "title": "Etwas ist schiefgelaufen",
+    "message": "Diese Seite ist beim Rendern abgestürzt. Ihre Daten sind sicher — versuchen Sie es erneut, und laden Sie die Seite neu, falls es wieder passiert.",
+    "retry": "Erneut versuchen",
+    "reload": "Seite neu laden",
+    "goHome": "Zu den Projekten",
+    "details": "Technische Details",
+    "sectionTitle": "Dieser Teil der Seite konnte nicht geladen werden",
+    "boardTitle": "Das Board konnte nicht dargestellt werden",
+    "boardHint": "Der Rest der Seite funktioniert weiterhin. Versuchen Sie es erneut oder öffnen Sie die Aufgabenliste.",
+    "editorFallback": "Der Markdown-Editor konnte nicht gestartet werden — hier ist ein einfaches Textfeld, die Formatierung funktioniert trotzdem.",
+    "rendererFallback": "Markdown konnte nicht dargestellt werden — der Rohtext wird angezeigt."
+  },
   "header": {
     "profile": "Profil",
     "logout": "Abmelden",

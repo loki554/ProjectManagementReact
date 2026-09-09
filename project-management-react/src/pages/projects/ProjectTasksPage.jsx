@@ -19,6 +19,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { useBoardTasks, useCreateTask, useUpdateTaskStatus } from '../../api/tasksQueries'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { ErrorBoundary } from '../../components/errors/ErrorBoundary'
+import { SectionErrorNotice } from '../../components/errors/ErrorFallback'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import { inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -369,34 +371,53 @@ export function ProjectTasksPage() {
       {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('tasks.loading')}</p>}
       {isError && <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
 
+      {/* Секционная граница (5.1): доска — самый сложный рендер во всём приложении
+          (dnd-kit, шесть колонок, перетаскивание с оверлеем) и единственное место, где одна
+          задача с неожиданными данными уносит вид на весь проект. Под границей только доска:
+          форма быстрого создания задачи выше продолжает работать, а сайдбар с хедером живут в
+          ProjectLayout и сюда не входят вовсе. resetKeys по tasks: пришедшие с сервера свежие
+          данные — повод попробовать отрисовать доску заново без участия человека. */}
       {!isLoading && !isError && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
+        <ErrorBoundary
+          name="kanban-board"
+          resetKeys={[tasks]}
+          fallback={({ error, reset }) => (
+            <SectionErrorNotice
+              error={error}
+              reset={reset}
+              title={t('errorBoundary.boardTitle')}
+              hint={t('errorBoundary.boardHint')}
+            />
+          )}
         >
-          {/* Колонки делят всю ширину поровну (flex-1) и не сжимаются уже min-w-64 —
-              на узком экране доска скроллится по горизонтали вместо переноса в сетку. */}
-          <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-1">
-            {TASK_STATUSES.map((status) => (
-              <KanbanColumn
-                key={status}
-                status={status}
-                tasks={tasksByStatus[status]}
-                disabled={!canManage}
-                onOpenTask={(taskNumber) => navigate(`/projects/${projectSlug}/tasks/${taskNumber}`)}
-                t={t}
-                locale={i18n.language}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            {/* Колонки делят всю ширину поровну (flex-1) и не сжимаются уже min-w-64 —
+                на узком экране доска скроллится по горизонтали вместо переноса в сетку. */}
+            <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-1">
+              {TASK_STATUSES.map((status) => (
+                <KanbanColumn
+                  key={status}
+                  status={status}
+                  tasks={tasksByStatus[status]}
+                  disabled={!canManage}
+                  onOpenTask={(taskNumber) => navigate(`/projects/${projectSlug}/tasks/${taskNumber}`)}
+                  t={t}
+                  locale={i18n.language}
+                />
+              ))}
+            </div>
 
-          <DragOverlay>
-            {activeTask && <TaskCardOverlay task={activeTask} t={t} locale={i18n.language} />}
-          </DragOverlay>
-        </DndContext>
+            <DragOverlay>
+              {activeTask && <TaskCardOverlay task={activeTask} t={t} locale={i18n.language} />}
+            </DragOverlay>
+          </DndContext>
+        </ErrorBoundary>
       )}
     </div>
   )
