@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '../../api/tagsQueries'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
+import { canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { useAuthStore } from '../../stores/authStore'
@@ -35,11 +36,11 @@ export function ProjectTagsPage() {
 
   const [editingTagId, setEditingTagId] = useState(null)
 
-  // Единственное owner-only место в приложении (в отличие от ADMIN+ у ProjectMembersPage) —
-  // точное сравнение роли, не roleIsAtLeast. Сервер всё равно проверяет права на каждом
-  // write-эндпоинте (INSUFFICIENT_ROLE), это только косметическое скрытие UI.
+  // Owner-only (в отличие от ADMIN+ у ProjectMembersPage). Сервер всё равно проверяет
+  // права на каждом write-эндпоинте (INSUFFICIENT_ROLE), это только косметическое скрытие
+  // UI — плюс архив проекта (4.14), в котором правок нет ни у кого.
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership?.role === 'OWNER'
+  const canManage = canWriteInProject(project, myMembership?.role, 'OWNER')
 
   const schema = useMemo(() => buildTagSchema(t), [i18n.language, t])
 

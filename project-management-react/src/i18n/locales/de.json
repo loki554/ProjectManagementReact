@@ -145,7 +145,16 @@
     "validation": {
       "nameLatinOnly": "Der Name darf nur lateinische Buchstaben, Ziffern und übliche Satzzeichen enthalten",
       "previewImageTooLarge": "Die Datei ist zu groß (max. 5MB)"
-    }
+    },
+    "archivedTitle": "Projektarchiv",
+    "archivedOn": "Archiviert am {{date}}",
+    "archivedBanner": "Dieses Projekt ist archiviert: alles lesbar, nichts änderbar.",
+    "showArchived": "Archiv",
+    "showActive": "Aktive Projekte",
+    "archiveEmpty": "Das Archiv ist leer",
+    "unarchive": "Aus dem Archiv holen",
+    "unarchiving": "Wird zurückgeholt...",
+    "backToProject": "Zum Projekt"
   },
   "projectSidebar": {
     "taskList": "Aufgabenliste",
@@ -160,7 +169,8 @@
     "export": "Export",
     "trash": "Papierkorb",
     "collapse": "Einklappen",
-    "expand": "Ausklappen"
+    "expand": "Ausklappen",
+    "taskTemplates": "Vorlagen"
   },
   "projectOverview": {
     "loading": "Projekt wird geladen...",
@@ -291,9 +301,14 @@
   "projectEdit": {
     "title": "Projekt bearbeiten",
     "changeImage": "Bild ändern",
-    "archived": "Projekt archiviert",
     "save": "Speichern",
-    "saving": "Wird gespeichert..."
+    "saving": "Wird gespeichert...",
+    "archiveTitle": "Archiv",
+    "archiveHint": "Das Projekt verschwindet aus der Liste und nimmt keine Änderungen mehr an. Alles bleibt lesbar und lässt sich jederzeit zurückholen.",
+    "archive": "Projekt archivieren",
+    "archiving": "Wird archiviert...",
+    "archiveConfirm": "Dieses Projekt archivieren? Es verschwindet aus der Projektliste und nimmt keine Änderungen mehr an.",
+    "archivedNotice": "Das Projekt ist archiviert, seine Einstellungen lassen sich daher nicht bearbeiten. Holen Sie es zuerst auf der Projektseite zurück."
   },
   "members": {
     "title": "Mitglieder von „{{project}}“",
@@ -789,7 +804,12 @@
     "SPRINT_TRANSITION_INVALID": "Dieser Sprint kann nicht in diesen Zustand versetzt werden",
     "SPRINT_PROJECT_MISMATCH": "Dieser Sprint gehört zu einem anderen Projekt",
     "SPRINT_COMPLETED": "Ein abgeschlossener Sprint nimmt keine Aufgaben mehr auf",
-    "REPORT_RANGE_INVALID": "Ungültiger Berichtszeitraum: Beginn liegt nach dem Ende oder länger als ein Jahr"
+    "REPORT_RANGE_INVALID": "Ungültiger Berichtszeitraum: Beginn liegt nach dem Ende oder länger als ein Jahr",
+    "PROJECT_ARCHIVED": "Das Projekt ist archiviert: holen Sie es zurück, um Änderungen vorzunehmen",
+    "TASK_TEMPLATE_NOT_FOUND": "Vorlage nicht gefunden",
+    "DUPLICATE_TASK_TEMPLATE_NAME": "Eine Vorlage mit diesem Namen gibt es im Projekt bereits",
+    "TASK_TEMPLATE_PROJECT_MISMATCH": "Die Vorlage gehört zu einem anderen Projekt",
+    "CHECKLIST_ITEM_NOT_FOUND": "Checklistenpunkt nicht gefunden"
   },
   "trash": {
     "title": "Papierkorb",
@@ -799,5 +819,56 @@
     "purgeAfter": "Verschwindet am",
     "restore": "Wiederherstellen",
     "withSubtasks": "und {{count}} Unteraufgabe(n)"
+  },
+  "checklist": {
+    "title": "Checkliste",
+    "progress": "{{done}} von {{total}}",
+    "badgeHint": "Checkliste: erledigt von gesamt",
+    "loading": "Checkliste wird geladen...",
+    "empty": "Noch keine Schritte",
+    "add": "Hinzufügen",
+    "adding": "Wird hinzugefügt...",
+    "addPlaceholder": "Ein Schritt dieser Aufgabe",
+    "edit": "Bearbeiten",
+    "editLabel": "Text des Schritts",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
+  },
+  "taskTemplates": {
+    "navLabel": "Aufgabenvorlagen",
+    "hint": "Ein fertiges Aufgabenformular für wiederkehrende Arbeiten: Felder plus Checkliste. Die gewählte Vorlage füllt das Formular der neuen Aufgabe, das weiterhin bearbeitbar bleibt.",
+    "create": "Neue Vorlage",
+    "name": "Name der Vorlage",
+    "taskTitle": "Aufgabentitel",
+    "taskTitlePlaceholder": "Wie die Aufgabe heißen wird",
+    "noTaskTitle": "Ohne Titel",
+    "description": "Aufgabenbeschreibung",
+    "urgency": "Dringlichkeit",
+    "tag": "Tag",
+    "category": "Kategorie",
+    "unset": "Nicht gesetzt",
+    "checklist": "Checkliste",
+    "checklistEmpty": "Noch keine Schritte in dieser Vorlage",
+    "addItem": "Schritt hinzufügen",
+    "itemPlaceholder": "Ein Schritt",
+    "removeItem": "Schritt entfernen",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "itemCount_zero": "ohne Checkliste",
+    "itemCount_one": "{{count}} Schritt",
+    "itemCount_other": "{{count}} Schritte",
+    "save": "Speichern",
+    "saving": "Wird gespeichert...",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteConfirm": "Die Vorlage \"{{name}}\" löschen? Bereits daraus erstellte Aufgaben bleiben unverändert.",
+    "loading": "Vorlagen werden geladen...",
+    "empty": "Noch keine Vorlagen",
+    "pickLabel": "Vorlage",
+    "noTemplate": "Ohne Vorlage",
+    "checklistWillBeAdded_one": "{{count}} Checklistenpunkt wird der Aufgabe hinzugefügt",
+    "checklistWillBeAdded_other": "{{count}} Checklistenpunkte werden der Aufgabe hinzugefügt"
   }
 }

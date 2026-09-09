@@ -12,6 +12,10 @@ public record ProjectResponse(
         String slug,
         String description,
         boolean archived,
+        // Когда убрали в архив (4.14); null у действующего проекта. Рядом с флагом, а не
+        // вместо него: «в архиве» — это состояние, по которому фильтруют список, а дата —
+        // подпись под строкой архива.
+        Instant archivedAt,
         String previewImageUrl,
         ProjectRole myRole,
         UUID createdBy,
@@ -27,6 +31,7 @@ public record ProjectResponse(
                 project.getSlug(),
                 project.getDescription(),
                 project.isArchived(),
+                project.getArchivedAt(),
                 buildPreviewImageUrl(project),
                 myRole,
                 project.getCreatedBy().getId(),

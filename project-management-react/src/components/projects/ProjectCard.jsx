@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 
 export function ProjectCard({ project }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const previewImageUrl = useAuthenticatedImage(project.previewImageUrl)
 
   return (
@@ -38,9 +38,16 @@ export function ProjectCard({ project }) {
           </Link>
         </div>
       </div>
+      {/* В архиве (4.14) — с датой: в списке архива она и есть то, по чему находят нужный
+          проект («тот, что закрыли весной»). Только дата, без времени: час архивации не
+          значит ничего. */}
       {project.archived && (
         <span className="mt-2 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
-          {t('projects.archived')}
+          {project.archivedAt
+            ? t('projects.archivedOn', {
+                date: new Date(project.archivedAt).toLocaleDateString(i18n.language, { dateStyle: 'medium' }),
+              })
+            : t('projects.archived')}
         </span>
       )}
     </li>

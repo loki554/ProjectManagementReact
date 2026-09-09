@@ -145,7 +145,16 @@
     "validation": {
       "nameLatinOnly": "Name must contain only Latin letters, digits, and standard punctuation",
       "previewImageTooLarge": "Image is too large (max 5MB)"
-    }
+    },
+    "archivedTitle": "Project archive",
+    "archivedOn": "Archived on {{date}}",
+    "archivedBanner": "This project is archived: everything can be read, nothing can be changed.",
+    "showArchived": "Archive",
+    "showActive": "Active projects",
+    "archiveEmpty": "The archive is empty",
+    "unarchive": "Restore from archive",
+    "unarchiving": "Restoring...",
+    "backToProject": "Back to the project"
   },
   "projectSidebar": {
     "taskList": "Task list",
@@ -160,7 +169,8 @@
     "export": "Export",
     "trash": "Trash",
     "collapse": "Collapse",
-    "expand": "Expand"
+    "expand": "Expand",
+    "taskTemplates": "Templates"
   },
   "projectOverview": {
     "loading": "Loading project...",
@@ -291,9 +301,14 @@
   "projectEdit": {
     "title": "Edit project",
     "changeImage": "Change image",
-    "archived": "Project archived",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "archiveTitle": "Archive",
+    "archiveHint": "The project leaves the list and stops accepting changes. Everything stays readable, and you can bring it back at any time.",
+    "archive": "Archive project",
+    "archiving": "Archiving...",
+    "archiveConfirm": "Archive this project? It will leave the project list and stop accepting changes.",
+    "archivedNotice": "The project is archived, so its settings cannot be edited. Restore it from the project page first."
   },
   "members": {
     "title": "Members of \"{{project}}\"",
@@ -789,7 +804,12 @@
     "SPRINT_TRANSITION_INVALID": "This sprint cannot be moved to that state",
     "SPRINT_PROJECT_MISMATCH": "This sprint belongs to another project",
     "SPRINT_COMPLETED": "A completed sprint no longer accepts tasks",
-    "REPORT_RANGE_INVALID": "Invalid report period: it starts after it ends or is longer than a year"
+    "REPORT_RANGE_INVALID": "Invalid report period: it starts after it ends or is longer than a year",
+    "PROJECT_ARCHIVED": "The project is archived: restore it from the archive to make changes",
+    "TASK_TEMPLATE_NOT_FOUND": "Template not found",
+    "DUPLICATE_TASK_TEMPLATE_NAME": "A template with this name already exists in the project",
+    "TASK_TEMPLATE_PROJECT_MISMATCH": "The template belongs to another project",
+    "CHECKLIST_ITEM_NOT_FOUND": "Checklist item not found"
   },
   "trash": {
     "title": "Trash",
@@ -799,5 +819,56 @@
     "purgeAfter": "Gone after",
     "restore": "Restore",
     "withSubtasks": "and {{count}} subtask(s)"
+  },
+  "checklist": {
+    "title": "Checklist",
+    "progress": "{{done}} of {{total}}",
+    "badgeHint": "Checklist: done of total",
+    "loading": "Loading checklist...",
+    "empty": "No steps yet",
+    "add": "Add",
+    "adding": "Adding...",
+    "addPlaceholder": "One step of this task",
+    "edit": "Edit",
+    "editLabel": "Step text",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "taskTemplates": {
+    "navLabel": "Task templates",
+    "hint": "A ready-made task form for recurring work: fields plus a checklist. Picking a template fills the new-task form, which you can still edit.",
+    "create": "New template",
+    "name": "Template name",
+    "taskTitle": "Task title",
+    "taskTitlePlaceholder": "What the task will be called",
+    "noTaskTitle": "No title",
+    "description": "Task description",
+    "urgency": "Urgency",
+    "tag": "Tag",
+    "category": "Category",
+    "unset": "Not set",
+    "checklist": "Checklist",
+    "checklistEmpty": "No steps in this template yet",
+    "addItem": "Add step",
+    "itemPlaceholder": "One step",
+    "removeItem": "Remove step",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "itemCount_zero": "no checklist",
+    "itemCount_one": "{{count}} step",
+    "itemCount_other": "{{count}} steps",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete the template \"{{name}}\"? Tasks already created from it stay untouched.",
+    "loading": "Loading templates...",
+    "empty": "No templates yet",
+    "pickLabel": "Template",
+    "noTemplate": "Without a template",
+    "checklistWillBeAdded_one": "{{count}} checklist step will be added to the task",
+    "checklistWillBeAdded_other": "{{count}} checklist steps will be added to the task"
   }
 }

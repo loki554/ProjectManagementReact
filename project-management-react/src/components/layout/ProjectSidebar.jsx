@@ -6,6 +6,7 @@ import {
   ChevronsRight,
   Clock,
   FolderTree,
+  LayoutTemplate,
   List,
   Rocket,
   SquareKanban,
@@ -35,6 +36,9 @@ const NAV_ITEMS = [
   { to: 'wiki', icon: BookOpen, labelKey: 'projectSidebar.wiki' },
   { to: 'settings/tags', icon: Tag, labelKey: 'projectSidebar.tags' },
   { to: 'settings/categories', icon: FolderTree, labelKey: 'projectSidebar.categories' },
+  // Шаблоны задач (4.13) — последний из справочников проекта: за ними ходят реже, чем за
+  // тэгами и категориями, потому что заведённый шаблон живёт потом сам.
+  { to: 'settings/templates', icon: LayoutTemplate, labelKey: 'projectSidebar.taskTemplates' },
   // Выгрузка (4.12) стоит внизу, рядом с корзиной, и не среди рабочих экранов выше: за
   // ней приходят редко и по отдельному поводу — забрать архив или свести задачи в
   // таблице, — а не в ходе обычной работы над задачами.

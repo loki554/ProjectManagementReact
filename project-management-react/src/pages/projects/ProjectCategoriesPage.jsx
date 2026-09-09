@@ -12,6 +12,7 @@ import {
 } from '../../api/categoriesQueries'
 import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
+import { canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -39,8 +40,9 @@ export function ProjectCategoriesPage() {
   // Owner-only, как на странице тэгов — сервер всё равно проверяет роль на каждом write-
   // эндпоинте (INSUFFICIENT_ROLE), здесь только косметическое скрытие UI. Обычный участник
   // при этом не заблокирован: новая категория заводится свободным вводом в форме задачи.
+  // В архивном проекте (4.14) правок нет ни у кого, включая владельца.
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership?.role === 'OWNER'
+  const canManage = canWriteInProject(project, myMembership?.role, 'OWNER')
 
   const schema = useMemo(() => buildCategorySchema(t), [i18n.language, t])
 

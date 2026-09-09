@@ -82,7 +82,7 @@ public class ProjectMemberService {
     public MemberResponse updateRole(User currentUser, UUID projectId, UUID targetUserId, UpdateMemberRoleRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        projectAccessService.requireWriteRole(project, myRole, ProjectRole.ADMIN);
 
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 
@@ -114,7 +114,7 @@ public class ProjectMemberService {
     public void remove(User currentUser, UUID projectId, UUID targetUserId) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        projectAccessService.requireWriteRole(project, myRole, ProjectRole.ADMIN);
 
         ProjectMember target = findMemberOrThrow(projectId, targetUserId);
 

@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import {
   useProjectBySlug,
+  useSetProjectArchived,
   useUpdateProject,
   useUploadProjectPreviewImage,
 } from '../../api/projectsQueries'
@@ -22,7 +23,6 @@ function buildSchema(t) {
   return z.object({
     name: z.string().min(1, t('auth.validation.required')).max(255),
     description: z.string().optional(),
-    archived: z.boolean(),
   })
 }
 
@@ -35,6 +35,7 @@ export function ProjectEditPage() {
 
   const { data: project, isLoading, isError, error } = useProjectBySlug(projectSlug)
   const updateProject = useUpdateProject(project?.id)
+  const setArchived = useSetProjectArchived(project?.id)
   const uploadPreviewImage = useUploadProjectPreviewImage()
   const currentImageUrl = useAuthenticatedImage(project?.previewImageUrl)
 
@@ -68,7 +69,6 @@ export function ProjectEditPage() {
       ? {
           name: project.name,
           description: project.description ?? '',
-          archived: project.archived,
         }
       : undefined,
   })
@@ -95,7 +95,6 @@ export function ProjectEditPage() {
       await updateProject.mutateAsync({
         name: values.name,
         description: values.description || null,
-        archived: values.archived,
         // См. TaskEditPage: версия на момент открытия формы, 409 вместо тихой перезаписи.
         version: project.version,
       })
@@ -129,6 +128,18 @@ export function ProjectEditPage() {
   // Косметическое скрытие — сервер всё равно вернёт INSUFFICIENT_ROLE на PATCH.
   if (project.myRole !== 'OWNER') {
     return <p className="px-4 py-8 text-sm text-red-600 dark:text-red-400">{t('errors.INSUFFICIENT_ROLE')}</p>
+  }
+  // Настройки архивного проекта не правятся (4.14). Показываем не форму, а причину и
+  // выход из неё — иначе владелец заполнил бы её и получил 409 на сохранении.
+  if (project.archived) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-8">
+        <p className="text-sm text-gray-600 dark:text-gray-400">{t('projectEdit.archivedNotice')}</p>
+        <Link to={`/projects/${projectSlug}`} className={`mt-4 inline-block ${secondaryButtonClass}`}>
+          {t('projects.backToProject')}
+        </Link>
+      </div>
+    )
   }
 
   const isPending = updateProject.isPending || uploadPreviewImage.isPending
@@ -176,15 +187,6 @@ export function ProjectEditPage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 accent-purple-600 dark:border-gray-600"
-            {...register('archived')}
-          />
-          {t('projectEdit.archived')}
-        </label>
-
         {updateProject.isError && (
           <p className="text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(updateProject.error, t)}</p>
         )}
@@ -202,6 +204,31 @@ export function ProjectEditPage() {
           </Link>
         </div>
       </form>
+
+      {/* Архивация (4.14) — за чертой и вне формы: это не поле настроек, а действие с
+          последствиями (проект уходит из списка и перестаёт принимать правки), и оно не
+          должно ни ехать вместе с переименованием, ни спотыкаться о его версию. */}
+      <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('projectEdit.archiveTitle')}</h2>
+        <p className="mt-1 mb-3 text-sm text-gray-500 dark:text-gray-400">{t('projectEdit.archiveHint')}</p>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm(t('projectEdit.archiveConfirm'))) {
+              setArchived.mutate(true, { onSuccess: () => navigate(`/projects/${projectSlug}`) })
+            }
+          }}
+          disabled={setArchived.isPending}
+          className={secondaryButtonClass}
+        >
+          {setArchived.isPending ? t('projectEdit.archiving') : t('projectEdit.archive')}
+        </button>
+        {setArchived.isError && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+            {getLocalizedErrorMessage(setArchived.error, t)}
+          </p>
+        )}
+      </div>
     </div>
   )
 }

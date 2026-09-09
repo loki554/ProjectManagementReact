@@ -40,13 +40,21 @@ public record TaskResponse(
         // таблице хватает признака «заблокирована» — им же обходится и предупреждение при
         // переводе в DONE. Считается батчем на весь список, см. TaskService.loadOpenBlockerCounts.
         int openBlockerCount,
+        // Прогресс чек-листа (4.13): сколько пунктов всего и сколько отмечено. Два числа, а
+        // не список пунктов: строке списка и карточке на доске нужен бейдж «3/7», а сами
+        // пункты приезжают отдельной ручкой на странице задачи — ровно то же решение, что
+        // у счётчика блокеров выше. У задачи без чек-листа оба нуля, и это не то же самое,
+        // что «0 из 5»: интерфейс по total = 0 понимает, что бейджа быть не должно.
+        int checklistTotal,
+        int checklistDone,
         Instant createdAt,
         Instant updatedAt,
         // Версия для оптимистичной блокировки (3.4): клиент возвращает её в PATCH и
         // получает 409, если задачу успели изменить, пока форма была открыта.
         long version
 ) {
-    public static TaskResponse from(Task task, BigDecimal totalHoursSpent, int openBlockerCount) {
+    public static TaskResponse from(Task task, BigDecimal totalHoursSpent, int openBlockerCount,
+                                    int checklistTotal, int checklistDone) {
         return new TaskResponse(
                 task.getId(),
                 task.getProject().getId(),
@@ -66,6 +74,8 @@ public record TaskResponse(
                 task.getSprint() != null ? SprintSummary.from(task.getSprint()) : null,
                 totalHoursSpent,
                 openBlockerCount,
+                checklistTotal,
+                checklistDone,
                 task.getCreatedAt(),
                 task.getUpdatedAt(),
                 task.getVersion()

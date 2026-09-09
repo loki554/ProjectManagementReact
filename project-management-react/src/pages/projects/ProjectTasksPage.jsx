@@ -25,7 +25,7 @@ import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import {
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
-  roleIsAtLeast,
+  canWriteInProject,
   taskStatusAccentClass,
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
@@ -90,6 +90,17 @@ function TaskCardBody({ task, t, locale }) {
             className="h-4 w-4 shrink-0 text-amber-500"
             aria-label={t('tasks.dependencies.blockedBadge', { count: task.openBlockerCount })}
           />
+        )}
+        {/* Прогресс чек-листа (4.13) — «3/7» рядом с номером. Только цифры, без полосы:
+            на карточке шириной в колонку полоса отняла бы строку у заголовка, а ответ
+            «сколько осталось» цифры дают точнее. У задачи без чек-листа бейджа нет. */}
+        {task.checklistTotal > 0 && (
+          <span
+            className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+            title={t('checklist.badgeHint')}
+          >
+            {task.checklistDone}/{task.checklistTotal}
+          </span>
         )}
         {task.urgency !== 'MEDIUM' && (
           <span
@@ -255,7 +266,7 @@ export function ProjectTasksPage() {
   const updateTaskStatus = useUpdateTaskStatus(projectId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const canManage = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   const schema = useMemo(() => buildCreateTaskSchema(t), [i18n.language, t])
   const {

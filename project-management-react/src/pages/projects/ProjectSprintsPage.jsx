@@ -16,7 +16,7 @@ import {
 } from '../../api/sprintsQueries'
 import { useBulkUpdateTasks, useTasks } from '../../api/tasksQueries'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
-import { TASK_NUMBER_BADGE_CLASS, roleIsAtLeast, taskStatusBadgeClass } from '../../lib/constants'
+import { TASK_NUMBER_BADGE_CLASS, canWriteInProject, taskStatusBadgeClass } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import {
   daysLeft,
@@ -80,8 +80,8 @@ export function ProjectSprintsPage() {
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
   // Планом распоряжается ADMIN и выше — как и на сервере (см. SprintService). Ниже по
   // странице MEMBER всё равно может двигать задачи: это правка задачи, а не плана.
-  const canManageSprints = myMembership ? roleIsAtLeast(myMembership.role, 'ADMIN') : false
-  const canMoveTasks = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const canManageSprints = canWriteInProject(project, myMembership?.role, 'ADMIN')
+  const canMoveTasks = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   const createSprint = useCreateSprint(projectId)
   const updateSprint = useUpdateSprint(projectId)

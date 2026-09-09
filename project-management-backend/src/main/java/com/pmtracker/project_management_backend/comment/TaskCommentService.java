@@ -65,7 +65,7 @@ public class TaskCommentService {
     public CommentResponse create(User currentUser, UUID taskId, CreateCommentRequest request) {
         Task task = findTaskOrThrow(taskId);
         ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
 
         TaskComment comment = new TaskComment();
         comment.setTask(task);
@@ -120,7 +120,7 @@ public class TaskCommentService {
         TaskComment comment = taskCommentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);
         Task task = comment.getTask();
         ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
         if (!comment.getAuthor().getId().equals(currentUser.getId())) {
             throw new NotCommentAuthorException();
         }
@@ -148,7 +148,7 @@ public class TaskCommentService {
         TaskComment comment = taskCommentRepository.findById(commentId).orElseThrow(CommentNotFoundException::new);
         UUID projectId = comment.getTask().getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(comment.getTask().getProject(), role, ProjectRole.MEMBER);
 
         boolean isAuthor = comment.getAuthor().getId().equals(currentUser.getId());
         boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);

@@ -368,6 +368,45 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("TAG_PROJECT_MISMATCH", ex.getMessage()));
     }
 
+    // --------------------------------------------------------------- архив проекта (4.14)
+
+    // 409, а не 403: дело не в правах — у того же владельца тот же запрос пройдёт, как
+    // только проект вернут из архива. Это состояние проекта на сервере, ровно как «спринт
+    // уже активен» рядом.
+    @ExceptionHandler(ProjectArchivedException.class)
+    public ResponseEntity<ErrorResponse> handleProjectArchived(ProjectArchivedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("PROJECT_ARCHIVED", ex.getMessage()));
+    }
+
+    // ----------------------------------------------- шаблоны и чек-листы задач (4.13)
+
+    @ExceptionHandler(TaskTemplateNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTaskTemplateNotFound(TaskTemplateNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("TASK_TEMPLATE_NOT_FOUND", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateTaskTemplateNameException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateTaskTemplateName(DuplicateTaskTemplateNameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse("DUPLICATE_TASK_TEMPLATE_NAME", ex.getMessage()));
+    }
+
+    // 400, как и у остальных «эта сущность из другого проекта»: запрос собран неверно, и
+    // повторение его не спасёт.
+    @ExceptionHandler(TaskTemplateProjectMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTaskTemplateProjectMismatch(TaskTemplateProjectMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("TASK_TEMPLATE_PROJECT_MISMATCH", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ChecklistItemNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleChecklistItemNotFound(ChecklistItemNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse("CHECKLIST_ITEM_NOT_FOUND", ex.getMessage()));
+    }
+
     // ------------------------------------------------------------------- спринты (4.9)
 
     @ExceptionHandler(SprintNotFoundException.class)

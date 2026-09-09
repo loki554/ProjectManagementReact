@@ -46,9 +46,12 @@ public class ProjectController {
     }
 
     @GetMapping
-    @Operation(summary = "Список проектов текущего пользователя", description = "Только проекты, где пользователь состоит в project_members; без пагинации")
-    public ResponseEntity<List<ProjectResponse>> list(@AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(projectService.listForUser(currentUser));
+    @Operation(summary = "Список проектов текущего пользователя",
+            description = "Только проекты, где пользователь состоит в project_members; без пагинации. "
+                    + "По умолчанию — действующие; archived=true отдаёт архив (4.14)")
+    public ResponseEntity<List<ProjectResponse>> list(@AuthenticationPrincipal User currentUser,
+                                                       @RequestParam(defaultValue = "false") boolean archived) {
+        return ResponseEntity.ok(projectService.listForUser(currentUser, archived));
     }
 
     @GetMapping("/{id}")
@@ -66,15 +69,37 @@ public class ProjectController {
     }
 
     @PatchMapping("/{id}")
-    @Operation(summary = "Редактировать проект", description = "Только OWNER (см. таблицу ролей): name/description/archived")
+    @Operation(summary = "Редактировать проект",
+            description = "Только OWNER (см. таблицу ролей): name/description. Архивация — отдельное "
+                    + "действие /archive, а не поле этой формы (4.14); архивный проект не редактируется "
+                    + "вовсе (409 PROJECT_ARCHIVED)")
     public ResponseEntity<ProjectResponse> update(@AuthenticationPrincipal User currentUser,
                                                    @PathVariable UUID id,
                                                    @Valid @RequestBody UpdateProjectRequest request) {
         return ResponseEntity.ok(projectService.update(currentUser, id, request));
     }
 
+    @PostMapping("/{id}/archive")
+    @Operation(summary = "Убрать проект в архив",
+            description = "Только OWNER. Проект уходит из списка проектов (остаётся в ?archived=true), "
+                    + "перестаёт принимать любые правки (409 PROJECT_ARCHIVED) и пропадает из «моих "
+                    + "задач» и напоминаний о сроках. Всё содержимое остаётся доступным на чтение, "
+                    + "включая поиск. Идемпотентно")
+    public ResponseEntity<ProjectResponse> archive(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
+        return ResponseEntity.ok(projectService.archive(currentUser, id));
+    }
+
+    @PostMapping("/{id}/unarchive")
+    @Operation(summary = "Вернуть проект из архива",
+            description = "Только OWNER. Работает и над архивным проектом — в этом и смысл. Идемпотентно")
+    public ResponseEntity<ProjectResponse> unarchive(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
+        return ResponseEntity.ok(projectService.unarchive(currentUser, id));
+    }
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить проект", description = "Только OWNER; каскадно удаляет project_members на уровне БД")
+    @Operation(summary = "Удалить проект",
+            description = "Только OWNER; каскадно удаляет project_members на уровне БД. Разрешено и для "
+                    + "архивного проекта: архив — это «закончено», а не «нельзя тронуть»")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal User currentUser, @PathVariable UUID id) {
         projectService.delete(currentUser, id);
         return ResponseEntity.noContent().build();

@@ -2,14 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as projectsApi from './projectsApi'
 
 const projectsKey = ['projects']
+// Действующие и архивные проекты лежат на разных ключах: это два разных ответа сервера, и
+// класть их в один кэш значило бы показывать в списке то, что только что заархивировали.
+const projectsListKey = (archived) => ['projects', 'list', { archived }]
 const projectKey = (projectId) => ['projects', projectId]
 const membersKey = (projectId) => ['projects', projectId, 'members']
 const starKey = (projectId) => ['projects', projectId, 'star']
 
-export function useProjects() {
+export function useProjects(archived = false) {
   return useQuery({
-    queryKey: projectsKey,
-    queryFn: projectsApi.fetchProjects,
+    queryKey: projectsListKey(archived),
+    queryFn: () => projectsApi.fetchProjects(archived),
   })
 }
 
@@ -59,6 +62,26 @@ export function useUpdateProject(projectId) {
 
 // В отличие от useUpdateProject, projectId здесь — аргумент mutate: хук предполагается
 // использованным один раз на страницу со списком нескольких проектов (кнопка удаления в строке).
+/**
+ * Архивация и возврат из архива (4.14) — один хук на оба направления, как у звезды
+ * проекта: mutate(true) убирает в архив, mutate(false) возвращает.
+ *
+ * Инвалидируется всё, что показывает проект: оба списка (он переезжает из одного в другой),
+ * карточка по id и по slug — от архива зависит не только бейдж, но и то, показывать ли на
+ * странице кнопки правки.
+ */
+export function useSetProjectArchived(projectId) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (archived) =>
+      archived ? projectsApi.archiveProject(projectId) : projectsApi.unarchiveProject(projectId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(projectKey(projectId), data)
+      queryClient.invalidateQueries({ queryKey: projectsKey })
+    },
+  })
+}
+
 export function useDeleteProject() {
   const queryClient = useQueryClient()
   return useMutation({

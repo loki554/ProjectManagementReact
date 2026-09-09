@@ -7,7 +7,7 @@ import { useProjectWiki, useUpdateWiki } from '../../api/wikiQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
-import { roleIsAtLeast } from '../../lib/constants'
+import { canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 
 export function ProjectWikiPage() {
@@ -38,7 +38,7 @@ export function ProjectWikiPage() {
   }
 
   // Косметическое скрытие — PUT на бэкенде в любом случае требует MEMBER и выше.
-  const canEdit = project && roleIsAtLeast(project.myRole, 'MEMBER')
+  const canEdit = canWriteInProject(project, project?.myRole, 'MEMBER')
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">

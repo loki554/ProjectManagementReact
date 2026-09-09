@@ -31,7 +31,7 @@ public class TagService {
     public TagResponse create(User currentUser, UUID projectId, CreateTagRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.OWNER);
 
         if (tagRepository.existsByProjectIdAndName(projectId, request.name())) {
             throw new DuplicateTagNameException();
@@ -61,7 +61,7 @@ public class TagService {
         Tag tag = findTagOrThrow(tagId);
         UUID projectId = tag.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(tag.getProject(), role, ProjectRole.OWNER);
 
         if (!tag.getName().equals(request.name()) && tagRepository.existsByProjectIdAndName(projectId, request.name())) {
             throw new DuplicateTagNameException();
@@ -77,7 +77,7 @@ public class TagService {
     public void delete(User currentUser, UUID tagId) {
         Tag tag = findTagOrThrow(tagId);
         ProjectRole role = projectAccessService.requireMembership(tag.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(tag.getProject(), role, ProjectRole.OWNER);
 
         tagRepository.delete(tag);
     }

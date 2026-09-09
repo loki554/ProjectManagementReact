@@ -75,7 +75,7 @@ public class AttachmentService {
     public AttachmentResponse upload(User currentUser, UUID taskId, MultipartFile file) {
         Task task = findTaskOrThrow(taskId);
         ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
 
         if (file.isEmpty()) {
             throw new InvalidFileException("No file selected");
@@ -154,7 +154,7 @@ public class AttachmentService {
         Attachment attachment = findAttachmentOrThrow(attachmentId);
         UUID projectId = attachment.getTask().getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(attachment.getTask().getProject(), role, ProjectRole.MEMBER);
 
         boolean isUploader = attachment.getUploadedBy().getId().equals(currentUser.getId());
         boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);

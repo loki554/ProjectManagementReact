@@ -42,6 +42,14 @@ public class Project {
     @Column(nullable = false)
     private boolean archived = false;
 
+    /**
+     * Когда проект убрали в архив (4.14, V34); null — проект действующий. Отдельная колонка,
+     * а не выведенная из updated_at дата: updated_at двигает любая правка, а список архива
+     * сортируют и читают именно по «когда закончили».
+     */
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
     @Column(name = "preview_image_path", length = 500)
     private String previewImagePath;
 
@@ -121,6 +129,14 @@ public class Project {
 
     public void setArchived(boolean archived) {
         this.archived = archived;
+    }
+
+    public Instant getArchivedAt() {
+        return archivedAt;
+    }
+
+    public void setArchivedAt(Instant archivedAt) {
+        this.archivedAt = archivedAt;
     }
 
     public String getPreviewImagePath() {

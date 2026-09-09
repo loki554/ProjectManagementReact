@@ -6,6 +6,27 @@ export function roleIsAtLeast(role, required) {
   return PROJECT_ROLES.indexOf(role) <= PROJECT_ROLES.indexOf(required)
 }
 
+/**
+ * Можно ли в этом проекте что-то менять с такой ролью (4.14) — зеркало
+ * ProjectAccessService.requireWriteRole на бэкенде: роль не ниже требуемой И проект не в
+ * архиве.
+ *
+ * Одна функция на оба условия по той же причине, что и на сервере: архив запрещает правки
+ * везде, и «не забыть дописать && !project.archived» в десяти экранах — верный способ
+ * однажды показать кнопку, которая отвечает 409. Здесь это всего лишь косметика (сервер
+ * проверяет сам), но косметика, ради которой пункт и делался: архивный проект должен
+ * выглядеть законченным, а не сыпать ошибками на каждое нажатие.
+ *
+ * project === undefined (ещё грузится) — это «пока нельзя»: то же самое поведение, что и у
+ * ещё не загруженной роли.
+ */
+export function canWriteInProject(project, role, required) {
+  if (!project || project.archived) {
+    return false
+  }
+  return roleIsAtLeast(role, required)
+}
+
 // Фиксированный набор статусов задачи — зеркало TaskStatus на бэкенде
 // (task/TaskStatus.java). Порядок = порядок колонок будущего канбана (Phase 5).
 export const TASK_STATUSES = ['NEW', 'IN_PROGRESS', 'PAUSED', 'FEEDBACK', 'DONE', 'REJECTED']

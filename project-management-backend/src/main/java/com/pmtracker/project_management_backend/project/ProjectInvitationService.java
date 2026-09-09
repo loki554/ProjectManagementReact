@@ -118,7 +118,7 @@ public class ProjectInvitationService {
     public InviteResponse invite(User currentUser, UUID projectId, InviteMemberRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        projectAccessService.requireWriteRole(project, myRole, ProjectRole.ADMIN);
         // Пригласить сразу с ролью OWNER — третий путь к тому же захвату проекта, что и смена
         // роли: ADMIN зовёт свой второй аккаунт владельцем и снимает настоящего.
         if (request.role() == ProjectRole.OWNER) {
@@ -174,7 +174,9 @@ public class ProjectInvitationService {
     public List<InvitationResponse> list(User currentUser, UUID projectId) {
         projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        // Чтение, а не правка: список приглашений архивного проекта по-прежнему видно
+        // (см. ProjectAccessService.requireReadRole).
+        projectAccessService.requireReadRole(myRole, ProjectRole.ADMIN);
 
         Instant now = Instant.now();
         return invitationRepository.findByProjectIdWithInviter(projectId).stream()
@@ -185,9 +187,9 @@ public class ProjectInvitationService {
     /** Отозвать приглашение: строка удаляется, ссылка из письма перестаёт работать. */
     @Transactional
     public void revoke(User currentUser, UUID projectId, UUID invitationId) {
-        projectAccessService.findProjectOrThrow(projectId);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole myRole = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(myRole, ProjectRole.ADMIN);
+        projectAccessService.requireWriteRole(project, myRole, ProjectRole.ADMIN);
 
         ProjectInvitation invitation = invitationRepository.findById(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));

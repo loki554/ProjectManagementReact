@@ -1,7 +1,7 @@
-import { Pencil } from 'lucide-react'
+import { Archive, Pencil } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
-import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
+import { useProjectBySlug, useProjectMembers, useSetProjectArchived } from '../../api/projectsQueries'
 import { ActivityFeed } from '../../components/projects/ActivityFeed'
 import { StarButton } from '../../components/projects/StarButton'
 import { secondaryButtonClass } from '../../components/ui/FormKit'
@@ -37,6 +37,7 @@ export function ProjectOverviewPage() {
   const { data: project, isLoading, isError, error } = useProjectBySlug(projectSlug)
   const { data: members } = useProjectMembers(project?.id)
   const previewImageUrl = useAuthenticatedImage(project?.previewImageUrl)
+  const setArchived = useSetProjectArchived(project?.id)
 
   if (isLoading) {
     return <p className="px-4 py-8 text-gray-500 dark:text-gray-400">{t('projectOverview.loading')}</p>
@@ -50,6 +51,33 @@ export function ProjectOverviewPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      {/* Полоса на всю ширину обзора, а не бейдж в углу: архивный проект открывается по
+          старой ссылке из письма или закладки, и человек должен понять, почему у него
+          пропали все кнопки, раньше, чем начнёт их искать (4.14). */}
+      {project.archived && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          <span className="flex items-center gap-2">
+            <Archive className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t('projects.archivedBanner')}
+          </span>
+          {project.myRole === 'OWNER' && (
+            <button
+              type="button"
+              onClick={() => setArchived.mutate(false)}
+              disabled={setArchived.isPending}
+              className={secondaryButtonClass}
+            >
+              {setArchived.isPending ? t('projects.unarchiving') : t('projects.unarchive')}
+            </button>
+          )}
+        </div>
+      )}
+      {setArchived.isError && (
+        <p className="mb-4 text-sm text-red-600 dark:text-red-400">
+          {getLocalizedErrorMessage(setArchived.error, t)}
+        </p>
+      )}
+
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1 space-y-6">
           <div className="flex gap-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
@@ -83,8 +111,10 @@ export function ProjectOverviewPage() {
         <aside className="w-full shrink-0 space-y-4 lg:w-72">
           <StarButton projectId={project.id} />
 
-          {/* Косметическое скрытие — PATCH на бэкенде в любом случае OWNER-only. */}
-          {project.myRole === 'OWNER' && (
+          {/* Косметическое скрытие — PATCH на бэкенде в любом случае OWNER-only. В архиве
+              настройки не правятся вовсе (409 PROJECT_ARCHIVED), поэтому кнопки нет:
+              вернуть проект из архива предлагает полоса сверху. */}
+          {project.myRole === 'OWNER' && !project.archived && (
             <Link
               to="settings/edit"
               className={`${secondaryButtonClass} flex w-full items-center justify-center gap-2`}

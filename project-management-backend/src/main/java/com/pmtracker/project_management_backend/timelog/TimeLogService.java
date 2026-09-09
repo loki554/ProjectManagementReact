@@ -41,7 +41,7 @@ public class TimeLogService {
     public TimeLogResponse create(User currentUser, UUID taskId, CreateTimeLogRequest request) {
         Task task = findTaskOrThrow(taskId);
         ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
 
         TimeLog timeLog = new TimeLog();
         timeLog.setTask(task);
@@ -73,7 +73,7 @@ public class TimeLogService {
         TimeLog timeLog = timeLogRepository.findById(timeLogId).orElseThrow(TimeLogNotFoundException::new);
         UUID projectId = timeLog.getTask().getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(timeLog.getTask().getProject(), role, ProjectRole.MEMBER);
 
         boolean isAuthor = timeLog.getUser().getId().equals(currentUser.getId());
         boolean isModerator = role.isAtLeast(ProjectRole.ADMIN);

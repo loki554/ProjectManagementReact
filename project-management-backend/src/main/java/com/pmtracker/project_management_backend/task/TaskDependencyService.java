@@ -73,7 +73,7 @@ public class TaskDependencyService {
         Task blocked = findTaskOrThrow(taskId);
         UUID projectId = blocked.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(blocked.getProject(), role, ProjectRole.MEMBER);
 
         if (taskId.equals(blockerTaskId)) {
             throw new SelfTaskDependencyException();
@@ -106,7 +106,7 @@ public class TaskDependencyService {
     public TaskDependenciesResponse remove(User currentUser, UUID taskId, UUID blockerTaskId) {
         Task blocked = findTaskOrThrow(taskId);
         ProjectRole role = projectAccessService.requireMembership(blocked.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(blocked.getProject(), role, ProjectRole.MEMBER);
 
         if (taskDependencyRepository.deleteLink(blockerTaskId, taskId) == 0) {
             throw new TaskDependencyNotFoundException();

@@ -17,13 +17,14 @@ import { AttachmentThumbnail } from '../../components/attachments/AttachmentThum
 import { MarkdownRenderer } from '../../components/markdown/MarkdownRenderer'
 import { ActivityFeed } from '../../components/projects/ActivityFeed'
 import { TaskCommentsSection } from '../../components/tasks/TaskCommentsSection'
+import { TaskChecklistSection } from '../../components/tasks/TaskChecklistSection'
 import { TaskDependenciesSection } from '../../components/tasks/TaskDependenciesSection'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import {
   ATTACHMENT_ACCEPT,
   TASK_NUMBER_BADGE_CLASS,
-  roleIsAtLeast,
+  canWriteInProject,
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
@@ -109,8 +110,10 @@ export function TaskViewPage() {
   const [commentsSort, setCommentsSort] = useState('newest')
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
-  const isModerator = myMembership ? roleIsAtLeast(myMembership.role, 'ADMIN') : false
+  // canManage закрывает и правку задачи, и всё, что к ней прицеплено: комментарии,
+  // вложения, время, чек-лист. В архивном проекте (4.14) он ложен у всех ролей.
+  const canManage = canWriteInProject(project, myMembership?.role, 'MEMBER')
+  const isModerator = canWriteInProject(project, myMembership?.role, 'ADMIN')
 
   const subtaskSchema = useMemo(() => buildSubtaskSchema(t), [i18n.language, t])
   const {
@@ -218,6 +221,11 @@ export function TaskViewPage() {
                   )}
                 </div>
               </div>
+
+              {/* Чек-лист (4.13) стоит выше подзадач и зависимостей, потому что он ближе
+                  всего к самой задаче: это её собственные шаги, а не связь с чем-то ещё, — и
+                  галочки в нём ставят чаще, чем открывают всё остальное на этой странице. */}
+              <TaskChecklistSection taskId={taskId} projectId={projectId} canManage={canManage} />
 
               <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-center justify-between gap-3">

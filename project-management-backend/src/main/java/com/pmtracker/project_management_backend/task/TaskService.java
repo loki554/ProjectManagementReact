@@ -2,6 +2,8 @@ package com.pmtracker.project_management_backend.task;
 
 import com.pmtracker.project_management_backend.activity.ActivityService;
 import com.pmtracker.project_management_backend.auth.User;
+import com.pmtracker.project_management_backend.checklist.ChecklistItemRepository;
+import com.pmtracker.project_management_backend.checklist.ChecklistService;
 import com.pmtracker.project_management_backend.category.Category;
 import com.pmtracker.project_management_backend.category.CategoryService;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
@@ -28,6 +30,8 @@ import com.pmtracker.project_management_backend.sprint.Sprint;
 import com.pmtracker.project_management_backend.sprint.SprintService;
 import com.pmtracker.project_management_backend.tag.Tag;
 import com.pmtracker.project_management_backend.tag.TagRepository;
+import com.pmtracker.project_management_backend.tasktemplate.TaskTemplate;
+import com.pmtracker.project_management_backend.tasktemplate.TaskTemplateService;
 import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksRequest;
 import com.pmtracker.project_management_backend.task.dto.BulkUpdateTasksResponse;
 import com.pmtracker.project_management_backend.task.dto.CreateTaskRequest;
@@ -82,6 +86,9 @@ public class TaskService {
     private final CategoryService categoryService;
     private final SprintService sprintService;
     private final TimeLogRepository timeLogRepository;
+    private final ChecklistItemRepository checklistItemRepository;
+    private final ChecklistService checklistService;
+    private final TaskTemplateService taskTemplateService;
     private final ActivityService activityService;
     private final NotificationService notificationService;
 
@@ -94,6 +101,9 @@ public class TaskService {
                         CategoryService categoryService,
                         SprintService sprintService,
                         TimeLogRepository timeLogRepository,
+                        ChecklistItemRepository checklistItemRepository,
+                        ChecklistService checklistService,
+                        TaskTemplateService taskTemplateService,
                         ActivityService activityService,
                         NotificationService notificationService) {
         this.taskRepository = taskRepository;
@@ -105,6 +115,9 @@ public class TaskService {
         this.categoryService = categoryService;
         this.sprintService = sprintService;
         this.timeLogRepository = timeLogRepository;
+        this.checklistItemRepository = checklistItemRepository;
+        this.checklistService = checklistService;
+        this.taskTemplateService = taskTemplateService;
         this.activityService = activityService;
         this.notificationService = notificationService;
     }
@@ -113,7 +126,7 @@ public class TaskService {
     public TaskResponse create(User currentUser, UUID projectId, CreateTaskRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.MEMBER);
 
         Task task = new Task();
         task.setProject(project);
@@ -128,12 +141,37 @@ public class TaskService {
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
+        int checklistTotal = applyTemplateChecklist(task, projectId, request.templateId());
         activityService.record(project, currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
         // 0 блокеров без запроса: связи (4.8) заводятся отдельной ручкой уже после
-        // создания, у только что созданной задачи их быть неоткуда.
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0);
+        // создания, у только что созданной задачи их быть неоткуда. Чек-лист, в отличие от
+        // них, у новой задачи быть может — но только пришедший из шаблона, и отмечать в нём
+        // пока нечего.
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0, checklistTotal, 0);
+    }
+
+    /**
+     * Перенести чек-лист шаблона в только что созданную задачу (4.13); возвращает число
+     * скопированных пунктов.
+     *
+     * <p>Почему шаблон приезжает сюда только чек-листом, а остальные его поля подставляет
+     * форма на клиенте. Заголовок, описание, срочность, тэг и категория — это то, что видно
+     * в форме и что человек правит глазами прежде, чем нажать «создать»: подставить их на
+     * сервере значило бы, что задача создаётся не такой, какой её только что видели.
+     * Чек-лист полем формы не является — его в форме заведения задачи попросту нет, — и
+     * приехать он может только так. Отсюда и асимметрия: видимое подставляет клиент,
+     * невидимое копирует сервер.
+     */
+    private int applyTemplateChecklist(Task task, UUID projectId, UUID templateId) {
+        if (templateId == null) {
+            return 0;
+        }
+        TaskTemplate template = taskTemplateService.requireTemplateOfProject(templateId, projectId);
+        List<String> contents = taskTemplateService.templateItemContents(template.getId());
+        checklistService.copyFromTemplate(task, contents);
+        return contents.size();
     }
 
     /**
@@ -194,18 +232,37 @@ public class TaskService {
         List<UUID> taskIds = tasks.stream().map(Task::getId).toList();
         Map<UUID, BigDecimal> hoursByTask = loadHoursTotals(taskIds);
         Map<UUID, Integer> blockersByTask = loadOpenBlockerCounts(taskIds);
+        Map<UUID, int[]> checklistByTask = loadChecklistProgress(taskIds);
         return tasks.stream()
-                .map(t -> TaskResponse.from(t,
-                        hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO),
-                        blockersByTask.getOrDefault(t.getId(), 0)))
+                .map(t -> {
+                    int[] checklist = checklistByTask.getOrDefault(t.getId(), NO_CHECKLIST);
+                    return TaskResponse.from(t,
+                            hoursByTask.getOrDefault(t.getId(), BigDecimal.ZERO),
+                            blockersByTask.getOrDefault(t.getId(), 0),
+                            checklist[0], checklist[1]);
+                })
                 .toList();
+    }
+
+    /** Задача без чек-листа: «0 из 0», по которому интерфейс понимает, что бейджа нет. */
+    private static final int[] NO_CHECKLIST = {0, 0};
+
+    /**
+     * Ответ по одной задаче. Три отдельных запроса за часами, блокерами и чек-листом — это
+     * цена страницы задачи, а не списка: списки собираются батчем (см. toResponses).
+     */
+    private TaskResponse toResponse(Task task) {
+        UUID taskId = task.getId();
+        int[] checklist = loadChecklistProgress(List.of(taskId)).getOrDefault(taskId, NO_CHECKLIST);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId),
+                checklist[0], checklist[1]);
     }
 
     @Transactional(readOnly = true)
     public TaskResponse getById(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
         projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
+        return toResponse(task);
     }
 
     // Для читаемых URL (/projects/{slug}/tasks/{taskNumber}, см. taskNumber в Task.java) —
@@ -217,7 +274,7 @@ public class TaskService {
         projectAccessService.requireMembership(projectId, currentUser);
         Task task = taskRepository.findByProjectIdAndTaskNumber(projectId, taskNumber)
                 .orElseThrow(TaskNotFoundException::new);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), openBlockerCount(task.getId()));
+        return toResponse(task);
     }
 
     @Transactional
@@ -225,7 +282,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
         UUID projectId = task.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
         requireCurrentVersion(request.version(), task.getVersion());
         // До первой правки: отказ обязан не оставить после себя ни изменённых полей, ни
         // событий в ленте — ровно как проверка версии строкой выше.
@@ -290,7 +347,7 @@ public class TaskService {
             notificationService.clearDueDateAlerts(task.getId());
         }
 
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
+        return toResponse(task);
     }
 
     // Instant в payload сериализуем строками заранее (см. task_due_date_changed), а null'ы
@@ -323,7 +380,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
         UUID projectId = task.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
 
         TaskStatus oldStatus = task.getStatus();
         if (oldStatus != request.expectedStatus()) {
@@ -363,7 +420,7 @@ public class TaskService {
             }
         }
 
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
+        return toResponse(task);
     }
 
     private void renumber(List<Task> orderedColumn) {
@@ -402,9 +459,9 @@ public class TaskService {
      */
     @Transactional
     public BulkUpdateTasksResponse bulkUpdate(User currentUser, UUID projectId, BulkUpdateTasksRequest request) {
-        projectAccessService.findProjectOrThrow(projectId);
+        Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.MEMBER);
 
         if (!request.hasChanges()) {
             throw new NoBulkChangesRequestedException();
@@ -572,7 +629,7 @@ public class TaskService {
     public void delete(User currentUser, UUID taskId) {
         Task task = findTaskOrThrow(taskId);
         ProjectRole role = projectAccessService.requireMembership(task.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(task.getProject(), role, ProjectRole.MEMBER);
         // task = null в событии: задача перестаёт быть видимой для JPA сразу после UPDATE,
         // и ссылка на неё из ленты активности вела бы в никуда — вернее, вела бы в 404 до
         // самого восстановления. Идентичность задачи — в снапшоте payload.
@@ -601,7 +658,7 @@ public class TaskService {
                 .orElseThrow(TaskNotFoundException::new);
         Project project = projectAccessService.findProjectOrThrow(deleted.getProjectId());
         ProjectRole role = projectAccessService.requireMembership(project.getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.MEMBER);
 
         // Подзадача под удалённым родителем восстановлению не подлежит: возвращать её
         // некуда, она повисла бы под невидимой задачей. Сначала родитель.
@@ -614,7 +671,7 @@ public class TaskService {
                 Map.of("taskNumber", deleted.getTaskNumber(), "title", deleted.getTitle()));
 
         Task task = findTaskOrThrow(taskId);
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(taskId), openBlockerCount(taskId));
+        return toResponse(task);
     }
 
     @Transactional(readOnly = true)
@@ -630,7 +687,7 @@ public class TaskService {
         Task parent = findTaskOrThrow(parentTaskId);
         UUID projectId = parent.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(parent.getProject(), role, ProjectRole.MEMBER);
 
         Task task = new Task();
         task.setProject(parent.getProject());
@@ -645,10 +702,14 @@ public class TaskService {
         task.setCreatedBy(currentUser);
         task.setPosition(nextPosition(projectId, status));
         taskRepository.save(task);
+        // Подзадачу тоже можно завести по шаблону: повторяющаяся работа бывает и вложенной
+        // («выкатить» внутри «релиза»), и запрещать здесь то, что разрешено этажом выше,
+        // не за что.
+        int checklistTotal = applyTemplateChecklist(task, projectId, request.templateId());
         activityService.record(parent.getProject(), currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
-        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0);
+        return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0, checklistTotal, 0);
     }
 
     private static final int MY_ACTIVE_TASKS_PAGE_SIZE = 8;
@@ -788,6 +849,21 @@ public class TaskService {
         return taskDependencyRepository.countOpenBlockers(taskIds, INACTIVE_STATUSES).stream()
                 .collect(Collectors.toMap(TaskDependencyRepository.OpenBlockerCount::getTaskId,
                         count -> (int) count.getOpenCount()));
+    }
+
+    /**
+     * Прогресс чек-листов на пачку задач (4.13) — парный к loadOpenBlockerCounts и по той же
+     * причине: доска из сотни карточек иначе стоила бы сотню запросов ради бейджа «3/7».
+     * Значение — пара {всего, отмечено}; задачи без чек-листа в результат не попадают, за
+     * них отвечает NO_CHECKLIST.
+     */
+    private Map<UUID, int[]> loadChecklistProgress(List<UUID> taskIds) {
+        if (taskIds.isEmpty()) {
+            return Map.of();
+        }
+        return checklistItemRepository.findProgressByTaskIds(taskIds).stream()
+                .collect(Collectors.toMap(ChecklistItemRepository.ChecklistProgress::getTaskId,
+                        progress -> new int[]{(int) progress.getTotal(), (int) progress.getDone()}));
     }
 
     private Map<UUID, BigDecimal> loadHoursTotals(List<UUID> taskIds) {

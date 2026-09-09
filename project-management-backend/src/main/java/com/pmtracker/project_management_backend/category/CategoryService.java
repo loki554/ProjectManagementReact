@@ -33,7 +33,7 @@ public class CategoryService {
     public CategoryResponse create(User currentUser, UUID projectId, CreateCategoryRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.OWNER);
 
         String name = normalizeName(request.name());
         if (categoryRepository.existsByProjectIdAndName(projectId, name)) {
@@ -63,7 +63,7 @@ public class CategoryService {
         Category category = findCategoryOrThrow(categoryId);
         UUID projectId = category.getProject().getId();
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(category.getProject(), role, ProjectRole.OWNER);
 
         String name = normalizeName(request.name());
         if (!category.getName().equals(name) && categoryRepository.existsByProjectIdAndName(projectId, name)) {
@@ -82,7 +82,7 @@ public class CategoryService {
     public void delete(User currentUser, UUID categoryId) {
         Category category = findCategoryOrThrow(categoryId);
         ProjectRole role = projectAccessService.requireMembership(category.getProject().getId(), currentUser);
-        projectAccessService.requireRole(role, ProjectRole.OWNER);
+        projectAccessService.requireWriteRole(category.getProject(), role, ProjectRole.OWNER);
 
         // У задач, использовавших категорию, category становится null — как при удалении тэга
         // (ON DELETE SET NULL в V18), сами задачи не трогаем.

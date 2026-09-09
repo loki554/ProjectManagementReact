@@ -22,7 +22,7 @@ import {
   TASK_DUE_FILTERS,
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
-  roleIsAtLeast,
+  canWriteInProject,
   taskStatusBadgeClass,
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
@@ -105,7 +105,7 @@ export function ProjectTaskListPage() {
   const { data: sprints } = useSprints(projectId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const canManage = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   // Фильтры, сортировка и номер страницы живут в адресной строке (5.5, 4.7), а не в
   // useState: отфильтрованный список должен переживать перезагрузку и уезжать коллеге
@@ -583,6 +583,16 @@ export function ProjectTaskListPage() {
                             className="h-4 w-4 shrink-0 text-amber-500"
                             aria-label={t('tasks.dependencies.blockedBadge', { count: task.openBlockerCount })}
                           />
+                        )}
+                        {/* Прогресс чек-листа (4.13) — там же и по той же причине: это
+                            признак задачи, а не десятая колонка таблицы. */}
+                        {task.checklistTotal > 0 && (
+                          <span
+                            className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                            title={t('checklist.badgeHint')}
+                          >
+                            {task.checklistDone}/{task.checklistTotal}
+                          </span>
                         )}
                       </span>
                     </td>

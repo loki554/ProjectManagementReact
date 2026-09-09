@@ -46,7 +46,7 @@ public class WikiService {
     public WikiResponse update(User currentUser, UUID projectId, UpdateWikiRequest request) {
         Project project = projectAccessService.findProjectOrThrow(projectId);
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.MEMBER);
+        projectAccessService.requireWriteRole(project, role, ProjectRole.MEMBER);
 
         Optional<ProjectWiki> existing = projectWikiRepository.findByProjectId(projectId);
 

@@ -8,7 +8,9 @@ public record UpdateProjectRequest(
         @NotBlank @Size(max = 255) String name,
         // См. CreateProjectRequest: колонка TEXT, границу задаёт только валидация.
         @Size(max = 20000) String description,
-        boolean archived,
+        // archived здесь больше нет (4.14): архивация — отдельное действие
+        // (POST /api/projects/{id}/archive), а не поле формы настроек. См.
+        // ProjectService.archive о том, почему.
         // Версия, которую клиент видел при загрузке формы (3.4). Обязательна: сделать её
         // необязательной значило бы, что защита от затирания чужих правок отключается
         // молчаливым забыванием параметра.

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -9,6 +9,7 @@ import { useCategories } from '../../api/categoriesQueries'
 import { useSprints } from '../../api/sprintsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { useCreateSubtask, useCreateTask, useTaskByNumber } from '../../api/tasksQueries'
+import { useTaskTemplate, useTaskTemplates } from '../../api/taskTemplatesQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { Combobox } from '../../components/ui/Combobox'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
@@ -16,7 +17,7 @@ import {
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
   TASK_URGENCIES,
-  roleIsAtLeast,
+  canWriteInProject,
 } from '../../lib/constants'
 import { fromDatetimeLocalValue } from '../../lib/datetimeLocal'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -55,6 +56,12 @@ export function TaskCreatePage() {
   const { data: tags } = useTags(projectId)
   const { data: categories } = useCategories(projectId)
   const { data: sprints } = useSprints(projectId)
+  const { data: templates } = useTaskTemplates(projectId)
+
+  // Выбранный шаблон (4.13). Список шаблонов приходит без пунктов чек-листа — за полным
+  // шаблоном ходим только тогда, когда его выбрали.
+  const [templateId, setTemplateId] = useState('')
+  const { data: selectedTemplate } = useTaskTemplate(templateId || null)
   // Combobox оперирует именами: в задаче категория задаётся свободным вводом, и бэкенд
   // сам сопоставляет имя со справочником (создавая недостающую запись).
   const categoryNames = useMemo(() => (categories ?? []).map((category) => category.name), [categories])
@@ -71,7 +78,7 @@ export function TaskCreatePage() {
   const activeMutation = parentNumber ? createSubtask : createTask
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const canManage = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   const listPath = `/projects/${projectSlug}/tasks`
   const backPath = parentNumber ? `/projects/${projectSlug}/tasks/${parentNumber}` : listPath
@@ -81,6 +88,7 @@ export function TaskCreatePage() {
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
@@ -97,6 +105,37 @@ export function TaskCreatePage() {
     },
   })
 
+  /**
+   * Шаблон заполняет форму, а не создаёт задачу за человека (4.13). Подставляются только
+   * те поля, про которые шаблон что-то говорит: null в шаблоне — это «ничего не говорю»,
+   * и затирать им уже введённое было бы хуже, чем не подставить ничего. Всё подставленное
+   * остаётся обычным содержимым формы: его видно и его правят до нажатия «создать».
+   *
+   * Чек-лист шаблона сюда не попадает — в форме заведения задачи его попросту нет. Его
+   * копирует сервер по templateId, который уезжает вместе с формой (см.
+   * TaskService.applyTemplateChecklist); ниже показано, сколько пунктов приедет.
+   */
+  useEffect(() => {
+    if (!selectedTemplate || selectedTemplate.id !== templateId) {
+      return
+    }
+    if (selectedTemplate.title) {
+      setValue('title', selectedTemplate.title, { shouldDirty: true })
+    }
+    if (selectedTemplate.description) {
+      setValue('description', selectedTemplate.description, { shouldDirty: true })
+    }
+    if (selectedTemplate.urgency) {
+      setValue('urgency', selectedTemplate.urgency, { shouldDirty: true })
+    }
+    if (selectedTemplate.tag) {
+      setValue('tagId', selectedTemplate.tag.id, { shouldDirty: true })
+    }
+    if (selectedTemplate.category) {
+      setValue('category', selectedTemplate.category.name, { shouldDirty: true })
+    }
+  }, [selectedTemplate, templateId, setValue])
+
   function onCreate(values) {
     activeMutation.mutate(
       {
@@ -109,6 +148,9 @@ export function TaskCreatePage() {
         tagId: values.tagId || null,
         category: values.category?.trim() || null,
         sprintId: values.sprintId || null,
+        // Шаблон уезжает вместе с формой ради одного — чек-листа: остальные его поля уже
+        // лежат в values, подставленные выше и, возможно, поправленные руками.
+        templateId: templateId || null,
       },
       { onSuccess: (created) => navigate(`/projects/${projectSlug}/tasks/${created.taskNumber}`) },
     )
@@ -148,6 +190,34 @@ export function TaskCreatePage() {
           )}
 
           <form onSubmit={handleSubmit(onCreate)} className="mt-4 space-y-4">
+            {/* Шаблон (4.13) стоит первым полем и отделён чертой: это не свойство задачи, а
+                способ заполнить форму, и выбирают его до того, как начали печатать. Если
+                шаблонов в проекте нет, поля нет вовсе — пустой селект на каждой форме
+                заведения задачи был бы напоминанием о возможности, которой не пользуются. */}
+            {templates && templates.length > 0 && (
+              <div className="border-b border-gray-200 pb-4 dark:border-gray-700">
+                <Field label={t('taskTemplates.pickLabel')}>
+                  <select
+                    className={inputClass}
+                    value={templateId}
+                    onChange={(event) => setTemplateId(event.target.value)}
+                  >
+                    <option value="">{t('taskTemplates.noTemplate')}</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                {selectedTemplate?.id === templateId && selectedTemplate.itemCount > 0 && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {t('taskTemplates.checklistWillBeAdded', { count: selectedTemplate.itemCount })}
+                  </p>
+                )}
+              </div>
+            )}
+
             <Field label={t('tasks.detail.titleLabel')} error={errors.title?.message}>
               <input type="text" className={inputClass} maxLength={255} {...register('title')} />
             </Field>

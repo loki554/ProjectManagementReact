@@ -16,7 +16,7 @@ import {
   TASK_NUMBER_BADGE_CLASS,
   TASK_STATUSES,
   TASK_URGENCIES,
-  roleIsAtLeast,
+  canWriteInProject,
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { isOpenBlockersError } from '../../lib/taskBlockers'
@@ -65,7 +65,7 @@ export function TaskEditPage() {
   const deleteTask = useDeleteTask(projectId)
 
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  const canManage = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   const viewPath = `/projects/${projectSlug}/tasks/${taskNumber}`
 

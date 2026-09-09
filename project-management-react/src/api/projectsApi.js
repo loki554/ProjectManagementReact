@@ -1,7 +1,9 @@
 import { apiClient } from './client'
 
-export function fetchProjects() {
-  return apiClient.get('/projects').then((res) => res.data)
+// archived=true отдаёт архив (4.14), по умолчанию — действующие проекты. Один эндпоинт на
+// оба списка: это те же проекты и та же форма ответа.
+export function fetchProjects(archived = false) {
+  return apiClient.get('/projects', { params: { archived } }).then((res) => res.data)
 }
 
 export function fetchProject(projectId) {
@@ -21,6 +23,17 @@ export function createProject(payload) {
 
 export function updateProject(projectId, payload) {
   return apiClient.patch(`/projects/${projectId}`, payload).then((res) => res.data)
+}
+
+// Архивация — отдельное действие, а не поле формы настроек: у неё есть последствия
+// (проект уходит из списка и перестаёт принимать правки), и подписывать их заодно с
+// переименованием проекта неправильно. Оба вызова идемпотентны.
+export function archiveProject(projectId) {
+  return apiClient.post(`/projects/${projectId}/archive`).then((res) => res.data)
+}
+
+export function unarchiveProject(projectId) {
+  return apiClient.post(`/projects/${projectId}/unarchive`).then((res) => res.data)
 }
 
 export function deleteProject(projectId) {

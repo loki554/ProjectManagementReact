@@ -6,7 +6,7 @@ import { useRestoreTask, useTrash } from '../../api/tasksQueries'
 import { secondaryButtonClass } from '../../components/ui/FormKit'
 import {
   TASK_NUMBER_BADGE_CLASS,
-  roleIsAtLeast,
+  canWriteInProject,
   taskStatusBadgeClass,
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -29,7 +29,9 @@ export function ProjectTrashPage() {
   // Косметическое скрытие: сервер всё равно требует MEMBER и выше на восстановление,
   // как и на удаление.
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canRestore = myMembership ? roleIsAtLeast(myMembership.role, 'MEMBER') : false
+  // Восстановление — правка проекта, поэтому в архиве (4.14) её нет: корзина архивного
+  // проекта остаётся видимой, но достать из неё задачу можно, только вернув проект.
+  const canRestore = canWriteInProject(project, myMembership?.role, 'MEMBER')
 
   return (
     <div className="flex h-full flex-col gap-3 px-4 py-4">

@@ -292,7 +292,7 @@ public class SprintService {
 
     private void requireManageRole(UUID projectId, User currentUser) {
         ProjectRole role = projectAccessService.requireMembership(projectId, currentUser);
-        projectAccessService.requireRole(role, ProjectRole.ADMIN);
+        projectAccessService.requireWriteRole(projectId, role, ProjectRole.ADMIN);
     }
 
     private static void requireValidDates(SprintRequest request) {

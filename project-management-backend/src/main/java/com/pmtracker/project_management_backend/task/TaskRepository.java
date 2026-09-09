@@ -147,6 +147,10 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
      * 2) остальные задачи — по urgency по убыванию важности (CASE, т.к. urgency хранится как
      *    VARCHAR, а не native enum — алфавитная сортировка дала бы неверный порядок);
      * 3) затем due_date по возрастанию (NULL — в конце) как финальный тай-брейк.
+     * Задачи архивных проектов (4.14) сюда не попадают: список «мои активные задачи» — это
+     * призыв к действию, а в архивном проекте действовать нечем, там запрещены любые правки.
+     * Найти такую задачу по-прежнему можно поиском — он архив не прячет, потому что поиск
+     * это не призыв, а справка.
      * join fetch на project/tag закрывает N+1 для полей ответа (Task.project — ManyToOne без
      * явного FetchType, но ad-hoc HQL без fetch join всё равно требует отдельного select per row
      * у Hibernate). Явный countQuery — авто-вывод COUNT из запроса с fetch join не всегда корректен
@@ -158,6 +162,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
             left join fetch t.tag
             where t.assignee.id = :userId
               and t.status not in :excludedStatuses
+              and t.project.archived = false
             order by
               case when t.dueDate is not null and t.dueDate <= :urgentCutoff then 0 else 1 end asc,
               case when t.dueDate is not null and t.dueDate <= :urgentCutoff then t.dueDate end asc,
@@ -173,6 +178,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
             select count(t) from Task t
             where t.assignee.id = :userId
               and t.status not in :excludedStatuses
+              and t.project.archived = false
             """)
     Page<Task> findActiveByAssignee(UUID userId, List<TaskStatus> excludedStatuses, Instant urgentCutoff, Pageable pageable);
 
@@ -182,6 +188,10 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
      * так и уже просроченные, разделение на "скоро"/"просрочена" по дедлайну относительно
      * now остаётся на стороне вызывающего кода. join fetch project/assignee закрывает N+1:
      * оба нужны для payload и получателя уведомления на каждой задаче.
+     *
+     * <p>Архивные проекты (4.14) исключены: напоминание о сроке — это просьба что-то
+     * сделать, а в архивном проекте сделать ничего нельзя. Иначе закрытый проект с сотней
+     * незакрытых задач писал бы письма всей команде вечно.
      */
     @Query("""
             select t from Task t
@@ -191,6 +201,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, TaskRepositor
               and t.status not in :excludedStatuses
               and t.dueDate is not null
               and t.dueDate <= :cutoff
+              and t.project.archived = false
             """)
     List<Task> findActiveWithDueDateBefore(List<TaskStatus> excludedStatuses, Instant cutoff);
 

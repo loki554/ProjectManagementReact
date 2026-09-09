@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useProjects } from '../../api/projectsQueries'
@@ -9,7 +10,11 @@ import { MyActiveTasksSection } from './MyActiveTasksSection'
 
 export function ProjectsListPage() {
   const { t } = useTranslation()
-  const { data: projects, isLoading, isError, error } = useProjects()
+  // Архив (4.14) — переключатель того же списка, а не отдельная страница: это те же
+  // проекты, и ходят в него редко, но за конкретным — «где тот прошлогодний». Состояние
+  // локальное, без URL: ссылкой на «мой архив» не делятся, она у каждого своя.
+  const [showArchived, setShowArchived] = useState(false)
+  const { data: projects, isLoading, isError, error } = useProjects(showArchived)
 
   return (
     <div className="min-h-svh">
@@ -17,10 +22,21 @@ export function ProjectsListPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('projects.title')}</h1>
-          <Link to="/projects/new" className={primaryButtonClass}>
-            {t('projects.newProject')}
-          </Link>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            {showArchived ? t('projects.archivedTitle') : t('projects.title')}
+          </h1>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setShowArchived((previous) => !previous)}
+              className="text-sm text-purple-600 hover:underline dark:text-purple-400"
+            >
+              {showArchived ? t('projects.showActive') : t('projects.showArchived')}
+            </button>
+            <Link to="/projects/new" className={primaryButtonClass}>
+              {t('projects.newProject')}
+            </Link>
+          </div>
         </div>
 
         {isLoading && <p className="text-gray-500 dark:text-gray-400">{t('projects.loading')}</p>}
@@ -28,10 +44,16 @@ export function ProjectsListPage() {
 
         {!isLoading && !isError && projects.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-white py-16 text-center dark:border-gray-600 dark:bg-gray-800">
-            <p className="text-gray-600 dark:text-gray-400">{t('projects.empty')}</p>
-            <Link to="/projects/new" className={`mt-4 ${primaryButtonClass}`}>
-              {t('projects.newProject')}
-            </Link>
+            <p className="text-gray-600 dark:text-gray-400">
+              {showArchived ? t('projects.archiveEmpty') : t('projects.empty')}
+            </p>
+            {/* В пустом архиве кнопка «новый проект» неуместна: сюда пришли искать старое,
+                а не заводить новое. */}
+            {!showArchived && (
+              <Link to="/projects/new" className={`mt-4 ${primaryButtonClass}`}>
+                {t('projects.newProject')}
+              </Link>
+            )}
           </div>
         )}
 

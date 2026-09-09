@@ -25,6 +25,7 @@ import { ProjectsListPage } from './pages/projects/ProjectsListPage'
 import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
 import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
 import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
+import { ProjectTaskTemplatesPage } from './pages/projects/ProjectTaskTemplatesPage'
 import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
 import { ProjectTrashPage } from './pages/projects/ProjectTrashPage'
 import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
@@ -153,6 +154,10 @@ function AppRoutes() {
           <Route path="settings/members" element={<ProjectMembersPage />} />
           <Route path="settings/tags" element={<ProjectTagsPage />} />
           <Route path="settings/categories" element={<ProjectCategoriesPage />} />
+          {/* Шаблоны задач (4.13) — в настройках, рядом с тэгами и категориями: это
+              справочник проекта, а не рабочий экран. Пользуются им не отсюда, а из формы
+              заведения задачи, где шаблон и выбирают. */}
+          <Route path="settings/templates" element={<ProjectTaskTemplatesPage />} />
           <Route path="settings/edit" element={<ProjectEditPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/projects" replace />} />

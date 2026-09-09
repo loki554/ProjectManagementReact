@@ -14,7 +14,7 @@ import {
 import { useProjectInvitations, useRevokeInvitation } from '../../api/invitationsQueries'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
-import { PROJECT_ROLES, roleIsAtLeast } from '../../lib/constants'
+import { PROJECT_ROLES, canWriteInProject } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildInviteSchema(t) {
@@ -39,7 +39,9 @@ export function ProjectMembersPage() {
   // Косметическое скрытие (см. 3.6.5) — сервер всё равно проверяет права на каждом
   // write-эндпоинте (INSUFFICIENT_ROLE), это не единственная линия защиты.
   const myMembership = members?.find((member) => member.userId === currentUser?.id)
-  const canManage = myMembership ? roleIsAtLeast(myMembership.role, 'ADMIN') : false
+  // Состав участников архивного проекта (4.14) тоже заморожен: приглашать в законченный
+  // проект и раздавать в нём роли незачем, а посмотреть, кто в нём был, по-прежнему можно.
+  const canManage = canWriteInProject(project, myMembership?.role, 'ADMIN')
 
   // Непринятые приглашения (4.2) — список только для OWNER/ADMIN, поэтому запрос и
   // включается только им: остальным он вернул бы 403 и нарисовал бы ошибку на странице,
