@@ -12,6 +12,7 @@ import { getLocalizedErrorMessage } from '../lib/errorMessage'
 import { USERNAME_MAX_LENGTH, USERNAME_PATTERN } from '../lib/mentions'
 import { useAuthenticatedImage } from '../lib/useAuthenticatedImage'
 import { useAuthStore } from '../stores/authStore'
+import { confirmAction } from '../stores/confirmStore'
 
 function buildSchema(t) {
   return z.object({
@@ -109,9 +110,21 @@ export function ProfilePage() {
     }
   }
 
-  function handleBackClick(event) {
-    if (hasUnsavedChanges && !window.confirm(t('profile.unsavedChangesConfirm'))) {
-      event.preventDefault()
+  // Переход отменяется всегда, а не только при отказе: ответа приходится ждать, а
+  // ссылка ждать не умеет — к моменту ответа страница была бы уже другой. Поэтому уводим
+  // сами и только после «да».
+  async function handleBackClick(event) {
+    if (!hasUnsavedChanges) {
+      return
+    }
+    event.preventDefault()
+    const confirmed = await confirmAction({
+      title: t('profile.unsavedChangesConfirm'),
+      body: t('profile.unsavedChangesBody'),
+      confirmLabel: t('profile.leavePage'),
+    })
+    if (confirmed) {
+      navigate('/projects')
     }
   }
 

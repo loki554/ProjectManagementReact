@@ -17,6 +17,10 @@
     "editorFallback": "The Markdown editor failed to start — here is a plain text box, formatting still works.",
     "rendererFallback": "Failed to render Markdown — showing the raw text."
   },
+  "confirm": {
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
   "header": {
     "profile": "Profile",
     "logout": "Log out",
@@ -334,8 +338,10 @@
     "archiveHint": "The project leaves the list and stops accepting changes. Everything stays readable, and you can bring it back at any time.",
     "archive": "Archive project",
     "archiving": "Archiving...",
-    "archiveConfirm": "Archive this project? It will leave the project list and stop accepting changes.",
-    "archivedNotice": "The project is archived, so its settings cannot be edited. Restore it from the project page first."
+    "archiveConfirm": "Archive this project?",
+    "archivedNotice": "The project is archived, so its settings cannot be edited. Restore it from the project page first.",
+    "archiveConfirmBody": "It will leave the project list and stop accepting changes. You can bring it back at any time.",
+    "archiveAction": "Archive"
   },
   "members": {
     "title": "Members of \"{{project}}\"",
@@ -409,12 +415,13 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "deleteConfirm": "Delete this tag? It will be removed from any tasks using it.",
+    "deleteConfirm": "Delete this tag?",
     "empty": "No tags yet",
     "loading": "Loading tags...",
     "validation": {
       "invalidColor": "Enter a valid color"
-    }
+    },
+    "deleteConfirmBody": "It will be removed from any tasks using it."
   },
   "categories": {
     "navLabel": "Categories",
@@ -427,8 +434,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "deleteConfirm": "Delete this category?",
-    "deleteConfirmWithTasks_one": "Delete this category? It will be removed from {{count}} task.",
-    "deleteConfirmWithTasks_other": "Delete this category? It will be removed from {{count}} tasks.",
+    "deleteConfirmWithTasks_one": "It will be removed from {{count}} task.",
+    "deleteConfirmWithTasks_other": "It will be removed from {{count}} tasks.",
     "taskCount_one": "{{count}} task",
     "taskCount_other": "{{count}} tasks",
     "empty": "No categories yet",
@@ -461,12 +468,10 @@
     "daysLeft_one": "{{count}} day left",
     "daysLeft_other": "{{count}} days left",
     "deleteConfirm": "Delete this sprint?",
-    "deleteConfirmWithTasks_one": "Delete this sprint? {{count}} task will return to the backlog.",
-    "deleteConfirmWithTasks_other": "Delete this sprint? {{count}} tasks will return to the backlog.",
-    "completeMoveConfirm_one": "{{count}} task is still open. Move it to \"{{sprint}}\"? Cancel returns it to the backlog.",
-    "completeMoveConfirm_other": "{{count}} tasks are still open. Move them to \"{{sprint}}\"? Cancel returns them to the backlog.",
-    "completeBacklogConfirm_one": "Complete this sprint? {{count}} open task will return to the backlog.",
-    "completeBacklogConfirm_other": "Complete this sprint? {{count}} open tasks will return to the backlog.",
+    "deleteConfirmWithTasks_one": "{{count}} task will return to the backlog.",
+    "deleteConfirmWithTasks_other": "{{count}} tasks will return to the backlog.",
+    "completeBacklogConfirm_one": "{{count}} open task will return to the backlog.",
+    "completeBacklogConfirm_other": "{{count}} open tasks will return to the backlog.",
     "completed_zero": "Sprint completed",
     "completed_one": "Sprint completed, {{count}} task moved",
     "completed_other": "Sprint completed, {{count}} tasks moved",
@@ -480,7 +485,12 @@
     "openInList": "Open in list",
     "validation": {
       "endBeforeStart": "The end date cannot be earlier than the start date"
-    }
+    },
+    "completeConfirm": "Complete this sprint?",
+    "completeOpenTasks_one": "{{count}} task is still open — decide where it goes.",
+    "completeOpenTasks_other": "{{count}} tasks are still open — decide where they go.",
+    "completeMoveChoice": "Move to \"{{sprint}}\"",
+    "completeBacklogChoice": "Send to the backlog"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -604,7 +614,17 @@
       "saving": "Saving...",
       "delete": "Delete task",
       "deleting": "Deleting...",
-      "deleteConfirm": "Delete this task along with all of its subtasks?"
+      "deleteConfirm": "Delete this task?",
+      "deleteConfirmBody": "It moves to the trash and can be restored from there within 30 days.",
+      "deleteConfirmBodyWith": "It moves to the trash together with {{details}}. You can restore it from there within 30 days.",
+      "deleteCountSubtasks_one": "{{count}} subtask",
+      "deleteCountSubtasks_other": "{{count}} subtasks",
+      "deleteCountComments_one": "{{count}} comment",
+      "deleteCountComments_other": "{{count}} comments",
+      "deleteCountAttachments_one": "{{count}} attachment",
+      "deleteCountAttachments_other": "{{count}} attachments",
+      "deleteCountTimeLogs_one": "{{count}} time entry",
+      "deleteCountTimeLogs_other": "{{count}} time entries"
     },
     "create": {
       "title": "New task",
@@ -639,8 +659,12 @@
       "openBlockerHint": "Still open",
       "blockedBadge_one": "{{count}} open blocker",
       "blockedBadge_other": "{{count}} open blockers",
-      "doneConfirm": "This task still has open blockers. Mark it as done anyway?",
-      "bulkDoneConfirm": "These tasks still have open blockers: {{tasks}}. Close them anyway?"
+      "doneConfirm": "Mark this task as done?",
+      "bulkDoneConfirm": "Close the selected tasks?",
+      "doneConfirmBody": "It still has open blockers.",
+      "doneAnyway": "Mark as done",
+      "bulkDoneConfirmBody": "These still have open blockers: {{tasks}}.",
+      "bulkDoneAnyway": "Close anyway"
     },
     "timeLogs": {
       "title": "Time tracking",
@@ -732,7 +756,7 @@
     "save": "Save",
     "saving": "Saving...",
     "saved": "Changes saved",
-    "unsavedChangesConfirm": "You have unsaved changes. Leave this page?",
+    "unsavedChangesConfirm": "Leave this page?",
     "password": {
       "title": "Change password",
       "hint": "After the change all sessions, including the current one, will be ended — you will need to sign in again.",
@@ -767,7 +791,9 @@
         "taskOverdue": "A due date has passed"
       },
       "bellStaysHint": "Whatever you turn off here, the notifications stay in the bell — except for projects you set to \"Nothing\"."
-    }
+    },
+    "unsavedChangesBody": "Your unsaved changes will be lost.",
+    "leavePage": "Leave"
   },
   "errors": {
     "INVALID_CREDENTIALS": "Invalid email or password",
@@ -890,12 +916,13 @@
     "cancel": "Cancel",
     "edit": "Edit",
     "delete": "Delete",
-    "deleteConfirm": "Delete the template \"{{name}}\"? Tasks already created from it stay untouched.",
+    "deleteConfirm": "Delete the template \"{{name}}\"?",
     "loading": "Loading templates...",
     "empty": "No templates yet",
     "pickLabel": "Template",
     "noTemplate": "Without a template",
     "checklistWillBeAdded_one": "{{count}} checklist step will be added to the task",
-    "checklistWillBeAdded_other": "{{count}} checklist steps will be added to the task"
+    "checklistWillBeAdded_other": "{{count}} checklist steps will be added to the task",
+    "deleteConfirmBody": "Tasks already created from it stay untouched."
   }
 }

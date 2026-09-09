@@ -28,6 +28,8 @@ import {
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { blockedTaskNumbers, formatTaskNumbers, isOpenBlockersError } from '../../lib/taskBlockers'
+import { confirmDoneWithBlockers } from '../../lib/taskBlockers'
+import { confirmAction } from '../../stores/confirmStore'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import {
@@ -212,12 +214,18 @@ export function ProjectTaskListPage() {
    * между фронтендом и сервером. Список на экране мог устареть — тогда тот же отказ
    * придёт с сервера, и он разбирается вторым, «немым» подтверждением.
    */
-  function applyBulk(payload, ignoreBlockers = false) {
+  async function applyBulk(payload, ignoreBlockers = false) {
     const taskIds = [...selectedIds]
     if (!ignoreBlockers && payload.status === 'DONE') {
       const blocked = blockedTaskNumbers(visibleTasks, taskIds)
       if (blocked.length > 0) {
-        if (!window.confirm(t('tasks.dependencies.bulkDoneConfirm', { tasks: formatTaskNumbers(blocked) }))) {
+        const confirmed = await confirmAction({
+          title: t('tasks.dependencies.bulkDoneConfirm'),
+          body: t('tasks.dependencies.bulkDoneConfirmBody', { tasks: formatTaskNumbers(blocked) }),
+          confirmLabel: t('tasks.dependencies.bulkDoneAnyway'),
+          tone: 'primary',
+        })
+        if (!confirmed) {
           return
         }
         applyBulk(payload, true)
@@ -231,8 +239,8 @@ export function ProjectTaskListPage() {
           pushToast(t('taskList.bulk.applied', { count: result.updated }))
           setSelectedIds(new Set())
         },
-        onError: (error) => {
-          if (!ignoreBlockers && isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+        onError: async (error) => {
+          if (!ignoreBlockers && isOpenBlockersError(error) && (await confirmDoneWithBlockers(t))) {
             applyBulk(payload, true)
           }
         },

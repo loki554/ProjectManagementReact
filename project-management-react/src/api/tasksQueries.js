@@ -1,5 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as attachmentsApi from './attachmentsApi'
+import * as commentsApi from './commentsApi'
 import * as tasksApi from './tasksApi'
+import * as timeLogsApi from './timeLogsApi'
 
 // tasksKey — общий префикс всех задач проекта: по нему инвалидируются разом и доска,
 // и любая страница списка, и запрос задачи по номеру.
@@ -219,6 +222,37 @@ export function useCreateSubtask(parentTaskId) {
     mutationFn: (payload) => tasksApi.createSubtask(parentTaskId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subtasksKey(parentTaskId) })
+    },
+  })
+}
+
+/**
+ * Сколько всего уедет в корзину вместе с задачей — для вопроса перед удалением (5.2).
+ * Четыре списка одним запросом не отдаются, поэтому спрашиваем все четыре разом и только в момент
+ * нажатия: грузить ими открытие формы ради кнопки, которую могут и не нажать, незачем.
+ *
+ * Отдельный ключ кэша, а не чтение чужих: список комментариев лежит в кэше под выбранной
+ * человеком сортировкой, и угадывать её здесь значило бы связать вопрос об удалении с состоянием
+ * селекта на соседней странице. staleTime — чтобы «нажал, передумал, нажал снова» не стоило
+ * восьми запросов.
+ */
+export function fetchTaskDeletionSummary(queryClient, taskId) {
+  return queryClient.fetchQuery({
+    queryKey: [...taskKey(taskId), 'deletion-summary'],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const [subtasks, comments, attachments, timeLogs] = await Promise.all([
+        tasksApi.fetchSubtasks(taskId),
+        commentsApi.fetchComments(taskId, 'newest'),
+        attachmentsApi.fetchAttachments(taskId),
+        timeLogsApi.fetchTimeLogs(taskId),
+      ])
+      return {
+        subtasks: subtasks.length,
+        comments: comments.length,
+        attachments: attachments.length,
+        timeLogs: timeLogs.length,
+      }
     },
   })
 }

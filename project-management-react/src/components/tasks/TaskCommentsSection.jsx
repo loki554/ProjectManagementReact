@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { useComments, useCreateComment, useDeleteComment, useUpdateComment } from '../../api/commentsQueries'
+import { confirmAction } from '../../stores/confirmStore'
 import { useProjectMembers } from '../../api/projectsQueries'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { useAuthStore } from '../../stores/authStore'
@@ -70,8 +71,8 @@ export function TaskCommentsSection({ taskId, projectId, canComment, isModerator
     updateComment.mutate({ commentId: editing.id, body }, { onSuccess: () => setEditing(null) })
   }
 
-  function onDelete(commentId) {
-    if (!window.confirm(t('tasks.comments.deleteConfirm'))) {
+  async function onDelete(commentId) {
+    if (!(await confirmAction({ title: t('tasks.comments.deleteConfirm'), confirmLabel: t('confirm.delete') }))) {
       return
     }
     deleteComment.mutate(commentId)

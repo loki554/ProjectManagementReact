@@ -4,6 +4,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import { AppErrorScreen } from './components/errors/ErrorFallback'
+import { ConfirmDialogHost } from './components/ui/ConfirmDialog'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { InvitePage } from './pages/InvitePage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -55,6 +56,9 @@ function App() {
       {/* Вне BrowserRouter/условного рендера ниже — тост про "сессия истекла" может
           прилететь ещё во время useAuthBootstrap, до того как маршруты вообще смонтированы. */}
       <ToastContainer />
+      {/* Там же и по той же причине, что тосты (5.2): спрашивают со всех экранов, а
+          ответ должен пережить даже переход, который сам же и вызвал. */}
+      <ConfirmDialogHost />
       {!bootstrapped ? (
         <div className="flex min-h-svh items-center justify-center text-gray-500 dark:text-gray-400">
           {t('app.loading')}

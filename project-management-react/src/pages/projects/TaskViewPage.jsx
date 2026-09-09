@@ -30,6 +30,7 @@ import {
 } from '../../lib/constants'
 import { downloadBlob } from '../../lib/downloadBlob'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { confirmAction } from '../../stores/confirmStore'
 import { formatFileSize } from '../../lib/formatFileSize'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { useAuthStore } from '../../stores/authStore'
@@ -144,8 +145,8 @@ export function TaskViewPage() {
     )
   }
 
-  function onDeleteTimeLog(timeLogId) {
-    if (!window.confirm(t('tasks.timeLogs.deleteConfirm'))) {
+  async function onDeleteTimeLog(timeLogId) {
+    if (!(await confirmAction({ title: t('tasks.timeLogs.deleteConfirm'), confirmLabel: t('confirm.delete') }))) {
       return
     }
     deleteTimeLog.mutate(timeLogId)
@@ -155,8 +156,8 @@ export function TaskViewPage() {
     uploadAttachment.mutate(file)
   }
 
-  function onDeleteAttachment(attachmentId) {
-    if (!window.confirm(t('tasks.attachments.deleteConfirm'))) {
+  async function onDeleteAttachment(attachmentId) {
+    if (!(await confirmAction({ title: t('tasks.attachments.deleteConfirm'), confirmLabel: t('confirm.delete') }))) {
       return
     }
     deleteAttachmentMutation.mutate(attachmentId)

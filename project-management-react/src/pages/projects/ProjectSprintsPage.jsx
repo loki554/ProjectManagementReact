@@ -18,6 +18,7 @@ import { useBulkUpdateTasks, useTasks } from '../../api/tasksQueries'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
 import { TASK_NUMBER_BADGE_CLASS, canWriteInProject, taskStatusBadgeClass } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { askConfirmation, confirmAction } from '../../stores/confirmStore'
 import {
   daysLeft,
   formatSprintRange,
@@ -160,17 +161,37 @@ export function ProjectSprintsPage() {
    * могут, и решение за человеком. Ответ по умолчанию — бэклог, следующий спринт
    * предлагается, только если он есть.
    */
-  function onComplete(sprint) {
+  async function onComplete(sprint) {
     const open = sprintOpenTaskCount(sprint)
     const next = openSprints.find((candidate) => candidate.id !== sprint.id)
     let moveTo = null
 
     if (open > 0 && next) {
-      moveTo = window.confirm(t('sprints.completeMoveConfirm', { count: open, sprint: next.name }))
-        ? next.id
-        : null
-    } else if (open > 0 && !window.confirm(t('sprints.completeBacklogConfirm', { count: open }))) {
-      return
+      // Три ответа, а не два: раньше это спрашивал window.confirm, у которого «отмена»
+      // означала не отмену, а «в бэклог», — то есть отменить завершение спринта было
+      // нельзя вовсе. Теперь отказ (Esc, «Отмена») означает ровно отказ.
+      const choice = await askConfirmation({
+        title: t('sprints.completeConfirm'),
+        body: t('sprints.completeOpenTasks', { count: open }),
+        choices: [
+          { id: 'backlog', label: t('sprints.completeBacklogChoice'), tone: 'primary' },
+          { id: 'move', label: t('sprints.completeMoveChoice', { sprint: next.name }), tone: 'primary' },
+        ],
+      })
+      if (!choice) {
+        return
+      }
+      moveTo = choice === 'move' ? next.id : null
+    } else if (open > 0) {
+      const confirmed = await confirmAction({
+        title: t('sprints.completeConfirm'),
+        body: t('sprints.completeBacklogConfirm', { count: open }),
+        confirmLabel: t('sprints.complete'),
+        tone: 'primary',
+      })
+      if (!confirmed) {
+        return
+      }
     }
 
     completeSprint.mutate(
@@ -179,11 +200,13 @@ export function ProjectSprintsPage() {
     )
   }
 
-  function onDelete(sprint) {
-    const message = sprint.taskCount
-      ? t('sprints.deleteConfirmWithTasks', { count: sprint.taskCount })
-      : t('sprints.deleteConfirm')
-    if (!window.confirm(message)) {
+  async function onDelete(sprint) {
+    const confirmed = await confirmAction({
+      title: t('sprints.deleteConfirm'),
+      body: sprint.taskCount ? t('sprints.deleteConfirmWithTasks', { count: sprint.taskCount }) : undefined,
+      confirmLabel: t('confirm.delete'),
+    })
+    if (!confirmed) {
       return
     }
     deleteSprint.mutate(sprint.id)

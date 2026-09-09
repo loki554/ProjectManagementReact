@@ -20,6 +20,7 @@ import {
 } from '../../components/ui/FormKit'
 import { TASK_URGENCIES, canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { confirmAction } from '../../stores/confirmStore'
 import { useAuthStore } from '../../stores/authStore'
 
 const EMPTY_FORM = {
@@ -150,8 +151,13 @@ export function ProjectTaskTemplatesPage() {
     }
   }
 
-  function onDelete(template) {
-    if (!window.confirm(t('taskTemplates.deleteConfirm', { name: template.name }))) {
+  async function onDelete(template) {
+    const confirmed = await confirmAction({
+      title: t('taskTemplates.deleteConfirm', { name: template.name }),
+      body: t('taskTemplates.deleteConfirmBody'),
+      confirmLabel: t('confirm.delete'),
+    })
+    if (!confirmed) {
       return
     }
     deleteTemplate.mutate(template.id)

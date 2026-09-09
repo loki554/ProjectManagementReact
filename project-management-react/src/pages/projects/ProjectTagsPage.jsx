@@ -9,6 +9,7 @@ import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '../../api/tag
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { confirmAction } from '../../stores/confirmStore'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -71,8 +72,13 @@ export function ProjectTagsPage() {
     updateTag.mutate({ tagId: editingTagId, payload: values }, { onSuccess: () => setEditingTagId(null) })
   }
 
-  function onDelete(tagId) {
-    if (!window.confirm(t('tags.deleteConfirm'))) {
+  async function onDelete(tagId) {
+    const confirmed = await confirmAction({
+      title: t('tags.deleteConfirm'),
+      body: t('tags.deleteConfirmBody'),
+      confirmLabel: t('confirm.delete'),
+    })
+    if (!confirmed) {
       return
     }
     deleteTag.mutate(tagId)

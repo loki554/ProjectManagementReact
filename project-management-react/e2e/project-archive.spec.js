@@ -24,11 +24,9 @@ const PROJECT_NAME = `E2E archive ${RUN_ID}`
 const TASK = 'Ship the last thing'
 
 test('архивный проект уходит из списка, остаётся доступным и возвращается', async ({ page }) => {
-  const dialogs = []
-  page.on('dialog', (dialog) => {
-    dialogs.push(dialog.message())
-    dialog.accept()
-  })
+  // Архивация спрашивает диалогом на странице (5.2); возврат из архива не спрашивает
+  // вовсе, и это проверяется в конце сценария.
+  const dialog = page.getByRole('dialog')
 
   await test.step('регистрация, подтверждение и вход', async () => {
     await page.goto('/register')
@@ -67,7 +65,8 @@ test('архивный проект уходит из списка, остаёт
     await page.goto(`${projectUrl}/settings/edit`)
     await page.getByRole('button', { name: 'Archive project' }).click()
 
-    await expect.poll(() => dialogs.length).toBe(1)
+    await expect(dialog.getByRole('heading', { name: 'Archive this project?' })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Archive', exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`${projectUrl.split('/').pop()}$`))
     await expect(page.getByText('This project is archived')).toBeVisible()
   })
@@ -107,7 +106,7 @@ test('архивный проект уходит из списка, остаёт
     await expect(page.getByText(PROJECT_NAME)).toBeVisible()
   })
 
-  // Спрашивают ровно один раз — при архивации. Возврат из архива не спрашивает: он ничего
-  // не ломает и отменяется тем же нажатием.
-  expect(dialogs).toHaveLength(1)
+  // Возврат из архива не спрашивает: он ничего не ломает и отменяется тем же нажатием, —
+  // а незакрытый диалог заблокировал бы страницу и последующие шаги не прошли бы.
+  await expect(dialog).toHaveCount(0)
 })

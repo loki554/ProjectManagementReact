@@ -17,6 +17,10 @@
     "editorFallback": "Редактор Markdown не запустился — перед вами простое поле ввода, разметка при этом работает.",
     "rendererFallback": "Не удалось отрисовать Markdown — показываем исходный текст."
   },
+  "confirm": {
+    "cancel": "Отмена",
+    "delete": "Удалить"
+  },
   "header": {
     "profile": "Профиль",
     "logout": "Выйти",
@@ -334,8 +338,10 @@
     "archiveHint": "Проект уйдёт из списка и перестанет принимать изменения. Всё содержимое останется доступным для чтения, вернуть его можно в любой момент.",
     "archive": "Убрать в архив",
     "archiving": "Убираем...",
-    "archiveConfirm": "Убрать проект в архив? Он уйдёт из списка проектов и перестанет принимать изменения.",
-    "archivedNotice": "Проект в архиве, поэтому его настройки не редактируются. Сначала верните его из архива на странице проекта."
+    "archiveConfirm": "Убрать проект в архив?",
+    "archivedNotice": "Проект в архиве, поэтому его настройки не редактируются. Сначала верните его из архива на странице проекта.",
+    "archiveConfirmBody": "Он уйдёт из списка проектов и перестанет принимать изменения. Вернуть можно в любой момент.",
+    "archiveAction": "Убрать в архив"
   },
   "members": {
     "title": "Участники проекта «{{project}}»",
@@ -409,12 +415,13 @@
     "save": "Сохранить",
     "cancel": "Отмена",
     "delete": "Удалить",
-    "deleteConfirm": "Удалить этот тэг? Он будет снят со всех задач, где использовался.",
+    "deleteConfirm": "Удалить этот тэг?",
     "empty": "Тэгов пока нет",
     "loading": "Загрузка тэгов...",
     "validation": {
       "invalidColor": "Введите корректный цвет"
-    }
+    },
+    "deleteConfirmBody": "Он будет снят со всех задач, где использовался."
   },
   "categories": {
     "navLabel": "Категории",
@@ -427,10 +434,10 @@
     "cancel": "Отмена",
     "delete": "Удалить",
     "deleteConfirm": "Удалить эту категорию?",
-    "deleteConfirmWithTasks_one": "Удалить эту категорию? Она будет снята с {{count}} задачи.",
-    "deleteConfirmWithTasks_few": "Удалить эту категорию? Она будет снята с {{count}} задач.",
-    "deleteConfirmWithTasks_many": "Удалить эту категорию? Она будет снята с {{count}} задач.",
-    "deleteConfirmWithTasks_other": "Удалить эту категорию? Она будет снята с {{count}} задач.",
+    "deleteConfirmWithTasks_one": "Она будет снята с {{count}} задачи.",
+    "deleteConfirmWithTasks_few": "Она будет снята с {{count}} задач.",
+    "deleteConfirmWithTasks_many": "Она будет снята с {{count}} задач.",
+    "deleteConfirmWithTasks_other": "Она будет снята с {{count}} задач.",
     "taskCount_one": "{{count}} задача",
     "taskCount_few": "{{count}} задачи",
     "taskCount_many": "{{count}} задач",
@@ -467,18 +474,14 @@
     "daysLeft_many": "осталось {{count}} дней",
     "daysLeft_other": "осталось {{count}} дней",
     "deleteConfirm": "Удалить этот спринт?",
-    "deleteConfirmWithTasks_one": "Удалить этот спринт? {{count}} задача вернётся в бэклог.",
-    "deleteConfirmWithTasks_few": "Удалить этот спринт? {{count}} задачи вернутся в бэклог.",
-    "deleteConfirmWithTasks_many": "Удалить этот спринт? {{count}} задач вернутся в бэклог.",
-    "deleteConfirmWithTasks_other": "Удалить этот спринт? {{count}} задач вернутся в бэклог.",
-    "completeMoveConfirm_one": "Незакрытая задача — {{count}}. Перенести её в «{{sprint}}»? Отмена — вернуть в бэклог.",
-    "completeMoveConfirm_few": "Незакрытых задач — {{count}}. Перенести их в «{{sprint}}»? Отмена — вернуть в бэклог.",
-    "completeMoveConfirm_many": "Незакрытых задач — {{count}}. Перенести их в «{{sprint}}»? Отмена — вернуть в бэклог.",
-    "completeMoveConfirm_other": "Незакрытых задач — {{count}}. Перенести их в «{{sprint}}»? Отмена — вернуть в бэклог.",
-    "completeBacklogConfirm_one": "Завершить спринт? {{count}} незакрытая задача вернётся в бэклог.",
-    "completeBacklogConfirm_few": "Завершить спринт? {{count}} незакрытые задачи вернутся в бэклог.",
-    "completeBacklogConfirm_many": "Завершить спринт? {{count}} незакрытых задач вернутся в бэклог.",
-    "completeBacklogConfirm_other": "Завершить спринт? {{count}} незакрытых задач вернутся в бэклог.",
+    "deleteConfirmWithTasks_one": "{{count}} задача вернётся в бэклог.",
+    "deleteConfirmWithTasks_few": "{{count}} задачи вернутся в бэклог.",
+    "deleteConfirmWithTasks_many": "{{count}} задач вернутся в бэклог.",
+    "deleteConfirmWithTasks_other": "{{count}} задач вернутся в бэклог.",
+    "completeBacklogConfirm_one": "{{count}} незакрытая задача вернётся в бэклог.",
+    "completeBacklogConfirm_few": "{{count}} незакрытые задачи вернутся в бэклог.",
+    "completeBacklogConfirm_many": "{{count}} незакрытых задач вернутся в бэклог.",
+    "completeBacklogConfirm_other": "{{count}} незакрытых задач вернутся в бэклог.",
     "completed_zero": "Спринт завершён",
     "completed_one": "Спринт завершён, перенесена {{count}} задача",
     "completed_few": "Спринт завершён, перенесено {{count}} задачи",
@@ -494,7 +497,14 @@
     "openInList": "Открыть в списке",
     "validation": {
       "endBeforeStart": "Окончание не может быть раньше начала"
-    }
+    },
+    "completeConfirm": "Завершить спринт?",
+    "completeOpenTasks_one": "Осталась {{count}} незакрытая задача — решите, куда её деть.",
+    "completeOpenTasks_few": "Осталось {{count}} незакрытые задачи — решите, куда их деть.",
+    "completeOpenTasks_many": "Осталось {{count}} незакрытых задач — решите, куда их деть.",
+    "completeOpenTasks_other": "Осталось {{count}} незакрытых задач — решите, куда их деть.",
+    "completeMoveChoice": "Перенести в «{{sprint}}»",
+    "completeBacklogChoice": "Вернуть в бэклог"
   },
   "dashboard": {
     "title": "Дашборд",
@@ -628,7 +638,25 @@
       "saving": "Сохраняем...",
       "delete": "Удалить задачу",
       "deleting": "Удаляем...",
-      "deleteConfirm": "Удалить задачу вместе со всеми подзадачами?"
+      "deleteConfirm": "Удалить задачу?",
+      "deleteConfirmBody": "Она уедет в корзину — оттуда её можно вернуть в течение 30 дней.",
+      "deleteConfirmBodyWith": "Вместе с ней в корзину уедут {{details}}. Вернуть можно в течение 30 дней.",
+      "deleteCountSubtasks_one": "{{count}} подзадача",
+      "deleteCountSubtasks_few": "{{count}} подзадачи",
+      "deleteCountSubtasks_many": "{{count}} подзадач",
+      "deleteCountSubtasks_other": "{{count}} подзадач",
+      "deleteCountComments_one": "{{count}} комментарий",
+      "deleteCountComments_few": "{{count}} комментария",
+      "deleteCountComments_many": "{{count}} комментариев",
+      "deleteCountComments_other": "{{count}} комментариев",
+      "deleteCountAttachments_one": "{{count}} вложение",
+      "deleteCountAttachments_few": "{{count}} вложения",
+      "deleteCountAttachments_many": "{{count}} вложений",
+      "deleteCountAttachments_other": "{{count}} вложений",
+      "deleteCountTimeLogs_one": "{{count}} запись времени",
+      "deleteCountTimeLogs_few": "{{count}} записи времени",
+      "deleteCountTimeLogs_many": "{{count}} записей времени",
+      "deleteCountTimeLogs_other": "{{count}} записей времени"
     },
     "create": {
       "title": "Новая задача",
@@ -665,8 +693,12 @@
       "blockedBadge_few": "Не закрыто {{count}} блокера",
       "blockedBadge_many": "Не закрыто {{count}} блокеров",
       "blockedBadge_other": "Не закрыто {{count}} блокеров",
-      "doneConfirm": "У задачи остались незакрытые блокеры. Всё равно перевести её в «Выполнено»?",
-      "bulkDoneConfirm": "У этих задач остались незакрытые блокеры: {{tasks}}. Всё равно закрыть?"
+      "doneConfirm": "Перевести задачу в «Выполнено»?",
+      "bulkDoneConfirm": "Закрыть выбранные задачи?",
+      "doneConfirmBody": "У неё остались незакрытые блокеры.",
+      "doneAnyway": "Всё равно перевести",
+      "bulkDoneConfirmBody": "У этих остались незакрытые блокеры: {{tasks}}.",
+      "bulkDoneAnyway": "Всё равно закрыть"
     },
     "timeLogs": {
       "title": "Учёт времени",
@@ -762,7 +794,7 @@
     "save": "Сохранить",
     "saving": "Сохраняем...",
     "saved": "Изменения сохранены",
-    "unsavedChangesConfirm": "У вас есть несохранённые изменения. Уйти со страницы?",
+    "unsavedChangesConfirm": "Уйти со страницы?",
     "password": {
       "title": "Смена пароля",
       "hint": "После смены пароля все сессии, включая текущую, будут завершены — потребуется войти заново.",
@@ -797,7 +829,9 @@
         "taskOverdue": "Срок истёк"
       },
       "bellStaysHint": "Что бы вы тут ни выключили, в колокольчике уведомления останутся — кроме проектов, которым вы сами выбрали «Ничего»."
-    }
+    },
+    "unsavedChangesBody": "Несохранённые изменения пропадут.",
+    "leavePage": "Уйти"
   },
   "errors": {
     "INVALID_CREDENTIALS": "Неверный email или пароль",
@@ -924,7 +958,7 @@
     "cancel": "Отмена",
     "edit": "Изменить",
     "delete": "Удалить",
-    "deleteConfirm": "Удалить шаблон «{{name}}»? Уже заведённые по нему задачи останутся как есть.",
+    "deleteConfirm": "Удалить шаблон «{{name}}»?",
     "loading": "Загрузка шаблонов...",
     "empty": "Шаблонов пока нет",
     "pickLabel": "Шаблон",
@@ -932,6 +966,7 @@
     "checklistWillBeAdded_one": "В задачу добавится {{count}} пункт чек-листа",
     "checklistWillBeAdded_few": "В задачу добавятся {{count}} пункта чек-листа",
     "checklistWillBeAdded_many": "В задачу добавятся {{count}} пунктов чек-листа",
-    "checklistWillBeAdded_other": "В задачу добавятся {{count}} пунктов чек-листа"
+    "checklistWillBeAdded_other": "В задачу добавятся {{count}} пунктов чек-листа",
+    "deleteConfirmBody": "Уже заведённые по нему задачи останутся как есть."
   }
 }

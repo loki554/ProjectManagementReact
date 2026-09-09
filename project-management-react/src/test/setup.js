@@ -9,6 +9,23 @@ import i18n from '../i18n'
 // тест это увидит, а не подставит fallback молча.
 await i18n.changeLanguage('en')
 
+// jsdom (30.x) знает элемент <dialog>, но не реализует showModal/close: ни top layer, ни
+// фокус-трапа у него нет в принципе. Подменяем на минимум — открыть и закрыть, — которого
+// хватает, чтобы проверять содержимое и кнопки диалога подтверждения (5.2). Сами фокус-трап и
+// Esc проверяются e2e в настоящем браузере — здесь их проверять было бы не на чём.
+if (!HTMLDialogElement.prototype.showModal) {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.open = true
+  }
+  HTMLDialogElement.prototype.close = function close(returnValue) {
+    this.open = false
+    if (returnValue !== undefined) {
+      this.returnValue = returnValue
+    }
+    this.dispatchEvent(new Event('close'))
+  }
+}
+
 afterEach(() => {
   cleanup()
   localStorage.clear()

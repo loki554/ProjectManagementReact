@@ -66,16 +66,10 @@ test('зависимости: связь номером, признак «заб
   let secondNumber
   let projectSlug
 
-  // Обработчик диалогов один на весь тест, а не page.once() перед каждым шагом:
-  // одноразовые обработчики накапливаются, если ожидаемый диалог не появился, и следующий
-  // достаётся сразу двоим («Cannot accept dialog which is already handled»). Заодно тут
-  // видно, сколько раз страница вообще спросила — предупреждение обязано быть одним.
-  let dialogAnswer = 'dismiss'
-  const dialogs = []
-  page.on('dialog', async (dialog) => {
-    dialogs.push(dialog.message())
-    await (dialogAnswer === 'accept' ? dialog.accept() : dialog.dismiss())
-  })
+  // Предупреждение о блокерах спрашивают диалогом на самой странице (5.2), а не нативным
+  // confirm. Считать вопросы обработчиком больше не нужно: пока диалог открыт, страница под
+  // ним инертна, поэтому лишний незакрытый вопрос немедленно ломает следующий же шаг.
+  const dialog = page.getByRole('dialog')
 
   await test.step('регистрация, подтверждение и вход', async () => {
     await page.goto('/register')
@@ -155,13 +149,13 @@ test('зависимости: связь номером, признак «заб
     await expect(page.getByText('1 open blocker')).toBeVisible()
 
     await page.getByRole('link', { name: 'Kanban' }).click()
-    dialogAnswer = 'dismiss'
-    const before = dialogs.length
     await dragCardInto(page, column(page, 'New').getByText(SECOND), column(page, 'Done'))
 
     // Спросили — и после отказа карточка вернулась в свою колонку: оптимистичный перенос
     // откатился вместе с отклонённым запросом.
-    await expect.poll(() => dialogs.length).toBe(before + 1)
+    await expect(dialog.getByRole('heading', { name: 'Mark this task as done?' })).toBeVisible()
+    await expect(dialog.getByText('It still has open blockers.')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(column(page, 'New').getByText(SECOND)).toBeVisible()
     await page.reload()
     await expect(column(page, 'New').getByText(SECOND)).toBeVisible()
@@ -174,15 +168,14 @@ test('зависимости: связь номером, признак «заб
 
     // Здесь вопрос задаётся до запроса и перечисляет номера: на двадцати выделенных
     // задачах важно, какие именно из них закрывать рано.
-    dialogAnswer = 'dismiss'
-    const before = dialogs.length
     await page.getByRole('button', { name: 'Apply' }).click()
-    await expect.poll(() => dialogs.length).toBe(before + 1)
-    expect(dialogs.at(-1)).toContain(`#${secondNumber}`)
+    await expect(dialog.getByRole('heading', { name: 'Close the selected tasks?' })).toBeVisible()
+    await expect(dialog.getByText(`#${secondNumber}`, { exact: false })).toBeVisible()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
     await expect(row(page, SECOND).getByText('New', { exact: true })).toBeVisible()
 
-    dialogAnswer = 'accept'
     await page.getByRole('button', { name: 'Apply' }).click()
+    await dialog.getByRole('button', { name: 'Close anyway' }).click()
     await expect(page.getByText('Tasks updated: 1')).toBeVisible()
     await page.reload()
     await expect(row(page, SECOND).getByText('Done', { exact: true })).toBeVisible()
@@ -191,14 +184,14 @@ test('зависимости: связь номером, признак «заб
   await test.step('закрытие заблокированной задачи спрашивает — и отказ ничего не меняет', async () => {
     await page.goto(`/projects/${projectSlug}/tasks/${blockedNumber}/edit`)
     // Сервер отклоняет первый запрос, страница спрашивает — отказываемся, второго не будет.
-    dialogAnswer = 'dismiss'
-    const dialogsBefore = dialogs.length
     await page.getByLabel('Status').selectOption('DONE')
     await page.getByRole('button', { name: 'Save' }).click()
 
-    // Спросили ровно один раз, и текст — про блокеры, а не про что-нибудь ещё.
-    await expect.poll(() => dialogs.length).toBe(dialogsBefore + 1)
-    expect(dialogs.at(-1)).toContain('open blockers')
+    // Спросили — и текст про блокеры, а не про что-нибудь ещё.
+    await expect(dialog.getByRole('heading', { name: 'Mark this task as done?' })).toBeVisible()
+    await expect(dialog.getByText('It still has open blockers.')).toBeVisible()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toHaveCount(0)
 
     // Остались в форме (успех уводит на страницу задачи), и статус в базе прежний.
     await expect(page).toHaveURL(/\/edit$/)
@@ -208,9 +201,9 @@ test('зависимости: связь номером, признак «заб
 
   await test.step('согласие проводит ту же правку', async () => {
     await page.goto(`/projects/${projectSlug}/tasks/${blockedNumber}/edit`)
-    dialogAnswer = 'accept'
     await page.getByLabel('Status').selectOption('DONE')
     await page.getByRole('button', { name: 'Save' }).click()
+    await dialog.getByRole('button', { name: 'Mark as done' }).click()
 
     // Ушли на страницу задачи — значит повторный запрос с ignoreBlockers прошёл.
     await expect(page).toHaveURL(new RegExp(`/tasks/${blockedNumber}$`))

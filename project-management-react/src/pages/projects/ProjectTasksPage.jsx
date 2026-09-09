@@ -33,6 +33,7 @@ import {
   taskUrgencyBadgeClass,
 } from '../../lib/constants'
 import { isOpenBlockersError } from '../../lib/taskBlockers'
+import { confirmDoneWithBlockers } from '../../lib/taskBlockers'
 import { tagBadgeStyle } from '../../lib/tagColor'
 import { assigneeLabelOf, formatDueDate, formatHours, isTaskOverdue } from '../../lib/taskDisplay'
 import { useAuthStore } from '../../stores/authStore'
@@ -314,8 +315,8 @@ export function ProjectTasksPage() {
    */
   function moveTask(target) {
     updateTaskStatus.mutate(target, {
-      onError: (error) => {
-        if (isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+      onError: async (error) => {
+        if (isOpenBlockersError(error) && (await confirmDoneWithBlockers(t))) {
           updateTaskStatus.mutate({ ...target, ignoreBlockers: true })
         }
       },

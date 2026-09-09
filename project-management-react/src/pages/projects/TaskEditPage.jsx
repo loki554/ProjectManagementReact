@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +9,7 @@ import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { useCategories } from '../../api/categoriesQueries'
 import { useSprints } from '../../api/sprintsQueries'
 import { useTags } from '../../api/tagsQueries'
-import { useDeleteTask, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
+import { fetchTaskDeletionSummary, useDeleteTask, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
 import { Combobox } from '../../components/ui/Combobox'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
@@ -20,6 +21,9 @@ import {
 } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
 import { isOpenBlockersError } from '../../lib/taskBlockers'
+import { confirmDoneWithBlockers } from '../../lib/taskBlockers'
+import { describeTaskDeletion } from '../../lib/taskDeletion'
+import { confirmAction } from '../../stores/confirmStore'
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '../../lib/datetimeLocal'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -41,6 +45,7 @@ export function TaskEditPage() {
   const { t, i18n } = useTranslation()
   const { projectSlug, taskNumber } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const currentUser = useAuthStore((state) => state.user)
 
   const { data: project, isLoading: projectLoading } = useProjectBySlug(projectSlug)
@@ -123,8 +128,8 @@ export function TaskEditPage() {
       },
       {
         onSuccess: () => navigate(viewPath),
-        onError: (error) => {
-          if (!ignoreBlockers && isOpenBlockersError(error) && window.confirm(t('tasks.dependencies.doneConfirm'))) {
+        onError: async (error) => {
+          if (!ignoreBlockers && isOpenBlockersError(error) && (await confirmDoneWithBlockers(t))) {
             save(values, true)
           }
         },
@@ -136,8 +141,25 @@ export function TaskEditPage() {
     save(values, false)
   }
 
-  function onDelete() {
-    if (!window.confirm(t('tasks.detail.deleteConfirm'))) {
+  /**
+   * Удаление задачи — единственное место, где вопрос сначала идёт на сервер (5.2): в нём
+   * перечисляется, что именно уедет в корзину вместе с задачей. Без этого «удалить задачу»
+   * и «удалить задачу с шестью подзадачами, перепиской и списанным временем» выглядели
+   * одинаково, хотя это принципиально разные решения.
+   *
+   * Счётчики читаются по тем же данным, что и вкладки страницы задачи, поэтому у пришедшего
+   * оттуда человека берутся из кэша. Если запрос не удался, вопрос всё равно задаётся, но
+   * без подробностей: не показать состав — неприятно, а не спросить перед удалением — куда
+   * хуже.
+   */
+  async function onDelete() {
+    const summary = await fetchTaskDeletionSummary(queryClient, taskId).catch(() => null)
+    const confirmed = await confirmAction({
+      title: t('tasks.detail.deleteConfirm'),
+      body: describeTaskDeletion(summary, t, i18n.language),
+      confirmLabel: t('confirm.delete'),
+    })
+    if (!confirmed) {
       return
     }
     deleteTask.mutate(

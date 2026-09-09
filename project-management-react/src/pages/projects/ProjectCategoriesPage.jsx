@@ -14,6 +14,7 @@ import { useProjectBySlug, useProjectMembers } from '../../api/projectsQueries'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { canWriteInProject } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { confirmAction } from '../../stores/confirmStore'
 import { useAuthStore } from '../../stores/authStore'
 
 function buildCategorySchema(t) {
@@ -76,13 +77,17 @@ export function ProjectCategoriesPage() {
     )
   }
 
-  function onDelete(category) {
+  async function onDelete(category) {
     // В отличие от тэга показываем в подтверждении число задач: удаление снимает категорию
-    // со всех них, и масштаб последствий должен быть виден до нажатия «ОК».
-    const message = category.taskCount
-      ? t('categories.deleteConfirmWithTasks', { count: category.taskCount })
-      : t('categories.deleteConfirm')
-    if (!window.confirm(message)) {
+    // со всех них, и масштаб последствий должен быть виден до нажатия «Удалить».
+    const confirmed = await confirmAction({
+      title: t('categories.deleteConfirm'),
+      body: category.taskCount
+        ? t('categories.deleteConfirmWithTasks', { count: category.taskCount })
+        : undefined,
+      confirmLabel: t('confirm.delete'),
+    })
+    if (!confirmed) {
       return
     }
     deleteCategory.mutate(category.id)

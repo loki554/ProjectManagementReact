@@ -17,6 +17,10 @@
     "editorFallback": "Der Markdown-Editor konnte nicht gestartet werden — hier ist ein einfaches Textfeld, die Formatierung funktioniert trotzdem.",
     "rendererFallback": "Markdown konnte nicht dargestellt werden — der Rohtext wird angezeigt."
   },
+  "confirm": {
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
+  },
   "header": {
     "profile": "Profil",
     "logout": "Abmelden",
@@ -334,8 +338,10 @@
     "archiveHint": "Das Projekt verschwindet aus der Liste und nimmt keine Änderungen mehr an. Alles bleibt lesbar und lässt sich jederzeit zurückholen.",
     "archive": "Projekt archivieren",
     "archiving": "Wird archiviert...",
-    "archiveConfirm": "Dieses Projekt archivieren? Es verschwindet aus der Projektliste und nimmt keine Änderungen mehr an.",
-    "archivedNotice": "Das Projekt ist archiviert, seine Einstellungen lassen sich daher nicht bearbeiten. Holen Sie es zuerst auf der Projektseite zurück."
+    "archiveConfirm": "Dieses Projekt archivieren?",
+    "archivedNotice": "Das Projekt ist archiviert, seine Einstellungen lassen sich daher nicht bearbeiten. Holen Sie es zuerst auf der Projektseite zurück.",
+    "archiveConfirmBody": "Es verschwindet aus der Projektliste und nimmt keine Änderungen mehr an. Sie können es jederzeit zurückholen.",
+    "archiveAction": "Archivieren"
   },
   "members": {
     "title": "Mitglieder von „{{project}}“",
@@ -409,12 +415,13 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
-    "deleteConfirm": "Diesen Tag löschen? Er wird von allen Aufgaben entfernt, die ihn verwenden.",
+    "deleteConfirm": "Diesen Tag löschen?",
     "empty": "Noch keine Tags",
     "loading": "Tags werden geladen...",
     "validation": {
       "invalidColor": "Geben Sie eine gültige Farbe ein"
-    }
+    },
+    "deleteConfirmBody": "Er wird von allen Aufgaben entfernt, die ihn verwenden."
   },
   "categories": {
     "navLabel": "Kategorien",
@@ -427,8 +434,8 @@
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "deleteConfirm": "Diese Kategorie löschen?",
-    "deleteConfirmWithTasks_one": "Diese Kategorie löschen? Sie wird von {{count}} Aufgabe entfernt.",
-    "deleteConfirmWithTasks_other": "Diese Kategorie löschen? Sie wird von {{count}} Aufgaben entfernt.",
+    "deleteConfirmWithTasks_one": "Sie wird von {{count}} Aufgabe entfernt.",
+    "deleteConfirmWithTasks_other": "Sie wird von {{count}} Aufgaben entfernt.",
     "taskCount_one": "{{count}} Aufgabe",
     "taskCount_other": "{{count}} Aufgaben",
     "empty": "Noch keine Kategorien",
@@ -461,12 +468,10 @@
     "daysLeft_one": "noch {{count}} Tag",
     "daysLeft_other": "noch {{count}} Tage",
     "deleteConfirm": "Diesen Sprint löschen?",
-    "deleteConfirmWithTasks_one": "Diesen Sprint löschen? {{count}} Aufgabe kehrt ins Backlog zurück.",
-    "deleteConfirmWithTasks_other": "Diesen Sprint löschen? {{count}} Aufgaben kehren ins Backlog zurück.",
-    "completeMoveConfirm_one": "{{count}} Aufgabe ist noch offen. Nach „{{sprint}}“ verschieben? Abbrechen bringt sie ins Backlog.",
-    "completeMoveConfirm_other": "{{count}} Aufgaben sind noch offen. Nach „{{sprint}}“ verschieben? Abbrechen bringt sie ins Backlog.",
-    "completeBacklogConfirm_one": "Sprint abschließen? {{count}} offene Aufgabe kehrt ins Backlog zurück.",
-    "completeBacklogConfirm_other": "Sprint abschließen? {{count}} offene Aufgaben kehren ins Backlog zurück.",
+    "deleteConfirmWithTasks_one": "{{count}} Aufgabe kehrt ins Backlog zurück.",
+    "deleteConfirmWithTasks_other": "{{count}} Aufgaben kehren ins Backlog zurück.",
+    "completeBacklogConfirm_one": "{{count}} offene Aufgabe kehrt ins Backlog zurück.",
+    "completeBacklogConfirm_other": "{{count}} offene Aufgaben kehren ins Backlog zurück.",
     "completed_zero": "Sprint abgeschlossen",
     "completed_one": "Sprint abgeschlossen, {{count}} Aufgabe verschoben",
     "completed_other": "Sprint abgeschlossen, {{count}} Aufgaben verschoben",
@@ -480,7 +485,12 @@
     "openInList": "In der Liste öffnen",
     "validation": {
       "endBeforeStart": "Das Ende darf nicht vor dem Beginn liegen"
-    }
+    },
+    "completeConfirm": "Sprint abschließen?",
+    "completeOpenTasks_one": "{{count}} Aufgabe ist noch offen — entscheiden Sie, wohin sie geht.",
+    "completeOpenTasks_other": "{{count}} Aufgaben sind noch offen — entscheiden Sie, wohin sie gehen.",
+    "completeMoveChoice": "Nach „{{sprint}}“ verschieben",
+    "completeBacklogChoice": "Ins Backlog zurück"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -604,7 +614,17 @@
       "saving": "Wird gespeichert...",
       "delete": "Aufgabe löschen",
       "deleting": "Wird gelöscht...",
-      "deleteConfirm": "Diese Aufgabe und alle ihre Unteraufgaben löschen?"
+      "deleteConfirm": "Diese Aufgabe löschen?",
+      "deleteConfirmBody": "Sie wandert in den Papierkorb und kann dort 30 Tage lang wiederhergestellt werden.",
+      "deleteConfirmBodyWith": "Zusammen mit ihr wandern {{details}} in den Papierkorb. 30 Tage lang wiederherstellbar.",
+      "deleteCountSubtasks_one": "{{count}} Unteraufgabe",
+      "deleteCountSubtasks_other": "{{count}} Unteraufgaben",
+      "deleteCountComments_one": "{{count}} Kommentar",
+      "deleteCountComments_other": "{{count}} Kommentare",
+      "deleteCountAttachments_one": "{{count}} Anhang",
+      "deleteCountAttachments_other": "{{count}} Anhänge",
+      "deleteCountTimeLogs_one": "{{count}} Zeiteintrag",
+      "deleteCountTimeLogs_other": "{{count}} Zeiteinträge"
     },
     "create": {
       "title": "Neue Aufgabe",
@@ -639,8 +659,12 @@
       "openBlockerHint": "Noch offen",
       "blockedBadge_one": "{{count}} offener Blocker",
       "blockedBadge_other": "{{count}} offene Blocker",
-      "doneConfirm": "Diese Aufgabe hat noch offene Blocker. Trotzdem als erledigt markieren?",
-      "bulkDoneConfirm": "Diese Aufgaben haben noch offene Blocker: {{tasks}}. Trotzdem schließen?"
+      "doneConfirm": "Aufgabe als erledigt markieren?",
+      "bulkDoneConfirm": "Ausgewählte Aufgaben schließen?",
+      "doneConfirmBody": "Sie hat noch offene Blocker.",
+      "doneAnyway": "Trotzdem erledigen",
+      "bulkDoneConfirmBody": "Diese haben noch offene Blocker: {{tasks}}.",
+      "bulkDoneAnyway": "Trotzdem schließen"
     },
     "timeLogs": {
       "title": "Zeiterfassung",
@@ -732,7 +756,7 @@
     "save": "Speichern",
     "saving": "Wird gespeichert...",
     "saved": "Änderungen gespeichert",
-    "unsavedChangesConfirm": "Sie haben ungespeicherte Änderungen. Seite verlassen?",
+    "unsavedChangesConfirm": "Seite verlassen?",
     "password": {
       "title": "Passwort ändern",
       "hint": "Nach der Änderung werden alle Sitzungen einschließlich der aktuellen beendet — Sie müssen sich erneut anmelden.",
@@ -767,7 +791,9 @@
         "taskOverdue": "Frist ist abgelaufen"
       },
       "bellStaysHint": "Was Sie hier auch ausschalten — in der Glocke bleiben die Benachrichtigungen, außer bei Projekten, für die Sie „Nichts“ gewählt haben."
-    }
+    },
+    "unsavedChangesBody": "Ungespeicherte Änderungen gehen verloren.",
+    "leavePage": "Verlassen"
   },
   "errors": {
     "INVALID_CREDENTIALS": "Ungültige E-Mail-Adresse oder ungültiges Passwort",
@@ -890,12 +916,13 @@
     "cancel": "Abbrechen",
     "edit": "Bearbeiten",
     "delete": "Löschen",
-    "deleteConfirm": "Die Vorlage \"{{name}}\" löschen? Bereits daraus erstellte Aufgaben bleiben unverändert.",
+    "deleteConfirm": "Die Vorlage \"{{name}}\" löschen?",
     "loading": "Vorlagen werden geladen...",
     "empty": "Noch keine Vorlagen",
     "pickLabel": "Vorlage",
     "noTemplate": "Ohne Vorlage",
     "checklistWillBeAdded_one": "{{count}} Checklistenpunkt wird der Aufgabe hinzugefügt",
-    "checklistWillBeAdded_other": "{{count}} Checklistenpunkte werden der Aufgabe hinzugefügt"
+    "checklistWillBeAdded_other": "{{count}} Checklistenpunkte werden der Aufgabe hinzugefügt",
+    "deleteConfirmBody": "Bereits daraus erstellte Aufgaben bleiben unverändert."
   }
 }

@@ -13,6 +13,7 @@ import {
 import { Field, inputClass, secondaryButtonClass, submitButtonClass } from '../../components/ui/FormKit'
 import { MAX_PROJECT_PREVIEW_IMAGE_SIZE_BYTES, PROJECT_PREVIEW_IMAGE_ACCEPT } from '../../lib/constants'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
+import { confirmAction } from '../../stores/confirmStore'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useToastStore } from '../../stores/toastStore'
 
@@ -213,8 +214,16 @@ export function ProjectEditPage() {
         <p className="mt-1 mb-3 text-sm text-gray-500 dark:text-gray-400">{t('projectEdit.archiveHint')}</p>
         <button
           type="button"
-          onClick={() => {
-            if (window.confirm(t('projectEdit.archiveConfirm'))) {
+          onClick={async () => {
+            const confirmed = await confirmAction({
+              title: t('projectEdit.archiveConfirm'),
+              body: t('projectEdit.archiveConfirmBody'),
+              confirmLabel: t('projectEdit.archiveAction'),
+              // Не «опасное» действие: архив обратим, и красная кнопка обещала бы
+              // последствия страшнее тех, что есть на самом деле (4.14).
+              tone: 'primary',
+            })
+            if (confirmed) {
               setArchived.mutate(true, { onSuccess: () => navigate(`/projects/${projectSlug}`) })
             }
           }}

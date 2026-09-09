@@ -44,11 +44,10 @@ function taskRow(page, title) {
 }
 
 test('спринт наполняется из бэклога, показывает прогресс и уносит недоделанное в следующий', async ({ page }) => {
-  const dialogs = []
-  page.on('dialog', (dialog) => {
-    dialogs.push(dialog.message())
-    dialog.accept()
-  })
+  // Завершение спринта спрашивает диалогом на странице (5.2). Отдельно считать вопросы не
+  // нужно: пока диалог открыт, страница под ним инертна — незакрытый вопрос сломал бы
+  // следующий шаг сценария сам.
+  const dialog = page.getByRole('dialog')
 
   await test.step('регистрация, подтверждение и вход', async () => {
     await page.goto('/register')
@@ -154,9 +153,12 @@ test('спринт наполняется из бэклога, показыва�
     // Кнопка «Complete» одна на странице: она есть только у идущего спринта.
     await page.getByRole('button', { name: 'Complete' }).click()
 
-    // Вопрос ровно один и он про то, куда девать незакрытое, — а не «точно ли».
-    await expect.poll(() => dialogs.length).toBe(1)
-    expect(dialogs[0]).toContain(NEXT_SPRINT)
+    // Вопрос про то, куда девать незакрытое, — а не «точно ли». И у него три ответа:
+    // перенести, вернуть в бэклог и не завершать вовсе (5.2).
+    await expect(dialog.getByRole('heading', { name: 'Complete this sprint?' })).toBeVisible()
+    await expect(dialog.getByText(/1 task is still open/)).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeVisible()
+    await dialog.getByRole('button', { name: `Move to "${NEXT_SPRINT}"` }).click()
     await expect(page.getByText('Sprint completed, 1 task moved')).toBeVisible()
     // exact: тост «Sprint completed, 1 task moved» тоже содержит это слово.
     await expect(page.getByText('Completed', { exact: true })).toBeVisible()
@@ -172,7 +174,7 @@ test('спринт наполняется из бэклога, показыва�
     await expect(taskRow(page, TASKS[0]).getByRole('button', { name: 'To backlog' })).toHaveCount(0)
   })
 
-  // Диалог за весь сценарий был ровно один — тот, что про недоделанные задачи. Ни
-  // заведение спринта, ни его старт, ни перекладывание задач ничего не спрашивают.
-  expect(dialogs).toHaveLength(1)
+  // Ни заведение спринта, ни его старт, ни перекладывание задач ничего не спрашивают:
+  // будь иначе, открытый диалог заблокировал бы страницу и следующий шаг не прошёл бы.
+  await expect(dialog).toHaveCount(0)
 })
