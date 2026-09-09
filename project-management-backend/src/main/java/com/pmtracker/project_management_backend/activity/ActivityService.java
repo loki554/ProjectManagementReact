@@ -5,7 +5,9 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.dto.PageResponse;
 import com.pmtracker.project_management_backend.project.Project;
 import com.pmtracker.project_management_backend.project.ProjectAccessService;
+import com.pmtracker.project_management_backend.realtime.ProjectChangedEvent;
 import com.pmtracker.project_management_backend.task.Task;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,11 +23,14 @@ public class ActivityService {
 
     private final ProjectActivityRepository projectActivityRepository;
     private final ProjectAccessService projectAccessService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ActivityService(ProjectActivityRepository projectActivityRepository,
-                           ProjectAccessService projectAccessService) {
+                           ProjectAccessService projectAccessService,
+                           ApplicationEventPublisher eventPublisher) {
         this.projectActivityRepository = projectActivityRepository;
         this.projectAccessService = projectAccessService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -43,6 +48,18 @@ public class ActivityService {
         activity.setTask(task);
         activity.setPayload(payload);
         projectActivityRepository.save(activity);
+
+        // Отсюда же уходит сигнал живым вкладкам (4.15). Единственная точка на всё
+        // приложение — и именно потому, что запись в ленту уже стоит в каждой правке:
+        // второй, параллельный набор вызовов «а теперь ещё разошли событие» рано или поздно
+        // разъехался бы с этим, причём молча. Публикуется внутри транзакции, а уезжает
+        // после коммита — сигнал «сходи посмотри» не должен опережать то, на что он
+        // показывает (см. RealtimeBroadcaster).
+        eventPublisher.publishEvent(new ProjectChangedEvent(
+                project.getId(),
+                type,
+                task != null ? task.getId() : null,
+                actor != null ? actor.getId() : null));
     }
 
     @Transactional(readOnly = true)

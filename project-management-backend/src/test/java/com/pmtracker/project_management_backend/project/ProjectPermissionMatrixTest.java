@@ -160,6 +160,9 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /projects/{id}/star",               f -> get("/api/projects/" + f.projectId + "/star"),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
+            endpoint("GET    /projects/{id}/notification-settings", f -> get("/api/projects/" + f.projectId
+                            + "/notification-settings"),
+                    ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /tasks/{id}",                       f -> get("/api/tasks/" + f.taskId),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("GET    /tasks/{id}/subtasks",              f -> get("/api/tasks/" + f.taskId + "/subtasks"),
@@ -300,10 +303,19 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
             endpoint("DELETE /attachments/{id} (чужой)",         f -> delete("/api/attachments/" + f.attachmentId),
                     ALLOWED, ALLOWED, NOT_ATTACHMENT_OWNER, INSUFFICIENT_ROLE),
 
-            // ---- Звёздочка: личная отметка участника, роль не при чём ----
+            // ---- Личные отметки участника: роль не при чём, хватает членства ----
             endpoint("PUT    /projects/{id}/star",               f -> put("/api/projects/" + f.projectId + "/star"),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED),
             endpoint("DELETE /projects/{id}/star",               f -> delete("/api/projects/" + f.projectId + "/star"),
+                    ALLOWED, ALLOWED, ALLOWED, ALLOWED),
+            // Режим уведомлений по проекту (4.16) стоит здесь, а не среди правок: он меняет
+            // то, что человек получает, а не то, что видят остальные, — поэтому доступен и
+            // наблюдателю, которому как раз нужнее прочих.
+            endpoint("PUT    /projects/{id}/notification-settings", f -> put("/api/projects/" + f.projectId
+                            + "/notification-settings")
+                            .contentType(APPLICATION_JSON)
+                            .content("""
+                                    {"mode":"ALL"}"""),
                     ALLOWED, ALLOWED, ALLOWED, ALLOWED));
 
     // --------------------------------------------------------------------------- тесты
@@ -372,7 +384,7 @@ class ProjectPermissionMatrixTest extends IntegrationTest {
     @Test
     @DisplayName("в таблице учтены все эндпоинты проекта")
     void matrixCoversEveryProjectEndpoint() {
-        assertThat(ENDPOINTS).hasSize(49);
+        assertThat(ENDPOINTS).hasSize(51);
         assertThat(ENDPOINTS).extracting(Endpoint::name).doesNotHaveDuplicates();
     }
 

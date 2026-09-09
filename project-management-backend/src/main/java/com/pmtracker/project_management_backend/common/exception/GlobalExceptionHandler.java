@@ -368,6 +368,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(new ErrorResponse("TAG_PROJECT_MISMATCH", ex.getMessage()));
     }
 
+    // ------------------------------------------------------- живые обновления (4.15)
+
+    // 429, а не 403: дело не в правах, а в количестве. Тот же запрос от того же человека
+    // пройдёт, как только закроется лишняя вкладка. Клиент трактует его как повод подождать
+    // подольше перед следующей попыткой — ровно как 429 от лимитера auth-эндпоинтов.
+    @ExceptionHandler(TooManyRealtimeStreamsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyRealtimeStreams(TooManyRealtimeStreamsException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(new ErrorResponse("TOO_MANY_STREAMS", ex.getMessage()));
+    }
+
     // --------------------------------------------------------------- архив проекта (4.14)
 
     // 409, а не 403: дело не в правах — у того же владельца тот же запрос пройдёт, как

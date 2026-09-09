@@ -145,6 +145,11 @@ public class TaskService {
         activityService.record(project, currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
+        // Тем, кто следит за проектом целиком (4.16). Отдельным вызовом, а не внутри
+        // notifyTaskAssigned: у назначения и у появления задачи разные получатели и разный
+        // смысл, и задача без исполнителя (состояние по умолчанию) — как раз тот случай,
+        // когда первого события нет вовсе, а второе есть.
+        notificationService.notifyTaskCreated(task, currentUser);
         // 0 блокеров без запроса: связи (4.8) заводятся отдельной ручкой уже после
         // создания, у только что созданной задачи их быть неоткуда. Чек-лист, в отличие от
         // них, у новой задачи быть может — но только пришедший из шаблона, и отмечать в нём
@@ -709,6 +714,10 @@ public class TaskService {
         activityService.record(parent.getProject(), currentUser, "task_created", task,
                 Map.of("taskNumber", task.getTaskNumber(), "title", task.getTitle()));
         notificationService.notifyTaskAssigned(task, currentUser, task.getAssignee());
+        // Подзадача для наблюдателя (4.16) — такое же появление задачи в проекте, как и
+        // любое другое: в ленте активности она уже неотличима от верхнеуровневой
+        // (тот же task_created выше), и делать её тише только в уведомлениях не за что.
+        notificationService.notifyTaskCreated(task, currentUser);
         return TaskResponse.from(task, timeLogRepository.sumHoursByTaskId(task.getId()), 0, checklistTotal, 0);
     }
 

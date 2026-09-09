@@ -5,6 +5,7 @@ import com.pmtracker.project_management_backend.auth.User;
 import com.pmtracker.project_management_backend.common.exception.AlreadyProjectMemberException;
 import com.pmtracker.project_management_backend.common.exception.CannotRemoveLastOwnerException;
 import com.pmtracker.project_management_backend.common.exception.ResourceNotFoundException;
+import com.pmtracker.project_management_backend.notification.ProjectNotificationSettingsService;
 import com.pmtracker.project_management_backend.project.dto.MemberResponse;
 import com.pmtracker.project_management_backend.project.dto.UpdateMemberRoleRequest;
 import org.springframework.stereotype.Service;
@@ -22,15 +23,18 @@ public class ProjectMemberService {
     private final ProjectMembershipCache membershipCache;
     private final ProjectAccessService projectAccessService;
     private final ActivityService activityService;
+    private final ProjectNotificationSettingsService projectNotificationSettingsService;
 
     public ProjectMemberService(ProjectMemberRepository projectMemberRepository,
                                  ProjectMembershipCache membershipCache,
                                  ProjectAccessService projectAccessService,
-                                 ActivityService activityService) {
+                                 ActivityService activityService,
+                                 ProjectNotificationSettingsService projectNotificationSettingsService) {
         this.projectMemberRepository = projectMemberRepository;
         this.membershipCache = membershipCache;
         this.projectAccessService = projectAccessService;
         this.activityService = activityService;
+        this.projectNotificationSettingsService = projectNotificationSettingsService;
     }
 
     @Transactional(readOnly = true)
@@ -125,6 +129,11 @@ public class ProjectMemberService {
 
         projectMemberRepository.delete(target);
         membershipCache.invalidate(projectId, targetUserId);
+        // Настройка уведомлений по проекту (4.16) уезжает вместе с членством: иначе
+        // повторное приглашение через полгода тихо восстановило бы подписку, о которой
+        // человек давно забыл. Рассылка наблюдателям это и так проверяет отдельно
+        // (см. findWatchers), но чинить состояние лучше там, где оно портится.
+        projectNotificationSettingsService.forgetMember(projectId, targetUserId);
         activityService.record(project, currentUser, "member_removed", null,
                 Map.of("userName", displayName(target.getUser())));
     }

@@ -7,6 +7,7 @@ import com.pmtracker.project_management_backend.mail.NotificationEmailRequestedE
 import com.pmtracker.project_management_backend.mail.NotificationMailItem;
 import com.pmtracker.project_management_backend.mail.UnsubscribeTokenService;
 import com.pmtracker.project_management_backend.notification.dto.NotificationResponse;
+import com.pmtracker.project_management_backend.realtime.UserNotifiedEvent;
 import com.pmtracker.project_management_backend.task.Task;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +35,15 @@ import java.util.UUID;
  * уведомление, и результат фиксируется в самой строке (email_sent_at), а не пересчитывается
  * потом. Иначе рассылке пришлось бы гадать, что человек хотел вчера, когда уведомление
  * создавалось, — а между созданием и вечерним дайджестом настройки вполне могли поменяться.
+ * <p>
+ * С 4.15 канала три: к колокольчику и почте добавился открытый поток в уже загруженную
+ * вкладку (см. {@code realtime/}). Он не отдельная доставка, а способ показать содержимое
+ * колокольчика без опроса раз в полминуты, поэтому и решения своего не принимает: событие
+ * уходит на каждое созданное уведомление, а куда именно — знает {@code RealtimeBroadcaster}.
+ * <p>
+ * С 4.16 у получателя появилась вторая ось настройки — по проектам. Проверяется она ровно
+ * в одном месте, в {@link #create}, и раньше всего остального: выключенный проект означает
+ * тишину во всех трёх каналах сразу, а не «письма не шлём, а в колокольчик положим».
  */
 @Service
 public class NotificationService {
@@ -42,6 +52,12 @@ public class NotificationService {
     // Превью текста комментария в уведомлении — сам комментарий читается на странице задачи.
     private static final int COMMENT_EXCERPT_MAX_LENGTH = 140;
 
+    /**
+     * Новая задача в проекте — уведомление только для тех, кто выбрал по проекту режим
+     * ALL (4.16). Ни постановщику, ни исполнителю оно не адресовано: первый её и создал,
+     * второй узнаёт о ней из {@link #TYPE_TASK_ASSIGNED}.
+     */
+    public static final String TYPE_TASK_CREATED = "task_created";
     public static final String TYPE_TASK_ASSIGNED = "task_assigned";
     public static final String TYPE_TASK_COMMENT = "task_comment";
     public static final String TYPE_TASK_MENTION = "task_mention";
@@ -50,15 +66,21 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final NotificationSettingsRepository settingsRepository;
+    private final ProjectNotificationSettingsService projectSettingsService;
+    private final ProjectNotificationSettingsRepository projectSettingsRepository;
     private final UnsubscribeTokenService unsubscribeTokenService;
     private final ApplicationEventPublisher eventPublisher;
 
     public NotificationService(NotificationRepository notificationRepository,
                                NotificationSettingsRepository settingsRepository,
+                               ProjectNotificationSettingsService projectSettingsService,
+                               ProjectNotificationSettingsRepository projectSettingsRepository,
                                UnsubscribeTokenService unsubscribeTokenService,
                                ApplicationEventPublisher eventPublisher) {
         this.notificationRepository = notificationRepository;
         this.settingsRepository = settingsRepository;
+        this.projectSettingsService = projectSettingsService;
+        this.projectSettingsRepository = projectSettingsRepository;
         this.unsubscribeTokenService = unsubscribeTokenService;
         this.eventPublisher = eventPublisher;
     }
@@ -102,6 +124,46 @@ public class NotificationService {
                 continue;
             }
             create(recipient, actor, TYPE_TASK_COMMENT, task, payload);
+        }
+
+        // Наблюдатели проекта (4.16): режим ALL означает «все комментарии в проекте», а не
+        // только в задачах, к которым я причастен. Тип тот же самый, task_comment, — событие
+        // и правда то же самое, и второй тип ради него означал бы две формулировки одного
+        // факта в колокольчике, в письме и в трёх локалях.
+        notifyWatchers(task, actor, TYPE_TASK_COMMENT, payload, notifiedUserIds);
+    }
+
+    /**
+     * Новая задача в проекте — тем, кто следит за проектом целиком (4.16).
+     * <p>
+     * Отдельного круга «постановщик и исполнитель» здесь нет и быть не может: постановщик
+     * задачу только что создал сам, а исполнителю про неё в ту же секунду уходит
+     * {@link #TYPE_TASK_ASSIGNED}. Поэтому единственные получатели — наблюдатели.
+     */
+    @Transactional
+    public void notifyTaskCreated(Task task, User actor) {
+        Set<UUID> notifiedUserIds = new HashSet<>();
+        if (task.getAssignee() != null) {
+            notifiedUserIds.add(task.getAssignee().getId());
+        }
+        notifyWatchers(task, actor, TYPE_TASK_CREATED, basePayload(task), notifiedUserIds);
+    }
+
+    /**
+     * Разослать событие наблюдателям проекта — тем, кто выбрал по нему режим ALL (4.16).
+     * <p>
+     * {@code notifiedUserIds} общий с основным кругом получателей и потому обязателен:
+     * наблюдатель — обычный участник проекта и вполне может быть заодно постановщиком или
+     * упомянутым. Два уведомления об одном комментарии — ровно та цена, которую человек
+     * заплатил бы за то, что попросил присылать больше.
+     */
+    private void notifyWatchers(Task task, User actor, String type,
+                                Map<String, Object> payload, Set<UUID> notifiedUserIds) {
+        for (User watcher : projectSettingsRepository.findWatchers(task.getProject().getId())) {
+            if (watcher.getId().equals(actor.getId()) || !notifiedUserIds.add(watcher.getId())) {
+                continue;
+            }
+            create(watcher, actor, type, task, payload);
         }
     }
 
@@ -154,11 +216,26 @@ public class NotificationService {
         }
         Map<String, Object> payload = basePayload(task);
         payload.put("dueDate", task.getDueDate() != null ? task.getDueDate().toString() : null);
-        create(recipient, null, type, task, payload);
-        return true;
+        // Ответ — «создали ли», а не «подходит ли задача»: сканер по нему считает свою
+        // работу, и выключенный проект (4.16) для него ничем не отличается от уже
+        // разосланного алерта — делать было нечего.
+        return create(recipient, null, type, task, payload);
     }
 
-    private void create(User recipient, User actor, String type, Task task, Map<String, Object> payload) {
+    /**
+     * @return true, если уведомление действительно создано; false — если получатель
+     *         выключил себе этот проект (4.16)
+     */
+    private boolean create(User recipient, User actor, String type, Task task, Map<String, Object> payload) {
+        // Единственное место, где проверяется режим проекта, — и этого достаточно, потому
+        // что через create проходят все пять типов, включая те, что создаёт планировщик.
+        // Проверка стоит до сохранения, а не до отправки письма: «отписаться от проекта»
+        // означает «не показывать это и в колокольчике» — иначе выключение отличалось бы
+        // от глобальной настройки почты (4.3) только формулировкой.
+        if (projectSettingsService.modeOf(task.getProject().getId(), recipient.getId())
+                == ProjectNotificationMode.MUTED) {
+            return false;
+        }
         Notification notification = new Notification();
         notification.setRecipient(recipient);
         notification.setActor(actor);
@@ -167,6 +244,17 @@ public class NotificationService {
         notification.setPayload(payload);
         notificationRepository.save(notification);
         planEmail(notification, recipient, actor);
+        // Третий канал доставки того же уведомления (4.15): колокольчик в уже открытой
+        // вкладке. Не альтернатива почте, а замена опросу раз в 30 секунд — тому самому,
+        // из-за которого «вас упомянули» приезжало в среднем через четверть минуты после
+        // того, как это написали.
+        eventPublisher.publishEvent(new UserNotifiedEvent(
+                recipient.getId(),
+                type,
+                task.getProject().getId(),
+                task.getId(),
+                actor != null ? actor.getId() : null));
+        return true;
     }
 
     /**

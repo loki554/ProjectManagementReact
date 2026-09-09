@@ -40,6 +40,7 @@
     "empty": "Noch keine Benachrichtigungen",
     "markAllRead": "Alle als gelesen markieren",
     "types": {
+      "task_created": "hat die Aufgabe \"{{title}}\" erstellt",
       "task_assigned": "hat Ihnen die Aufgabe \"{{title}}\" zugewiesen",
       "task_comment": "hat die Aufgabe \"{{title}}\" kommentiert: „{{commentExcerpt}}“",
       "task_mention": "hat Sie in der Aufgabe \"{{title}}\" erwähnt: „{{commentExcerpt}}“",
@@ -297,6 +298,19 @@
   "projectStar": {
     "star": "Star",
     "starred": "Starred"
+  },
+  "projectNotifications": {
+    "title": "Projekt-Benachrichtigungen",
+    "modes": {
+      "ALL": "Alles im Projekt",
+      "PARTICIPATING": "Nur was mich betrifft",
+      "MUTED": "Nichts"
+    },
+    "modeHints": {
+      "ALL": "Neue Aufgaben und alle Kommentare des Projekts, nicht nur zu Ihren Aufgaben.",
+      "PARTICIPATING": "Zuweisungen, Kommentare zu Ihren Aufgaben, Erwähnungen und Fristen.",
+      "MUTED": "Weder E-Mail noch Glocke für dieses Projekt. Seine Aufgaben bleiben in Ihren Listen."
+    }
   },
   "projectEdit": {
     "title": "Projekt bearbeiten",
@@ -718,7 +732,7 @@
     },
     "notifications": {
       "title": "Benachrichtigungs-E-Mails",
-      "hint": "Benachrichtigungen erscheinen immer in der Glocke. Hier legen Sie fest, ob sie zusätzlich per E-Mail kommen.",
+      "hint": "Benachrichtigungen erscheinen in der Glocke, sofern das Projekt nicht in seinen eigenen Einstellungen abgeschaltet ist. Hier legen Sie fest, ob sie zusätzlich per E-Mail kommen.",
       "loading": "Einstellungen werden geladen...",
       "emailEnabled": "Benachrichtigungen per E-Mail senden",
       "emailEnabledHint": "Ausschalten, wenn die Glocke genügt.",
@@ -739,7 +753,7 @@
         "taskDueSoon": "Frist läuft bald ab",
         "taskOverdue": "Frist ist abgelaufen"
       },
-      "bellStaysHint": "Was Sie hier auch ausschalten — in der Glocke bleiben die Benachrichtigungen."
+      "bellStaysHint": "Was Sie hier auch ausschalten — in der Glocke bleiben die Benachrichtigungen, außer bei Projekten, für die Sie „Nichts“ gewählt haben."
     }
   },
   "errors": {

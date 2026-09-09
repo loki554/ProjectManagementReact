@@ -21,6 +21,33 @@ public class AsyncConfig {
     private static final Logger log = LoggerFactory.getLogger(AsyncConfig.class);
 
     public static final String MAIL_EXECUTOR = "mailExecutor";
+    public static final String REALTIME_EXECUTOR = "realtimeExecutor";
+
+    /**
+     * Рассылка живых обновлений в открытые SSE-потоки (4.15). Отдельный пул, а не общий с
+     * почтой: у этих двух задач противоположный профиль. Письмо уходит редко и надолго
+     * (SMTP с таймаутом в пять секунд), сигнал в поток — часто и мгновенно, и вставать за
+     * лежащим SMTP ему незачем — это ровно то запаздывание, ради устранения которого пункт
+     * и делался.
+     */
+    @Bean(REALTIME_EXECUTOR)
+    public Executor realtimeExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        // Очередь заметно короче почтовой и по той же логике, только доведённой до конца:
+        // просроченный сигнал бесполезен вдвойне. Клиент, до которого не доехало событие,
+        // не остаётся без данных — он их перечитает по возвращении на вкладку, ровно как
+        // до 4.15.
+        executor.setQueueCapacity(200);
+        executor.setThreadNamePrefix("realtime-");
+        executor.setRejectedExecutionHandler((task, rejectingExecutor) ->
+                log.warn("Realtime executor queue is full, dropping a change notification"));
+        // Ждать нечего: незавершённая рассылка при остановке инстанса означает, что
+        // соединения всё равно вот-вот оборвутся вместе с процессом.
+        executor.setWaitForTasksToCompleteOnShutdown(false);
+        return executor;
+    }
 
     @Bean(MAIL_EXECUTOR)
     public Executor mailExecutor() {

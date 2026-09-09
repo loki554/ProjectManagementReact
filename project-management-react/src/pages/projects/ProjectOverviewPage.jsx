@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { useProjectBySlug, useProjectMembers, useSetProjectArchived } from '../../api/projectsQueries'
 import { ActivityFeed } from '../../components/projects/ActivityFeed'
+import { ProjectNotificationsCard } from '../../components/projects/ProjectNotificationsCard'
 import { StarButton } from '../../components/projects/StarButton'
 import { secondaryButtonClass } from '../../components/ui/FormKit'
 import { getLocalizedErrorMessage } from '../../lib/errorMessage'
@@ -110,6 +111,10 @@ export function ProjectOverviewPage() {
 
         <aside className="w-full shrink-0 space-y-4 lg:w-72">
           <StarButton projectId={project.id} />
+
+          {/* И в архиве тоже: архив запрещает менять проект, а не выключать себе письма
+              про него (4.16). */}
+          <ProjectNotificationsCard projectId={project.id} />
 
           {/* Косметическое скрытие — PATCH на бэкенде в любом случае OWNER-only. В архиве
               настройки не правятся вовсе (409 PROJECT_ARCHIVED), поэтому кнопки нет:

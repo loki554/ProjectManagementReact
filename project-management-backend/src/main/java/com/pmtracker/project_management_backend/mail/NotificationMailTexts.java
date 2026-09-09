@@ -41,6 +41,9 @@ final class NotificationMailTexts {
     static String subject(NotificationMailItem item) {
         String title = sanitizeHeaderValue(item.stringValue("title"));
         return switch (item.type()) {
+            // Тип приходит только тем, кто сам попросил присылать всё по проекту (4.16),
+            // поэтому тема начинается с проекта, а не с «вам»: это не обращение, а сводка.
+            case NotificationService.TYPE_TASK_CREATED -> "Новая задача «" + title + "» — Task Tracker";
             case NotificationService.TYPE_TASK_ASSIGNED -> "Вам назначена задача «" + title + "» — Task Tracker";
             case NotificationService.TYPE_TASK_COMMENT -> "Новый комментарий к задаче «" + title + "» — Task Tracker";
             // Тема отличается от «нового комментария» намеренно: письмо про упоминание —
@@ -69,6 +72,8 @@ final class NotificationMailTexts {
         String actor = item.actorName() != null ? item.actorName() : "Кто-то";
         String title = orEmpty(item.stringValue("title"));
         return switch (item.type()) {
+            case NotificationService.TYPE_TASK_CREATED ->
+                    actor + " завёл(а) задачу «" + title + "»";
             case NotificationService.TYPE_TASK_ASSIGNED ->
                     actor + " назначил(а) вам задачу «" + title + "»";
             case NotificationService.TYPE_TASK_COMMENT ->

@@ -69,5 +69,17 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
             """)
     List<User> findUsersByProjectIdAndUsernameIn(UUID projectId, Collection<String> usernames);
 
+    /**
+     * Кто из перечисленных состоит в проекте — адресаты живого обновления (4.15).
+     * <p>
+     * Список на входе, а не «все участники проекта», потому что спрашивают здесь не «кому
+     * это видно» вообще, а «кому это видно из тех, у кого сейчас открыта вкладка». Первых
+     * может быть сколько угодно, вторых — единицы; фильтр по {@code IN} превращает рассылку
+     * в один индексный запрос по (project_id, user_id) вместо выгрузки всего состава ради
+     * пересечения с горсткой id.
+     */
+    @Query("select m.user.id from ProjectMember m where m.project.id = :projectId and m.user.id in :userIds")
+    List<UUID> findUserIdsByProjectIdAndUserIdIn(UUID projectId, Collection<UUID> userIds);
+
     long countByProjectIdAndRole(UUID projectId, ProjectRole role);
 }

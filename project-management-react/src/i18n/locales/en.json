@@ -40,6 +40,7 @@
     "empty": "No notifications yet",
     "markAllRead": "Mark all as read",
     "types": {
+      "task_created": "created task \"{{title}}\"",
       "task_assigned": "assigned you task \"{{title}}\"",
       "task_comment": "commented on task \"{{title}}\": “{{commentExcerpt}}”",
       "task_mention": "mentioned you in task \"{{title}}\": “{{commentExcerpt}}”",
@@ -297,6 +298,19 @@
   "projectStar": {
     "star": "Star",
     "starred": "Starred"
+  },
+  "projectNotifications": {
+    "title": "Project notifications",
+    "modes": {
+      "ALL": "Everything in the project",
+      "PARTICIPATING": "Only what involves me",
+      "MUTED": "Nothing"
+    },
+    "modeHints": {
+      "ALL": "New tasks and every comment in the project, not just on your tasks.",
+      "PARTICIPATING": "Assignments, comments on your tasks, mentions and due dates.",
+      "MUTED": "No email and no bell for this project. Its tasks stay in your lists."
+    }
   },
   "projectEdit": {
     "title": "Edit project",
@@ -718,7 +732,7 @@
     },
     "notifications": {
       "title": "Notification emails",
-      "hint": "Notifications always show up in the bell. Here you choose whether to also get them by email.",
+      "hint": "Notifications show up in the bell unless you have turned the project off in its own settings. Here you choose whether to also get them by email.",
       "loading": "Loading settings...",
       "emailEnabled": "Send notifications by email",
       "emailEnabledHint": "Turn this off if the bell is enough.",
@@ -739,7 +753,7 @@
         "taskDueSoon": "A due date is approaching",
         "taskOverdue": "A due date has passed"
       },
-      "bellStaysHint": "Whatever you turn off here, the notifications stay in the bell."
+      "bellStaysHint": "Whatever you turn off here, the notifications stay in the bell — except for projects you set to \"Nothing\"."
     }
   },
   "errors": {

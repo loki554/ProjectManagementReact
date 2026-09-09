@@ -32,6 +32,7 @@ import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
 import { TaskCreatePage } from './pages/projects/TaskCreatePage'
 import { TaskEditPage } from './pages/projects/TaskEditPage'
 import { TaskViewPage } from './pages/projects/TaskViewPage'
+import { useRealtimeUpdates } from './api/realtime'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
 
 function App() {
@@ -40,6 +41,12 @@ function App() {
   // не рендерим защищённые роуты — иначе ProtectedRoute успеет редиректнуть на /login
   // ещё до того, как токен реально обновится.
   const bootstrapped = useAuthBootstrap()
+  // Один поток живых обновлений на вкладку, а не на страницу (4.15): колокольчик и «мои
+  // задачи» видны везде, и переоткрывать соединение на каждый переход между проектами
+  // значило бы платить рукопожатием за навигацию. Здесь же, а не внутри BrowserRouter:
+  // от маршрута поток не зависит вовсе, а от наличия сессии — зависит, и стор с ней
+  // одинаково доступен по обе стороны условного рендера ниже.
+  useRealtimeUpdates()
 
   return (
     <>
