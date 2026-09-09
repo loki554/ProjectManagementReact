@@ -7,6 +7,7 @@ import { AppErrorScreen } from './components/errors/ErrorFallback'
 import { ConfirmDialogHost } from './components/ui/ConfirmDialog'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { InvitePage } from './pages/InvitePage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SearchPage } from './pages/SearchPage'
 import { UnsubscribePage } from './pages/UnsubscribePage'
@@ -184,7 +185,11 @@ function AppRoutes() {
             <Route path="settings/edit" element={<ProjectEditPage />} />
           </Route>
           <Route path="/" element={<Navigate to="/projects" replace />} />
-          <Route path="*" element={<Navigate to="/projects" replace />} />
+          {/* Настоящая 404, а не редирект на список проектов (5.3): редирект врал, будто по
+              адресу что-то есть, и прятал саму ошибку — опечатка в ссылке на задачу выглядела
+              как «задачу удалили». Сюда же попадают несуществующие разделы внутри проекта: у
+              вложенных маршрутов своего "*" нет, и несовпавший путь доходит до этого. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ErrorBoundary>
     </>

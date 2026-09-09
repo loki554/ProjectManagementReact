@@ -21,6 +21,20 @@
     "cancel": "Abbrechen",
     "delete": "Löschen"
   },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "description": "Unter dieser Adresse gibt es nichts. Höchstwahrscheinlich hat der Link einen Tippfehler.",
+    "toProjects": "Zu den Projekten",
+    "projectTitle": "Projekt nicht gefunden",
+    "projectDescription": "Prüfen Sie die Adresse: Das Projekt wurde vielleicht umbenannt oder hat nie existiert. Beim Umbenennen ändert sich der Link.",
+    "noAccessTitle": "Kein Zugriff auf dieses Projekt",
+    "noAccessDescription": "Das Projekt existiert, aber Sie sind kein Mitglied. Bitten Sie jemanden aus dem Team, Sie hinzuzufügen.",
+    "projectErrorTitle": "Projekt konnte nicht geöffnet werden",
+    "taskTitle": "Aufgabe nicht gefunden",
+    "taskDescription": "Prüfen Sie die Nummer in der Adresse. Eine gelöschte Aufgabe liegt 30 Tage im Papierkorb und kann von dort zurückgeholt werden.",
+    "toBoard": "Zum Board",
+    "toTrash": "Papierkorb öffnen"
+  },
   "header": {
     "profile": "Profil",
     "logout": "Abmelden",

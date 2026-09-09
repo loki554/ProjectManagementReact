@@ -21,6 +21,20 @@
     "cancel": "Cancel",
     "delete": "Delete"
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "There is nothing at this address. Most likely the link has a typo in it.",
+    "toProjects": "Go to projects",
+    "projectTitle": "Project not found",
+    "projectDescription": "Check the address: the project may have been renamed, or it never existed. Renaming a project changes its link.",
+    "noAccessTitle": "No access to this project",
+    "noAccessDescription": "The project exists, but you are not a member of it. Ask someone from its team to invite you.",
+    "projectErrorTitle": "Could not open the project",
+    "taskTitle": "Task not found",
+    "taskDescription": "Check the number in the address. A deleted task stays in the trash for 30 days and can be restored from there.",
+    "toBoard": "Go to the board",
+    "toTrash": "Open the trash"
+  },
   "header": {
     "profile": "Profile",
     "logout": "Log out",

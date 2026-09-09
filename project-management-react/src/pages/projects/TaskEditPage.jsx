@@ -11,6 +11,7 @@ import { useSprints } from '../../api/sprintsQueries'
 import { useTags } from '../../api/tagsQueries'
 import { fetchTaskDeletionSummary, useDeleteTask, useTaskByNumber, useUpdateTask } from '../../api/tasksQueries'
 import { MarkdownEditor } from '../../components/markdown/MarkdownEditor'
+import { TaskErrorNotice } from '../../components/tasks/TaskErrorNotice'
 import { Combobox } from '../../components/ui/Combobox'
 import { Field, inputClass, primaryButtonClass, secondaryButtonClass } from '../../components/ui/FormKit'
 import {
@@ -189,7 +190,7 @@ export function TaskEditPage() {
       </Link>
 
       {isLoading && <p className="mt-4 text-gray-500 dark:text-gray-400">{t('tasks.detail.loading')}</p>}
-      {isError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
+      {isError && <TaskErrorNotice error={error} projectSlug={projectSlug} />}
 
       {!isLoading && !isError && task && (
         <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">

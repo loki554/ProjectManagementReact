@@ -19,6 +19,7 @@ import { ActivityFeed } from '../../components/projects/ActivityFeed'
 import { TaskCommentsSection } from '../../components/tasks/TaskCommentsSection'
 import { TaskChecklistSection } from '../../components/tasks/TaskChecklistSection'
 import { TaskDependenciesSection } from '../../components/tasks/TaskDependenciesSection'
+import { TaskErrorNotice } from '../../components/tasks/TaskErrorNotice'
 import { Field, inputClass, primaryButtonClass } from '../../components/ui/FormKit'
 import { UserAvatar } from '../../components/ui/UserAvatar'
 import {
@@ -186,7 +187,7 @@ export function TaskViewPage() {
         )}
 
         {isLoading && <p className="mt-4 text-gray-500 dark:text-gray-400">{t('tasks.detail.loading')}</p>}
-        {isError && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{getLocalizedErrorMessage(error, t)}</p>}
+        {isError && <TaskErrorNotice error={error} projectSlug={projectSlug} />}
 
         {!isLoading && !isError && task && (
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">

@@ -1,6 +1,7 @@
 import { Outlet, useParams } from 'react-router-dom'
 import { useProjectBySlug } from '../../api/projectsQueries'
 import { AppHeader } from './AppHeader'
+import { ProjectAccessNotice } from './ProjectAccessNotice'
 import { ProjectSidebar } from './ProjectSidebar'
 
 // Общий каркас всех страниц внутри проекта: сверху хедер, слева сайдбар с
@@ -9,7 +10,7 @@ import { ProjectSidebar } from './ProjectSidebar'
 // по одинаковому queryKey, поэтому передавать проект через Outlet context не нужно.
 export function ProjectLayout() {
   const { projectSlug } = useParams()
-  const { data: project } = useProjectBySlug(projectSlug)
+  const { data: project, isError, error } = useProjectBySlug(projectSlug)
 
   // Высота фиксирована по вьюпорту, скроллится не body, а <main>. Это даёт страницам
   // внутри проекта (список задач, канбан) полноценную область известной высоты: можно
@@ -19,9 +20,12 @@ export function ProjectLayout() {
     <div className="flex h-svh flex-col overflow-hidden">
       <AppHeader />
       <div className="flex min-h-0 flex-1">
-        <ProjectSidebar project={project} />
+        {/* Сайдбар не рисуется, когда проекта нет или в него не пускают: навигация по
+            разделам того, чего для человека не существует, — обещание, которое некому
+            выполнить. */}
+        {!isError && <ProjectSidebar project={project} />}
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <Outlet />
+          {isError ? <ProjectAccessNotice error={error} /> : <Outlet />}
         </main>
       </div>
     </div>
