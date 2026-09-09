@@ -88,6 +88,12 @@ test('ошибка рендера гасит ровно один уровень:
     // Не перезагружаем страницу: смысл resetKeys в том, что свежие данные снимают ошибку
     // сами. Уход на список задач и обратно заставляет react-query перечитать доску.
     await page.getByRole('link', { name: 'Task list', exact: true }).click()
+    // Дождаться списка обязательно, а не кликать дальше сразу: страницы грузятся по
+    // требованию (5.4), а роутер ведёт переход через startTransition и до приезда файла
+    // показывает прежнюю страницу. Второй клик в этот момент отменил бы переход, доска так и не
+    // размонтировалась бы, и проверяли бы мы не восстановление, а гонку.
+    await expect(page).toHaveURL(/\/tasks$/)
+    await expect(page.getByText(TASK_TITLE)).toBeVisible()
     await page.getByRole('link', { name: 'Kanban', exact: true }).click()
 
     await expect(page.getByText(TASK_TITLE)).toBeVisible()

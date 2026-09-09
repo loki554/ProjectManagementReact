@@ -4,10 +4,15 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import { AppErrorScreen } from './components/errors/ErrorFallback'
-import './i18n'
+import { loadDetectedLanguage } from './i18n'
 import './index.css'
 
 const queryClient = new QueryClient()
+
+// Словарь текущего языка — до первого рендера (5.4): он теперь отдельный файл, и без
+// этого ожидания первый кадр был бы на ключах вместо слов. Грузится он параллельно с основным
+// файлом приложения, а не после него: import() вызывается до рендера, а не из компонента.
+await loadDetectedLanguage()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

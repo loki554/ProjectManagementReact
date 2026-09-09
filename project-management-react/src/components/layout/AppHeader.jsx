@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { logout } from '../../api/authApi'
-import { SUPPORTED_LANGUAGES } from '../../i18n'
+import { SUPPORTED_LANGUAGES, changeLanguage } from '../../i18n'
 import { useAuthenticatedImage } from '../../lib/useAuthenticatedImage'
 import { useAuthStore } from '../../stores/authStore'
 import { ThemeToggle } from '../ThemeToggle'
@@ -53,7 +53,7 @@ export function AppHeader() {
             <button
               key={lng}
               type="button"
-              onClick={() => i18n.changeLanguage(lng)}
+              onClick={() => changeLanguage(lng)}
               aria-label={t(`language.${lng}`)}
               className={`rounded px-2 py-1 text-xs font-medium uppercase ${
                 i18n.resolvedLanguage === lng

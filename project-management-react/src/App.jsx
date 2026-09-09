@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
@@ -5,39 +6,57 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { ErrorBoundary } from './components/errors/ErrorBoundary'
 import { AppErrorScreen } from './components/errors/ErrorFallback'
 import { ConfirmDialogHost } from './components/ui/ConfirmDialog'
+import { RouteFallback } from './components/ui/RouteFallback'
 import { ToastContainer } from './components/ui/ToastContainer'
-import { InvitePage } from './pages/InvitePage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { SearchPage } from './pages/SearchPage'
-import { UnsubscribePage } from './pages/UnsubscribePage'
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
-import { VerifyEmailPage } from './pages/auth/VerifyEmailPage'
-import { ProjectLayout } from './components/layout/ProjectLayout'
-import { NewProjectPage } from './pages/projects/NewProjectPage'
-import { ProjectDashboardPage } from './pages/projects/ProjectDashboardPage'
-import { ProjectEditPage } from './pages/projects/ProjectEditPage'
-import { ProjectExportPage } from './pages/projects/ProjectExportPage'
-import { ProjectMembersPage } from './pages/projects/ProjectMembersPage'
-import { ProjectOverviewPage } from './pages/projects/ProjectOverviewPage'
-import { ProjectSprintsPage } from './pages/projects/ProjectSprintsPage'
-import { ProjectTimeReportPage } from './pages/projects/ProjectTimeReportPage'
-import { ProjectsListPage } from './pages/projects/ProjectsListPage'
-import { ProjectTaskListPage } from './pages/projects/ProjectTaskListPage'
-import { ProjectCategoriesPage } from './pages/projects/ProjectCategoriesPage'
-import { ProjectTagsPage } from './pages/projects/ProjectTagsPage'
-import { ProjectTaskTemplatesPage } from './pages/projects/ProjectTaskTemplatesPage'
-import { ProjectTasksPage } from './pages/projects/ProjectTasksPage'
-import { ProjectTrashPage } from './pages/projects/ProjectTrashPage'
-import { ProjectWikiPage } from './pages/projects/ProjectWikiPage'
-import { TaskCreatePage } from './pages/projects/TaskCreatePage'
-import { TaskEditPage } from './pages/projects/TaskEditPage'
-import { TaskViewPage } from './pages/projects/TaskViewPage'
 import { useRealtimeUpdates } from './api/realtime'
 import { useAuthBootstrap } from './stores/useAuthBootstrap'
+
+/**
+ * Страницы приезжают отдельными файлами по мере надобности (5.4). До этого весь трекер —
+ * канбан с dnd-kit, Markdown-редактор, графики дашборда — грузился на экране входа, где не
+ * нужно ничего из этого: 1,9 МБ одним куском ради формы с двумя полями.
+ *
+ * Вход и регистрация остаются в основном файле намеренно: это первый экран, и делить его на
+ * два запроса значило бы менять размер на задержку ровно там, где задержка заметнее всего.
+ *
+ * Обёртка нужна из-за именованных экспортов: React.lazy ждёт модуль с default, а страницы в
+ * проекте экспортируются по имени — и менять двадцать пять файлов ради формы записи здесь
+ * было бы худшим из способов это исправить.
+ */
+function lazyPage(load, exportName) {
+  return lazy(() => load().then((module) => ({ default: module[exportName] })))
+}
+
+const InvitePage = lazyPage(() => import('./pages/InvitePage'), 'InvitePage')
+const NotFoundPage = lazyPage(() => import('./pages/NotFoundPage'), 'NotFoundPage')
+const ProfilePage = lazyPage(() => import('./pages/ProfilePage'), 'ProfilePage')
+const SearchPage = lazyPage(() => import('./pages/SearchPage'), 'SearchPage')
+const UnsubscribePage = lazyPage(() => import('./pages/UnsubscribePage'), 'UnsubscribePage')
+const ForgotPasswordPage = lazyPage(() => import('./pages/auth/ForgotPasswordPage'), 'ForgotPasswordPage')
+const ResetPasswordPage = lazyPage(() => import('./pages/auth/ResetPasswordPage'), 'ResetPasswordPage')
+const VerifyEmailPage = lazyPage(() => import('./pages/auth/VerifyEmailPage'), 'VerifyEmailPage')
+const ProjectLayout = lazyPage(() => import('./components/layout/ProjectLayout'), 'ProjectLayout')
+const NewProjectPage = lazyPage(() => import('./pages/projects/NewProjectPage'), 'NewProjectPage')
+const ProjectDashboardPage = lazyPage(() => import('./pages/projects/ProjectDashboardPage'), 'ProjectDashboardPage')
+const ProjectEditPage = lazyPage(() => import('./pages/projects/ProjectEditPage'), 'ProjectEditPage')
+const ProjectExportPage = lazyPage(() => import('./pages/projects/ProjectExportPage'), 'ProjectExportPage')
+const ProjectMembersPage = lazyPage(() => import('./pages/projects/ProjectMembersPage'), 'ProjectMembersPage')
+const ProjectOverviewPage = lazyPage(() => import('./pages/projects/ProjectOverviewPage'), 'ProjectOverviewPage')
+const ProjectSprintsPage = lazyPage(() => import('./pages/projects/ProjectSprintsPage'), 'ProjectSprintsPage')
+const ProjectTimeReportPage = lazyPage(() => import('./pages/projects/ProjectTimeReportPage'), 'ProjectTimeReportPage')
+const ProjectsListPage = lazyPage(() => import('./pages/projects/ProjectsListPage'), 'ProjectsListPage')
+const ProjectTaskListPage = lazyPage(() => import('./pages/projects/ProjectTaskListPage'), 'ProjectTaskListPage')
+const ProjectCategoriesPage = lazyPage(() => import('./pages/projects/ProjectCategoriesPage'), 'ProjectCategoriesPage')
+const ProjectTagsPage = lazyPage(() => import('./pages/projects/ProjectTagsPage'), 'ProjectTagsPage')
+const ProjectTaskTemplatesPage = lazyPage(() => import('./pages/projects/ProjectTaskTemplatesPage'), 'ProjectTaskTemplatesPage')
+const ProjectTasksPage = lazyPage(() => import('./pages/projects/ProjectTasksPage'), 'ProjectTasksPage')
+const ProjectTrashPage = lazyPage(() => import('./pages/projects/ProjectTrashPage'), 'ProjectTrashPage')
+const ProjectWikiPage = lazyPage(() => import('./pages/projects/ProjectWikiPage'), 'ProjectWikiPage')
+const TaskCreatePage = lazyPage(() => import('./pages/projects/TaskCreatePage'), 'TaskCreatePage')
+const TaskEditPage = lazyPage(() => import('./pages/projects/TaskEditPage'), 'TaskEditPage')
+const TaskViewPage = lazyPage(() => import('./pages/projects/TaskViewPage'), 'TaskViewPage')
 
 function App() {
   const { t } = useTranslation()
@@ -94,103 +113,114 @@ function AppRoutes() {
         resetKeys={[location.key]}
         fallback={({ error, reset }) => <AppErrorScreen error={error} onRetry={reset} />}
       >
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          {/* Не под ProtectedRoute: по этой ссылке приходят из письма, и чаще всего — ещё
-              не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
-              (см. InvitePage). */}
-          <Route path="/invite" element={<InvitePage />} />
-          {/* Тоже не под ProtectedRoute: по этой ссылке приходят из письма-уведомления, и
-              требовать входа ради «перестаньте мне писать» — верный способ получить вместо
-              отписки жалобу на спам (см. UnsubscribePage). */}
-          <Route path="/unsubscribe" element={<UnsubscribePage />} />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              <ProtectedRoute>
-                <ProjectsListPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Выдача поиска — свой роут, а не оверлей: состояние поиска целиком лежит в
-              query-параметрах, чтобы ссылкой можно было поделиться (см. SearchPage). */}
-          <Route
-            path="/search"
-            element={
-              <ProtectedRoute>
-                <SearchPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/projects/new"
-            element={
-              <ProtectedRoute>
-                <NewProjectPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Все страницы внутри проекта живут во вложенных роутах под общим
-              ProjectLayout (хедер + сайдбар), их URL-ы не изменились. */}
-          <Route
-            path="/projects/:projectSlug"
-            element={
-              <ProtectedRoute>
-                <ProjectLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<ProjectOverviewPage />} />
-            <Route path="tasks" element={<ProjectTaskListPage />} />
-            <Route path="board" element={<ProjectTasksPage />} />
-            {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
-                справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
-            <Route path="sprints" element={<ProjectSprintsPage />} />
-            {/* Дашборд (4.11) и отчёт по времени (4.10) — тоже рабочие экраны, а не
-                настройки: оба только читают то, что трекер уже собрал, и оба отвечают на
-                вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
-            <Route path="dashboard" element={<ProjectDashboardPage />} />
-            <Route path="reports/time" element={<ProjectTimeReportPage />} />
-            {/* Выгрузка (4.12) — тоже рабочий экран, но редкий: за ней приходят раз в
-                квартал, когда нужен архив или сводная таблица, поэтому в сайдбаре она
-                стоит внизу, рядом с корзиной. */}
-            <Route path="export" element={<ProjectExportPage />} />
-            <Route path="trash" element={<ProjectTrashPage />} />
-            {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
-                поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
-                с ?parent=<taskNumber>. */}
-            <Route path="tasks/new" element={<TaskCreatePage />} />
-            <Route path="tasks/:taskNumber" element={<TaskViewPage />} />
-            <Route path="tasks/:taskNumber/edit" element={<TaskEditPage />} />
-            <Route path="wiki" element={<ProjectWikiPage />} />
-            <Route path="settings/members" element={<ProjectMembersPage />} />
-            <Route path="settings/tags" element={<ProjectTagsPage />} />
-            <Route path="settings/categories" element={<ProjectCategoriesPage />} />
-            {/* Шаблоны задач (4.13) — в настройках, рядом с тэгами и категориями: это
-                справочник проекта, а не рабочий экран. Пользуются им не отсюда, а из формы
-                заведения задачи, где шаблон и выбирают. */}
-            <Route path="settings/templates" element={<ProjectTaskTemplatesPage />} />
-            <Route path="settings/edit" element={<ProjectEditPage />} />
-          </Route>
-          <Route path="/" element={<Navigate to="/projects" replace />} />
-          {/* Настоящая 404, а не редирект на список проектов (5.3): редирект врал, будто по
-              адресу что-то есть, и прятал саму ошибку — опечатка в ссылке на задачу выглядела
-              как «задачу удалили». Сюда же попадают несуществующие разделы внутри проекта: у
-              вложенных маршрутов своего "*" нет, и несовпавший путь доходит до этого. */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        {/* Suspense — внутри маршрутной границы (5.1), а не снаружи: не доехавший файл
+            страницы это и есть ошибка страницы, и разбираться с ней должен тот же экран.
+            Одна общая обёртка на все маршруты, а не по одной на каждый: заглушка у них всё
+            равно одна и та же.
+
+            Видно её реже, чем кажется: роутер ведёт переход через startTransition и, пока
+            едет файл следующей страницы, продолжает показывать предыдущую — заглушка нужна
+            только там, где показывать нечего: первый вход на страницу по прямой ссылке или
+            первый экран после входа. */}
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            {/* Не под ProtectedRoute: по этой ссылке приходят из письма, и чаще всего — ещё
+                не имея аккаунта. Страница сама решает, что показать вошедшему и анонимному
+                (см. InvitePage). */}
+            <Route path="/invite" element={<InvitePage />} />
+            {/* Тоже не под ProtectedRoute: по этой ссылке приходят из письма-уведомления, и
+                требовать входа ради «перестаньте мне писать» — верный способ получить вместо
+                отписки жалобу на спам (см. UnsubscribePage). */}
+            <Route path="/unsubscribe" element={<UnsubscribePage />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectsListPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Выдача поиска — свой роут, а не оверлей: состояние поиска целиком лежит в
+                query-параметрах, чтобы ссылкой можно было поделиться (см. SearchPage). */}
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/new"
+              element={
+                <ProtectedRoute>
+                  <NewProjectPage />
+                </ProtectedRoute>
+              }
+            />
+            {/* Все страницы внутри проекта живут во вложенных роутах под общим
+                ProjectLayout (хедер + сайдбар), их URL-ы не изменились. */}
+            <Route
+              path="/projects/:projectSlug"
+              element={
+                <ProtectedRoute>
+                  <ProjectLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<ProjectOverviewPage />} />
+              <Route path="tasks" element={<ProjectTaskListPage />} />
+              <Route path="board" element={<ProjectTasksPage />} />
+              {/* Спринты (4.9) — отдельная страница проекта, не раздел настроек: это не
+                  справочник вроде тэгов, а рабочий экран, на который ходят каждый день. */}
+              <Route path="sprints" element={<ProjectSprintsPage />} />
+              {/* Дашборд (4.11) и отчёт по времени (4.10) — тоже рабочие экраны, а не
+                  настройки: оба только читают то, что трекер уже собрал, и оба отвечают на
+                  вопросы, которые задают в понедельник утром, а не при заведении проекта. */}
+              <Route path="dashboard" element={<ProjectDashboardPage />} />
+              <Route path="reports/time" element={<ProjectTimeReportPage />} />
+              {/* Выгрузка (4.12) — тоже рабочий экран, но редкий: за ней приходят раз в
+                  квартал, когда нужен архив или сводная таблица, поэтому в сайдбаре она
+                  стоит внизу, рядом с корзиной. */}
+              <Route path="export" element={<ProjectExportPage />} />
+              <Route path="trash" element={<ProjectTrashPage />} />
+              {/* Статический сегмент "new" ранжируется выше динамического :taskNumber,
+                  поэтому конфликт с /tasks/:taskNumber исключён. Подзадача — тот же роут
+                  с ?parent=<taskNumber>. */}
+              <Route path="tasks/new" element={<TaskCreatePage />} />
+              <Route path="tasks/:taskNumber" element={<TaskViewPage />} />
+              <Route path="tasks/:taskNumber/edit" element={<TaskEditPage />} />
+              <Route path="wiki" element={<ProjectWikiPage />} />
+              <Route path="settings/members" element={<ProjectMembersPage />} />
+              <Route path="settings/tags" element={<ProjectTagsPage />} />
+              <Route path="settings/categories" element={<ProjectCategoriesPage />} />
+              {/* Шаблоны задач (4.13) — в настройках, рядом с тэгами и категориями: это
+                  справочник проекта, а не рабочий экран. Пользуются им не отсюда, а из формы
+                  заведения задачи, где шаблон и выбирают. */}
+              <Route path="settings/templates" element={<ProjectTaskTemplatesPage />} />
+              <Route path="settings/edit" element={<ProjectEditPage />} />
+            </Route>
+            <Route path="/" element={<Navigate to="/projects" replace />} />
+            {/* Настоящая 404, а не редирект на список проектов (5.3): редирект врал, будто по
+                адресу что-то есть, и прятал саму ошибку — опечатка в ссылке на задачу выглядела
+                как «задачу удалили». Сюда же попадают несуществующие разделы внутри проекта: у
+                вложенных маршрутов своего "*" нет, и несовпавший путь доходит до этого. */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </ErrorBoundary>
     </>
   )
