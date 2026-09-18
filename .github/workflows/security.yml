@@ -31,7 +31,7 @@ jobs:
       run:
         working-directory: project-management-react
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -68,7 +68,7 @@ jobs:
   owasp-dependency-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Секрет читается через env, а не подставляется прямо в текст команды: подставленный
       # в run секрет попадает в скрипт шага целиком и его легко случайно напечатать.
