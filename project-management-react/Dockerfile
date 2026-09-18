@@ -4,7 +4,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------- сборка
-FROM node:24-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /build
 
 # Сначала манифесты — слой с node_modules пересобирается при изменении зависимостей,
