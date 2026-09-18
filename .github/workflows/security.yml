@@ -94,7 +94,7 @@ jobs:
 
       # Кэш базы NVD отдельно от кэша Maven: она обновляется по своему расписанию и весит
       # сотни мегабайт, а без кэша каждый прогон начинается с её выкачивания.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         if: steps.key.outputs.present == 'true'
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
