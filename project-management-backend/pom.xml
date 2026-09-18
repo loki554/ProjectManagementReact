@@ -277,6 +277,20 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<jvmArguments>-DDB_PASSWORD=${DB_PASSWORD}</jvmArguments>
+					<!-- devtools в fat jar не нужен: рестарт-класслоадер, файловый watcher и
+					     LiveReload-сервер на 35729 — всё это дев-инструменты, а в проде это
+					     лишняя поверхность атаки и лишняя память (см. 8.3 IMPROVEMENTS.md).
+
+					     Плагин исключает его и по умолчанию, но дефолт здесь — не гарантия:
+					     в дескрипторе плагина у параметра стоит user property
+					     ${spring-boot.repackage.excludeDevtools}, то есть любой -D в командной
+					     строке сборки (или в конфиге CI) молча вернёт devtools в jar. Явное
+					     значение в pom перебивает user property и делает решение частью
+					     репозитория, а не свойством того, кто запускает сборку.
+
+					     Сама зависимость остаётся optional+runtime, чтобы spring-boot:run
+					     в dev по-прежнему перезапускал приложение на изменение классов. -->
+					<excludeDevtools>true</excludeDevtools>
 				</configuration>
 			</plugin>
 			<!-- JaCoCo: порог покрытия сервисного слоя (см. 2.7 IMPROVEMENTS.md). Смысл не в
