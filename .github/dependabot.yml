@@ -1,0 +1,81 @@
+# Автообновление зависимостей (8.7 IMPROVEMENTS.md).
+#
+# Зачем вообще: 30+ npm-пакетов и десяток Java-библиотек вручную не обновляет никто, и
+# «не обновляет никто» заканчивается не устареванием, а тем, что мы узнаём про уязвимость
+# из новостей. Dependabot, а не Renovate: он встроен в GitHub, ему не нужен ни отдельный
+# app, ни конфиг-репозиторий, а возможностей Renovate, которых здесь не хватает, в проекте
+# этого размера просто не возникает.
+#
+# ВАЖНО про security-обновления: они приходят НЕ отсюда. Этот файл настраивает только
+# плановые обновления версий; отдельные PR по уязвимостям Dependabot шлёт сам, если в
+# настройках репозитория включены Dependabot alerts и security updates (Settings →
+# Code security). Включить их нужно руками один раз — файлом это не делается.
+version: 2
+
+updates:
+  # --- фронтенд ----------------------------------------------------------------------
+  - package-ecosystem: npm
+    directory: /project-management-react
+    schedule:
+      interval: weekly
+      day: monday
+    # Потолок открытых PR: без него после недели молчания прилетает два десятка веток,
+    # и разбирать их не станет никто — то есть эффект получится обратный задуманному.
+    open-pull-requests-limit: 5
+    groups:
+      # Патчи и минорные версии одним PR: по отдельности это два десятка веток в неделю,
+      # каждая из которых меняет одну цифру. Мажорные версии намеренно НЕ группируются —
+      # их приходится читать поштучно, и смешивать их с рутиной нельзя.
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+      # React и роутер отдельной группой: они обновляются согласованно (react и react-dom
+      # обязаны совпадать), и попытка обновить половину пары ломает сборку.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+    ignore:
+      # Мажорные версии инструментов сборки приезжают со сменой конфигурации, и PR от бота
+      # в них всегда красный — читать их надо руками и отдельно, когда до этого дойдут руки.
+      - dependency-name: vite
+        update-types: [version-update:semver-major]
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
+
+  # --- бэкенд ------------------------------------------------------------------------
+  - package-ecosystem: maven
+    directory: /project-management-backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      maven-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Мажор Spring Boot — это отдельная работа на несколько дней (переименованные
+      # стартеры, переехавшие пакеты: этот проект уже проходил 3.x → 4.x). PR от бота
+      # тут не помощь, а шум.
+      - dependency-name: org.springframework.boot:spring-boot-starter-parent
+        update-types: [version-update:semver-major]
+
+  # --- образы ------------------------------------------------------------------------
+  # Базовые образы устаревают так же, как библиотеки, только чинить их некому: CVE в
+  # eclipse-temurin или nginx не видит ни npm audit, ни Maven — их видит только тот, кто
+  # следит за тегами. Dockerfile'ов два, и каждый со своим FROM.
+  - package-ecosystem: docker
+    directory: /project-management-backend
+    schedule:
+      interval: weekly
+      day: monday
+  - package-ecosystem: docker
+    directory: /project-management-react
+    schedule:
+      interval: weekly
+      day: monday
+
+  # --- сами workflow'ы ---------------------------------------------------------------
+  # Версии actions в .github/workflows тоже зависимости, причём с доступом к репозиторию.
+  # Заодно это снимает вопрос «не устарел ли actions/checkout@v4» — бот поднимет сам.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -76,7 +76,14 @@ EXPOSE 8080
 # MaxRAMPercentage вместо -Xmx: лимит памяти задаёт оркестратор, и JVM должна считать свою
 # кучу от него, а не от памяти хоста. 75% — оставляем четверть на метаспейс, стеки потоков
 # и прямые буферы, без которых контейнер убивал бы OOM-killer при формально живой куче.
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
+#
+# JAVA_TOOL_OPTIONS, а не собственная переменная в ENTRYPOINT-обёртке: её JVM читает сама,
+# и это позволяет оставить ENTRYPOINT в exec-форме. Через "sh -c" (чтобы развернуть свою
+# переменную) PID 1 становится шелл, сигналы до джавы доходят через него, а аргументы
+# docker run уезжают в $0/$1 шелла вместо приложения — то есть "docker run образ id -u"
+# запускает не id, а всё тот же java. На это уже наступили, когда писали проверку
+# «контейнер не от root» в CI.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 
 # Проба контейнера — readiness, а не liveness: docker'у важно «можно ли слать трафик»
 # (именно на это смотрит depends_on: service_healthy у фронтенда), и БД в эту группу
@@ -86,4 +93,4 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=60s --retries=5 \
 
 # JarLauncher из распакованного слоёного layout'а, а не java -jar: fat jar здесь уже не
 # лежит, его содержимое разложено по каталогам выше.
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]

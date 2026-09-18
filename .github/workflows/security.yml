@@ -1,0 +1,124 @@
+# Проверка зависимостей на уязвимости (8.7 IMPROVEMENTS.md).
+#
+# Отдельным workflow от CI, потому что у них разный триггер и разный смысл. CI отвечает на
+# «сломал ли этот PR сборку» и обязан быть быстрым; здесь ответ на «не появилось ли за ночь
+# новой CVE в том, что уже лежит в main», и этот вопрос задаётся по расписанию — уязвимость
+# в зависимости появляется без единого нашего коммита.
+name: security
+
+on:
+  schedule:
+    # Еженедельно, утром понедельника — в тот же день, когда Dependabot приносит плановые
+    # обновления, чтобы разбирать это одним заходом.
+    - cron: '0 6 * * 1'
+  pull_request:
+    # На PR — только когда меняются сами зависимости. Гонять аудит на правку компонента
+    # незачем: список пакетов от неё не меняется.
+    paths:
+      - 'project-management-react/package-lock.json'
+      - 'project-management-react/package.json'
+      - 'project-management-backend/pom.xml'
+      - '.github/workflows/security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project-management-react
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project-management-react/package-lock.json
+      - run: npm ci
+
+      # Полный отчёт печатается всегда и ничего не блокирует — это то, что читают глазами.
+      - name: полный отчёт
+        run: npm audit || true
+
+      # А блокирует только critical, и это сознательно выбранный порог, а не осторожность
+      # ради осторожности. На момент установки в дереве четыре high: nanoid и postcss —
+      # транзитивные зависимости сборки (Vite/Tailwind), react-router — advisory про режим
+      # RSC, которого это приложение не использует вовсе. Поставить порог high значило бы
+      # получить красный CI с первого дня и научить всех его игнорировать — а привычка
+      # игнорировать красное дороже, чем отсутствие ворот.
+      #
+      # ЧТО СДЕЛАТЬ ДАЛЬШЕ: разобрать эти четыре (Dependabot принесёт обновления сам) и
+      # опустить порог до high. Строчка ниже — единственное, что для этого надо поменять.
+      - name: ворота (critical)
+        run: npm audit --audit-level=critical
+
+  # Java-зависимости. Здесь важна оговорка: основную работу делает не этот job, а
+  # Dependabot security updates — он смотрит в GitHub Advisory Database, покрывает Maven
+  # и включается одним переключателем в настройках репозитория, без ключей и без сканера.
+  #
+  # OWASP Dependency-Check, который предлагался в пункте, заведён рядом и сознательно
+  # необязателен: с переходом NVD на API v2 анонимный доступ зарезан до нескольких запросов
+  # в 30 секунд, и первая загрузка базы без ключа занимает часы, а не минуты — то есть без
+  # NVD_API_KEY этот job не «медленный», а нерабочий. Поэтому он выполняется только там,
+  # где ключ заведён (Settings → Secrets → NVD_API_KEY, бесплатно выдаётся на nvd.nist.gov),
+  # а без ключа честно пропускается, а не висит красным укором.
+  owasp-dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Секрет читается через env, а не подставляется прямо в текст команды: подставленный
+      # в run секрет попадает в скрипт шага целиком и его легко случайно напечатать.
+      - name: есть ли ключ NVD
+        id: key
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          if [ -n "$NVD_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "NVD_API_KEY не задан — Dependency-Check пропущен." >> "$GITHUB_STEP_SUMMARY"
+            echo "Уязвимости Maven при этом всё равно отслеживает Dependabot security updates." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      # Кэш базы NVD отдельно от кэша Maven: она обновляется по своему расписанию и весит
+      # сотни мегабайт, а без кэша каждый прогон начинается с её выкачивания.
+      - uses: actions/cache@v4
+        if: steps.key.outputs.present == 'true'
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: nvd-${{ github.run_id }}
+          restore-keys: nvd-
+
+      - name: dependency-check
+        if: steps.key.outputs.present == 'true'
+        working-directory: project-management-backend
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        # Плагин не прописан в pom намеренно: он нужен раз в неделю в CI, а в pom добавлял
+        # бы всем разработчикам плагин, который при обычном mvnw verify только мешает.
+        # Версия зафиксирована — иначе сборка перестаёт быть воспроизводимой.
+        run: >
+          ./mvnw -B -ntp org.owasp:dependency-check-maven:12.1.0:check
+          "-DnvdApiKey=$NVD_API_KEY"
+          -DfailBuildOnCVSS=9
+          -DassemblyAnalyzerEnabled=false
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && steps.key.outputs.present == 'true' }}
+        with:
+          name: dependency-check-report
+          path: project-management-backend/target/dependency-check-report.html
+          retention-days: 7
+          if-no-files-found: ignore
