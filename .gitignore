@@ -11,7 +11,10 @@ project-management-backend/storage/
 # secrets
 .env
 .env.*
+# ...кроме примеров: .env.example (dev) и .env.prod.example (docker-compose.prod.yml).
+# Правило-исключение нужно отдельной строкой — шаблон .env.* выше накрывает и их.
 !.env.example
+!.env.prod.example
 application-local.yml
 application-secrets.yml
 

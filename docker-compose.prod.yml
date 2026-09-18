@@ -1,0 +1,103 @@
+# Прод-стек целиком: Postgres, бэкенд, раздача фронтенда (8.1 IMPROVEMENTS.md).
+#
+# Запуск:
+#   cp .env.prod.example .env.prod   # и заполнить
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+#
+# Отдельный файл, а не профили внутри docker-compose.yml: тот поднимает Postgres, MailHog
+# и MinIO для локальной разработки, и смешивать его с продом значит однажды поднять в
+# проде MailHog. Разные файлы — разные стеки, перепутать их можно только осознанно.
+#
+# ЧЕГО ЗДЕСЬ НЕТ И ПОЧЕМУ: TLS. Предполагается, что перед стеком стоит то, что умеет ACME
+# (Caddy, Traefik, облачный балансировщик) и терминирует https, передавая X-Forwarded-Proto.
+# Городить внутри compose ещё один слой с сертификатами — это брать на себя ротацию
+# Let's Encrypt руками; см. 8.9 про то, где этот прокси описывается.
+
+# Имя проекта задано явно, и это не косметика. По умолчанию compose берёт его из имени
+# каталога — а каталог у dev-стека и у прод-стека один и тот же. Без этой строки
+# "docker compose -f docker-compose.prod.yml up" не поднимает отдельный стек, а
+# ПЕРЕСОЗДАЁТ контейнеры соседнего файла поверх его же volume: найдено на смоук-тесте,
+# где прод-бэкенд получил dev-базу (с уже инициализированным паролем) и честно упал на
+# "password authentication failed". Отдельное имя — отдельные контейнеры, сеть и volume.
+name: pmtracker-prod
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # Порт наружу НЕ публикуется: база доступна только внутри сети compose. Опубликованный
+    # 5432 — это открытая наружу база, и ни один firewall хоста об этом не узнает, потому
+    # что docker пишет правила в iptables мимо него.
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      # Без этого бэкенд стартует раньше готовности базы, падает на Flyway и уходит в
+      # рестарт-цикл: depends_on без condition ждёт только запуска контейнера, а не того,
+      # что внутри него кто-то готов отвечать.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./project-management-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Хост — имя сервиса в сети compose, а не localhost: внутри контейнера localhost
+      # это сам контейнер бэкенда.
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # Публичный адрес приложения. Идёт в ссылки писем (подтверждение почты, сброс
+      # пароля, приглашения) — то есть должен быть тем, что человек увидит в браузере,
+      # а не внутренним именем сервиса.
+      FRONTEND_BASE_URL: ${PUBLIC_BASE_URL}
+      STORAGE_BASE_PATH: /app/storage
+      # Часовой пояс контейнера — не косметика: по нему считается расписание суточной
+      # сводки уведомлений (app.notifications.digest.cron). По умолчанию в образе UTC.
+      TZ: ${TZ:-UTC}
+    volumes:
+      # Вложения и аватарки. Именованный volume, а не bind mount: права внутри уже
+      # выставлены на uid 10001 в Dockerfile, а bind принёс бы владельца с хоста.
+      # ВАЖНО: это локальный диск одного инстанса. Второй экземпляр бэкенда чужих файлов
+      # не увидит — для нескольких инстансов нужен S3 (STORAGE_TYPE=s3, см. 3.7).
+      - storage:/app/storage
+    # Порт наружу не публикуется: снаружи доступен только nginx, который проксирует /api/.
+    # Заодно это значит, что /actuator/health не виден из интернета — пробы ходят к нему
+    # изнутри контейнера (HEALTHCHECK в Dockerfile).
+
+  frontend:
+    build:
+      context: ./project-management-react
+      args:
+        # Тот же origin, что и у SPA: nginx проксирует /api/ на бэкенд (см. nginx/default.conf).
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    depends_on:
+      backend:
+        # service_healthy, а не service_started: nginx с upstream'ом, который ещё не
+        # поднялся, отдаёт 502, и первый же зашедший увидит пустую страницу вместо приложения.
+        condition: service_healthy
+    ports:
+      # Слева — порт хоста, на который смотрит TLS-терминатор. Наружу, в интернет, этот
+      # порт выставлять не нужно: https делает прокси перед ним.
+      - "${HTTP_PORT:-8080}:8080"
+
+volumes:
+  pg_data:
+  storage:

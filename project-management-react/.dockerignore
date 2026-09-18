@@ -1,0 +1,9 @@
+# node_modules из контекста исключён намеренно: в образе зависимости ставит npm ci по
+# package-lock.json, а копирование локальных (собранных под Windows) нативных модулей
+# в linux-образ дало бы либо мусор, либо трудноуловимую поломку сборки.
+node_modules/
+dist/
+test-results/
+playwright-report/
+.git/
+*.md
