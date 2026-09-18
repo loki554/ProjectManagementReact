@@ -21,7 +21,7 @@ export default async function globalSetup() {
   await probe(
     `${E2E.apiUrl}/notifications/unread-count`,
     'бэкенд',
-    'Запустите стек: ./dev.sh (или ./mvnw initialize spring-boot:run в project-management-backend).',
+    'Запустите стек: ./dev.sh (или ./mvnw spring-boot:run в project-management-backend, с DB_PASSWORD в окружении).',
   )
   await probe(
     `${E2E.mailhogUrl}/api/v2/messages?limit=1`,
