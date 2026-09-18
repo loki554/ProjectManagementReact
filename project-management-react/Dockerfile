@@ -37,6 +37,18 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 
+# Каталог точек расширения (8.9): в прод-образе он пуст, а на staging сюда монтируются
+# noindex и basic-auth. Создаётся явно, чтобы include не смотрел в несуществующий путь.
+#
+# USER вокруг mkdir — не перестраховка: этот образ уже переключён на uid 101, и RUN в нём
+# идёт от непривилегированного пользователя, которому /etc/nginx не принадлежит (сборка
+# падала с exit code 1 ровно на этой строке). COPY выше проблемы не имеет: он кладёт
+# файлы от root независимо от USER. Возвращаем 101 сразу же — рантайм обязан остаться
+# непривилегированным, ради чего этот образ и выбран.
+USER root
+RUN mkdir -p /etc/nginx/snippets/environment
+USER 101
+
 COPY --from=build /build/dist /usr/share/nginx/html
 
 EXPOSE 8080

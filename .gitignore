@@ -15,6 +15,10 @@ project-management-backend/storage/
 # Правило-исключение нужно отдельной строкой — шаблон .env.* выше накрывает и их.
 !.env.example
 !.env.prod.example
+!.env.staging.example
+
+# Пароль от basic-auth стенда (8.9). Генерируется на месте, см. ops/staging/README.md.
+ops/staging/htpasswd
 application-local.yml
 application-secrets.yml
 

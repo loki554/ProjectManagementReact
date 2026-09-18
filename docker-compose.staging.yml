@@ -1,0 +1,76 @@
+# Стенд (8.9 IMPROVEMENTS.md). Не самостоятельный стек, а НАКЛАДКА на прод-файл:
+#
+#   docker compose --env-file .env.staging \
+#     -f docker-compose.prod.yml -f docker-compose.staging.yml up -d --build
+#
+# Именно накладка, а не копия. Смысл стенда в том, чтобы проверять ровно то, что поедет в
+# прод; отдельный самостоятельный файл начал бы расходиться с прод-стеком с первой же
+# правки, и стенд проверял бы конфигурацию, которой в проде нет. Здесь описаны только
+# отличия, и каждое из них — ответ на вопрос «чем стенд обязан отличаться от прода».
+#
+# Spring-профиль при этом остаётся prod, и это тоже осознанно: профиль staging завёл бы
+# ещё одну конфигурацию, которую никто не проверяет, — а нужны стенду не другие настройки,
+# а другие ЗНАЧЕНИЯ (другая база, другой домен, другой SMTP), и они приходят из .env.staging.
+
+# Своё имя проекта: отдельные контейнеры, сеть и volume. Без этого стенд и прод на одном
+# хосте — это один и тот же стек с переписанными настройками (см. комментарий в прод-файле,
+# где на это уже наступили).
+name: pmtracker-staging
+
+services:
+  # Почта стенда никуда не уходит. Это главное отличие и главный риск, который оно снимает:
+  # на стенде живут копии реальных данных и реальные адреса, и одно письмо «подтвердите
+  # регистрацию», ушедшее с тестового стенда живому человеку, стоит дороже всей экономии на
+  # настройке. MailHog ловит всё и показывает на 8025.
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    ports:
+      # Веб-интерфейс ящика. Порт наружу публикуется, потому что смотреть письма нужно
+      # людям, — но за тем же прокси и с той же аутентификацией, что и сам стенд.
+      - "${MAILHOG_PORT:-8025}:8025"
+
+  backend:
+    environment:
+      # Перенаправление почты на MailHog. Порт 1025 без TLS и без логина — поэтому здесь же
+      # снимается mail.smtp.starttls.required из прод-профиля: MailHog STARTTLS не умеет, и
+      # с обязательным STARTTLS отправка молча падала бы, а регистрация на стенде не
+      # работала бы вовсе.
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "false"
+      # Лимиты входа на стенде мешают: половина ручных проверок — это вход-выход по кругу,
+      # и на шестой попытке стенд отвечает 429 (а E2E-набор упирается в лимит регистраций).
+      # В проде такое недопустимо и запрещено самим prod-профилем; здесь — переопределение
+      # ровно на стенде и видимой строкой, а не «забыли включить».
+      APP_RATE_LIMIT_ENABLED: "false"
+      # Swagger UI на стенде удобен и безопасен: стенд закрыт basic-auth, а карта API — это
+      # то, ради чего на стенд и ходят. В проде он остаётся выключенным (1.4).
+      SPRINGDOC_API_DOCS_ENABLED: "true"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "true"
+      # Строгий CSP бэкенда не даёт странице Swagger загрузить собственные скрипты —
+      # то же послабление, что в dev-профиле.
+      APP_SECURITY_CONTENT_SECURITY_POLICY: >-
+        default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self';
+        frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    volumes:
+      # Точки расширения nginx (см. ops/staging/*.conf и include'ы в nginx/default.conf):
+      # noindex на каждый ответ и basic-auth на весь стенд. Монтируются, а не вшиваются в
+      # образ, именно поэтому — образ обязан остаться тем же самым, что поедет в прод.
+      - ./ops/staging/headers-noindex.conf:/etc/nginx/snippets/environment/headers-noindex.conf:ro
+      - ./ops/staging/server-auth.conf:/etc/nginx/snippets/environment/server-auth.conf:ro
+      - ./ops/staging/htpasswd:/etc/nginx/snippets/environment/htpasswd:ro
+
+  backup:
+    environment:
+      # Бэкапы стенда нужны (проверять процедуру восстановления надо где-то, и лучше здесь,
+      # чем впервые в проде), но держать их две недели незачем — данные всё равно тестовые.
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-3}
