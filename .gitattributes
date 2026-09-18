@@ -1,0 +1,12 @@
+# Переводы строк для файлов, которые исполняются внутри Linux-контейнеров (8.5 IMPROVEMENTS.md).
+#
+# Причина конкретная: на Windows у репозитория включён autocrlf, то есть при клонировании
+# скрипты приезжают с CRLF. Внутри контейнера это означает шебанг "#!/usr/bin/env bash\r",
+# то есть "bad interpreter: no such file or directory" — сообщение, по которому никто и
+# никогда не догадывается, что дело в переводах строк. Те же грабли ждут Dockerfile'ы,
+# конфиги nginx и compose-файлы, которые читаются в Linux.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.conf      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf

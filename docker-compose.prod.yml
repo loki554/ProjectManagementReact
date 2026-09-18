@@ -98,6 +98,42 @@ services:
       # порт выставлять не нужно: https делает прокси перед ним.
       - "${HTTP_PORT:-8080}:8080"
 
+  # Бэкапы базы по расписанию с проверкой восстановлением (8.5, см. ops/backup/README.md).
+  backup:
+    # Тот же образ, что у базы, и это обязательное условие: pg_dump не умеет снимать дамп
+    # с сервера новее себя. Отдельный «образ для бэкапов» со своей версией клиента ломался
+    # бы ровно в момент обновления Postgres, то есть тогда, когда бэкап нужнее всего.
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Стандартные переменные libpq: их понимают сразу pg_dump, pg_restore, psql,
+      # createdb и dropdb, так что ни в одном из скриптов нет ни -h, ни -U, ни пароля
+      # в командной строке (где его видно в ps).
+      PGHOST: postgres
+      PGDATABASE: ${DB_NAME}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      BACKUP_DIR: /backups
+      BACKUP_AT: ${BACKUP_AT:-03:30}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_VERIFY: ${BACKUP_VERIFY:-true}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./ops/backup:/ops:ro
+      - backups:/backups
+    # Через bash, а не напрямую: каталог ops/ приезжает bind-mount'ом с хоста, и бит
+    # исполнения у файла на этом хосте может быть каким угодно (Windows, часть NFS).
+    # Явный интерпретатор снимает вопрос — как и .gitattributes, который держит в этих
+    # файлах LF: шебанг с CRLF даёт "bad interpreter", по которому догадаться невозможно.
+    entrypoint: ["bash", "/ops/scheduler.sh"]
+
 volumes:
   pg_data:
   storage:
+  # Дампы. Отдельный том, а не каталог внутри pg_data: бэкап, лежащий в том же томе, что
+  # и база, исчезает вместе с ней ровно тогда, когда понадобится. Это всё ещё тот же хост —
+  # про то, почему это не офсайт-бэкап, написано в ops/backup/README.md.
+  backups:
