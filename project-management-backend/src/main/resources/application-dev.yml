@@ -16,6 +16,15 @@ spring:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
 
+# Разбор health по компонентам в dev включён обратно: наружу dev не смотрит, а видеть,
+# что именно лежит (Postgres из docker-compose, место на диске), при отладке нужно.
+# В остальных профилях наружу уходит только UP/DOWN, см. application.properties.
+management:
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
 # Swagger UI живёт только в dev (в application.properties springdoc выключен по умолчанию).
 # Здесь же ослабленный CSP: строгий default-src 'none' из application.properties не дал бы
 # самой странице Swagger загрузить свои скрипты и стили. Внешние источники не разрешены и

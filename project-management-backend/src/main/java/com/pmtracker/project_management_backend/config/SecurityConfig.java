@@ -2,6 +2,8 @@ package com.pmtracker.project_management_backend.config;
 
 import com.pmtracker.project_management_backend.ratelimit.AuthRateLimitFilter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.health.actuate.endpoint.HealthEndpoint;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -139,6 +141,17 @@ public class SecurityConfig {
                                 .maxAgeInSeconds(Duration.ofDays(365).toSeconds())
                                 .includeSubDomains(true)))
                 .authorizeHttpRequests(auth -> {
+                    // Health-пробы (8.6) — единственный actuator-эндпоинт без токена.
+                    // Иначе никак: docker healthcheck и probes оркестратора ходят без
+                    // учётных данных, а инстанс, который на пробу отвечает 401, для
+                    // балансировщика неотличим от мёртвого. Утечки здесь нет — анонимному
+                    // клиенту уходит одно слово UP/DOWN (show-details: never), а сам
+                    // /actuator/info и всё остальное остаются за аутентификацией.
+                    //
+                    // EndpointRequest, а не строка пути: он берёт management.endpoints.web.base-path
+                    // из конфигурации и покрывает подпути (/health/liveness, /health/readiness),
+                    // так что смена base-path не оставит здесь тихо неработающее правило.
+                    auth.requestMatchers(EndpointRequest.to(HealthEndpoint.class)).permitAll();
                     auth.requestMatchers(
                             "/api/auth/register",
                             "/api/auth/verify-email",

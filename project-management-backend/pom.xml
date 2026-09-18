@@ -35,6 +35,16 @@
 		<spring-boot.run.profiles>dev</spring-boot.run.profiles>
 	</properties>
 	<dependencies>
+		<!-- Actuator ради одного эндпоинта — /actuator/health (8.6 IMPROVEMENTS.md).
+		     Оркестратору нужен ответ на «жив ли инстанс» и «можно ли слать трафик», и это
+		     два разных вопроса: liveness/readiness-группы разводят их так, что упавшая БД
+		     выводит инстанс из ротации, но не заставляет контейнер перезапускаться по кругу.
+		     Всё остальное, что приносит actuator (env, beans, mappings, heapdump), наружу не
+		     выставлено — см. management.* в application.properties. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -292,6 +302,18 @@
 					     в dev по-прежнему перезапускал приложение на изменение классов. -->
 					<excludeDevtools>true</excludeDevtools>
 				</configuration>
+				<executions>
+					<!-- build-info.properties в jar: без него /actuator/info пустой, а именно
+					     он отвечает на вопрос «какая сборка сейчас в проде» (8.6). Execution
+					     repackage из родительского POM никуда не девается — Maven сливает
+					     executions по id. -->
+					<execution>
+						<id>build-info</id>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<!-- JaCoCo: порог покрытия сервисного слоя (см. 2.7 IMPROVEMENTS.md). Смысл не в
 			     цифре как таковой, а в храповике: тесты 2.1-2.6 подняли сервисы до ~85% по
