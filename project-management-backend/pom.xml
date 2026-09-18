@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.0</version>
+		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.pmtracker</groupId>
@@ -76,18 +76,18 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.12.6</version>
+			<version>0.13.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.12.6</version>
+			<version>0.13.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.12.6</version>
+			<version>0.13.0</version>
 			<scope>runtime</scope>
 		</dependency>
 		<!-- bucket4j: token bucket для rate limiting auth-эндпоинтов (см. ratelimit/).
@@ -97,7 +97,7 @@
 		<dependency>
 			<groupId>com.bucket4j</groupId>
 			<artifactId>bucket4j_jdk17-core</artifactId>
-			<version>8.14.0</version>
+			<version>8.19.0</version>
 		</dependency>
 		<!-- Apache Tika: определение реального типа файла по magic bytes (см. 1.12 IMPROVEMENTS.md).
 		     Только tika-core — детекторы по сигнатурам и tika-mimetypes.xml лежат в нём, парсеры
@@ -113,7 +113,7 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-webp</artifactId>
-			<version>3.12.0</version>
+			<version>3.15.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -128,7 +128,7 @@
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
-			<version>3.2.0</version>
+			<version>3.2.4</version>
 		</dependency>
 		<!-- AWS SDK v2, только модуль S3: объектное хранилище как альтернатива локальному
 		     диску (3.7 IMPROVEMENTS.md). Берётся не starter от AWS, а голый клиент — Spring
@@ -138,7 +138,7 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
-			<version>2.30.0</version>
+			<version>2.54.18</version>
 			<exclusions>
 				<!-- Apache HTTP-клиент AWS SDK подтягивает commons-logging, который
 				     конфликтует с jcl-over-slf4j из Boot ("multiple bindings"). Синхронному
